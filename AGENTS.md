@@ -1,151 +1,65 @@
 # Tinycast
 
-A native macOS menu-bar launcher: fuzzy app launcher, global and per-app hotkeys, a text/image
-clipboard history, an inline calculator, a floating note, snippets, quicklinks, window management
-and an emoji picker. It also **runs Raycast extensions** natively, in JavaScriptCore.
-SwiftUI + AppKit, running as an accessory with no Dock icon (`LSUIElement`). Zero third-party
-dependencies.
+Native macOS menu-bar launcher and productivity app, built with SwiftUI and AppKit; runs as an accessory without a Dock icon.
+Maintain the inherited architecture as features change; this file does not prescribe a feature inventory. Ignore `.pi/`.
 
-## Posture: modern-first, always
+## Layout and ownership
 
-**Tinycast supports macOS 26 and later, with macOS 27 strongly preferred.** Swift 6+ with complete
-strict concurrency is required. Prefer the latest Swift patterns and modern Apple APIs.
-
-Prefer current APIs and language features:
-
-- **Prefer the modern Apple API**, always. Observation over `ObservableObject`. `SMAppService` over
-  login-item shims.
-- **Prefer synchronous code.** Keep short UI and state operations synchronous on `@MainActor`.
-  Introduce concurrency only for genuinely asynchronous operations or blocking work that must leave
-  the main actor. Shared state alone does not justify `async`, a `Task`, or an actor. Preserve
-  synchronous callback returns and event ordering. When concurrency is needed, prefer structured
-  concurrency with clear ownership and cancellation. Strict concurrency checking enforces safety;
-  it does not require making operations asynchronous.
-- **Migrate, never wrap.** Adopt modern replacements directly and delete obsolete call sites. Do not
-  keep wrappers that only preserve an old spelling.
-- **A deprecated API is a defect**, not a warning to live with.
-- **Verify API and language-feature availability** against the SDK and compiler used by the build
-  and CI. Use direct availability checks where macOS 27+ APIs require them to preserve macOS 26 support.
-- **No compatibility layers, legacy workarounds or obsolete patterns.** No support below macOS 26 or
-  speculative fallbacks. Keep the implementation direct. Migration code lives only in
-  `Tinycast/Migrations/` and is deleted after one stable release ([migrations.md](docs/migrations.md)).
-
-Carbon is a deliberate capability-gap dependency rather than inertia: nothing modern registers a
-system-wide chord, and HIToolbox's TIS APIs remain the public input-source mechanism. Full reasoning in
-[standards.md](docs/standards.md#posture).
-
-## Where things are
-
-| Folder                   | Holds                                                                                   |
-| ------------------------ | --------------------------------------------------------------------------------------- |
-| `Tinycast/App/`          | `@main`, `AppDelegate`, `AppCore` — the composition root                                |
-| `Tinycast/DesignSystem/` | shared visual primitives; `Theme.swift` is the only design-token source                 |
-| `Tinycast/Platform/`     | system shims: `Permissions`, `AppPaths`, `Signposts`, `NotificationToken`, …            |
-| `Tinycast/Palette/`      | the palette shell: panel, window controller, `RootPaletteView`, `PaletteScreen`         |
-| `Tinycast/Windows/`      | the non-palette AppKit surfaces: `Dialog/`, `HUD/`, `About/`, `AppWindowController`     |
-| `Tinycast/Features/`     | one folder per feature; larger ones split `Model/` `Service/` `UI/` `Settings/`         |
-| `Tinycast/Migrations/`   | one-shot repairs of state an older release left behind, each deleted after one release  |
-| `Tests/`                 | the standalone harnesses — one Swift file each, no XCTest target                        |
-| `Scripts/`               | every executable script: test runner, data generators, packaging, linting, editor setup |
-
-| Read it before you                                          | Doc                                                          |
-| ----------------------------------------------------------- | ------------------------------------------------------------ |
-| change how anything is wired or owned                       | [architecture.md](docs/architecture.md)                      |
-| write Swift — naming, style, concurrency, budgets, comments | [standards.md](docs/standards.md)                            |
-| claim a change is done                                      | [testing.md](docs/testing.md)                                |
-| build, run or regenerate data                               | [development.md](docs/development.md)                        |
-| add or restyle any view                                     | [ui.md](docs/ui.md)                                          |
-| touch one feature's internals                               | [features/](docs/features/) — each opens with its invariants |
-| remove or rename anything persisted                         | [migrations.md](docs/migrations.md)                          |
-| package or ship a build                                     | [release.md](docs/release.md)                                |
+- **`Tinycast/App/AppCore.swift` owns long-lived application state through `AppCore.shared`; do not add competing singletons.**
+- `Tinycast/App/TinycastApp.swift` declares the entry point and SwiftUI app; `AppDelegate.swift` starts the core and handles lifecycle callbacks.
+- Wire services and cross-component callbacks in `AppCore.start()`; follow its termination path for teardown.
+- `Tinycast/Palette/` owns the palette shell; `PaletteEnvironment.swift` injects the core and shared observable dependencies into SwiftUI.
+- Route user actions through coordinators; existing views can use the injected core as a coordinator locator.
+- `Tinycast/Features/` contains feature-local code, generally split into `Model/`, `Service/`, `UI/`, and `Settings/` when needed.
+- `Model/` holds data and decisions; `Service/` holds effects and platform integration; `UI/` holds views/coordinators; `Settings/` holds configuration UI.
+- **Keep AppKit, SwiftUI, and Cocoa imports out of `Features/*/Model/`; harnesses compile shipped model sources independently.**
+- Some model stores also perform persistence; do not assume `Model/` means effect-free code. Inject environment inputs for testability.
+- `Tinycast/DesignSystem/` owns shared visuals and theme tokens; `Tinycast/Platform/` owns shared system integration and lifetime helpers.
+- `Tinycast/Windows/` owns non-palette AppKit presentation; `Tinycast/Migrations/` holds one-shot persisted-state migrations.
+- `Tinycast/Resources/` holds bundled data/localization; `Tests/` holds standalone Swift harnesses, not an XCTest target.
+- `Scripts/` owns generators and verification tooling; `website/` is separate from the native application.
+- Shared static configuration, caches, and callbacks also exist outside the core; trace callers before changing their lifetime.
+- For example, `Tinycast/DesignSystem/Interaction/Motion.swift` holds shared motion configuration; this is not a precedent for new global service owners.
 
 ## Non-negotiables
 
-Never break these without an explicit task to do so. Anything feature-specific lives in that
-feature's doc, under its own `## Invariants`.
+- Target macOS 26+ with Swift 6 and complete strict concurrency; check newer API availability against `project.yml` and the active SDK.
+- **Edit `project.yml`, then run `xcodegen generate` and include `Tinycast.xcodeproj` changes; never hand-edit the generated project.**
+- Do not introduce SwiftPM or `Bundle.module`; this is an Xcode application project.
+- Never hand-edit generated sources/resources; locate their generator in `Scripts/` and regenerate them.
+- Keep persisted data isolated by the active bundle identifier; follow `Tinycast/Platform/AppPaths.swift` so Debug cannot overwrite Release data.
+- Put user-owned data in Application Support and refetchable data in Caches; read `docs/migrations.md` before removing or renaming persisted state.
+- Reuse theme tokens and preserve existing appearance behavior unless a visual change is requested; keep feature-specific UI inside its owner.
+- Before removing a subsystem, trace core ownership, environment injection, startup/teardown, persisted state, resources, and tests.
 
-- **`AppCore` is the sole owner.** New long-lived state goes on `AppCore`, wired in `start()` — never a
-  competing singleton. Views reach a feature's **coordinator** through `@Environment`, not `AppCore`.
-- **A file under `Features/*/Model/` may not import AppKit or SwiftUI**, and takes every environment
-  fact — clock, filesystem, home directory, rates — as an injected parameter. The harnesses compile the
-  shipped sources, so this is enforced by compilation rather than convention.
-- **Swift 6 language mode: data-race violations are hard errors.** `@MainActor` is the default,
-  model values shared across isolation boundaries are `Sendable`, and exclusive ownership transfer
-  uses `sending`. Heavy or IO-bound work goes off-main. Prefer `@concurrent` async functions when work
-  must leave the caller's actor; use `Task.detached` when an independent task is needed. Do not add a
-  second actor.
-- **Async results can become stale across suspension.** Before applying them, validate cancellation,
-  operation identity and destination where they can change. Long-lived work has an owner and teardown;
-  detached or callback-backed work owned by a caller follows that caller's cancellation.
-- **Dark is the baseline, and a colour's dark branch is the literal it always was.** `Theme.Colors`
-  resolves per appearance through `ramp`/`adaptive`; every dark value is the `Color.white.opacity(…)`
-  the forced-dark build shipped, restated rather than re-derived. Retune a light branch freely — change
-  a dark one only when the task is to change Dark. `AppAppearance` drives `NSApp.appearance`, and
-  `.system` maps to `nil` so AppKit follows macOS on its own.
-- **Tinycast presents its own dialogs — never `NSAlert` or a system popover.** A question
-  goes through `DialogController`, a report through a HUD via `HUDPresenter`. The Settings window is
-  the one exception: a stock titled window, its panes ask with SwiftUI's `confirmationDialog` or
-  `alert`, which present as a sheet on it.
-- **A networked feature fetches on a private `.ephemeral`, `urlCache = nil` session**, never
-  `URLSession.shared`, so its own cache file stays the only copy on disk. `CurrencyRateStore` is the
-  reference — copy it rather than inventing a second shape. A flag that grants a capability is never
-  carried by a backup or by `settings.json`: `snippetsEnabled` is excluded from settings backups so an
-  import cannot grant keystroke listening.
-- **Extensions stay inside `Features/Extensions/`.** Every view, row, menu, geometry and sizing
-  constant an extension needs is written and owned there — never added to `DesignSystem/`, never bolted
-  onto `Theme`, and never lifted somewhere another feature can build on it. Another surface may render
-  one as an opaque box — `LauncherScreen` does exactly that with `ExtensionArgumentsAccessory` — but it
-  never reaches inside one. An extension renders untrusted third-party code whose shape we do not
-  control, so it must never be able to force a change on a launcher surface.
-  **Duplicating a view or a piece of layout maths to keep it here is the correct trade**, and the one
-  place the no-duplication rule yields. What _is_ shared: `Theme`'s base tokens (spacing, radius,
-  colour), `InterfaceMetrics` as the view over those same base tokens, `PopoverMenuItem` as a data
-  shape, and `Platform/`. What is never shared: anything with
-  "how an extension looks or moves" in it. `ExtensionActionsPanel` and `ExtensionGridGeometry` exist
-  precisely because the palette's own menu and the emoji grid must stay free to change without them.
-- **`AppEntry.Kind` is the only thing that says what an entry is.** One case per launcher section and
-  per `VisibilityStore` category — never re-derive a category by sniffing an entry ID. Which _pane_
-  lists a command is a separate fact, and `SettingsTab.ownedCommands` is the only place that states it.
-- **Generated files are never hand-edited.** `EmojiData.generated.swift` and
-  `Resources/EmojiKeywords/` come from `node Scripts/gen-emoji.js`, `CurrencyData.generated.swift` from `node Scripts/gen-currencies.js`,
-  `CountryZoneData.generated.swift` from `node Scripts/gen-countries.js`, and
-  `Resources/RaycastRuntime.generated.js` from `Scripts/raycast-runtime/build.mjs` — the runtime is
-  committed so building the app never needs Node.
-- **`DesignSystem/Scrolling/EdgeDissolve.swift` and `ThinScrollbar.swift` are off-limits.** Both are
-  tuned by eye against the palette's floating bars, so any edit is a visual regression. Needing to touch
-  one to fix a scroll bug means the real fix belongs elsewhere.
+## Swift conventions
 
-## Conventions worth knowing up front
+- Preserve local patterns and formatter/linter configuration; use Observation (`@Observable`), not `ObservableObject`.
+- Keep UI-facing mutable state on `@MainActor`; keep short UI operations synchronous to preserve event ordering.
+- Mark non-observable implementation state with `@ObservationIgnored`; inject concrete collaborators instead of adding a dependency container.
+- Move blocking/heavy work off-main; give asynchronous work an owner, cancellation, and teardown.
+- Revalidate cancellation, operation identity, and destination after suspension before applying results that may be stale.
+- Avoid closure retain cycles; use unowned captures only when the owner's lifetime encloses the collaborator's lifetime.
+- Localize SwiftUI literals directly and traveling strings with `String(localized:)`; follow `docs/standards.md` for catalog syncing and translations.
 
-- **User-facing text is localized through `Localizable.xcstrings`**: SwiftUI literals as they are,
-  `String(localized:)` wherever text travels as a `String`, one literal per sentence. Run
-  `./Scripts/sync-strings.sh` after changing any, and translate all eight languages in the same change.
-  See [standards.md](docs/standards.md#localization).
-- **A new preference also gets a `SettingsFileKey`** and its binding in `SettingsFileSchema`, so the
-  opt-in `settings.json` mirror carries it; the exhaustive switch fails the build until it is bound.
-  See [settings-file.md](docs/features/settings-file.md).
-- **A type's suffix says what it _is_** — `Store`, `Coordinator`, `Controller`, `Manager`, `Engine`,
-  `Policy` and the rest each name a specific responsibility. **Semantic correctness always wins over
-  suffix consistency:** pick the suffix that describes the type honestly, add a new one when none fits,
-  and never rename a well-named type just to match the table.
-  Full table: [standards.md#naming](docs/standards.md#naming).
-- **Comments are rare, one line, and explain the _why_** — the gotcha or invariant, never the what.
-  **Never two in a row, never extended into a block**: if one line can't carry it, name a function,
-  constant or type instead. Cap 100 characters, delete rather than update, and never comment a change
-  you just made. Nothing lints this; get it right the first time.
-  Full rules: [standards.md#comments](docs/standards.md#comments).
-- **Debug builds are their own channel** — `Tinycast Dev.app` / `com.abueammar.tinycast.dev` — so a
-  local run never shares prefs, caches, TCC grants or the login item with an installed copy. Anything
-  newly persisted must stay keyed by `Bundle.main.bundleIdentifier`.
-- **XcodeGen owns the project.** `Tinycast.xcodeproj` is committed but generated from `project.yml`;
-  after editing it, run `xcodegen generate` and commit both. No SwiftPM, and never `Bundle.module`.
+## Verification
 
-## Before you finish
+Run these separately for code changes; harness success does not prove the app builds or lint passes:
 
-Each item is explained in [testing.md](docs/testing.md#definition-of-done).
+```sh
+./Scripts/run-tests.sh
+xcodebuild -project Tinycast.xcodeproj -scheme Tinycast -configuration Debug build
+./Scripts/lint.sh
+```
 
-- `./Scripts/run-tests.sh` passes.
-- The Debug build compiles with **no new warnings**.
-- `./Scripts/lint.sh` is clean.
-- `grep -rln 'import AppKit\|import SwiftUI\|import Cocoa' Tinycast/Features/*/Model/` returns nothing.
-- Any doc your change made wrong is fixed in the same commit.
+Build with no new warnings; report checks that could not run. Documentation-only changes do not require an app build.
+Consult `docs/development.md` and `docs/signing.md` for toolchain and signing prerequisites.
+
+## Read first
+
+- `docs/architecture.md` before changing ownership, wiring, or lifecycle.
+- `docs/standards.md` before writing Swift; detailed naming, comments, concurrency, and localization rules live there.
+- `docs/ui.md` before adding or restyling views; `docs/testing.md` before declaring code changes complete.
+- Relevant `docs/features/` documentation before changing subsystem internals; `CONTRIBUTING.md` for upstream contribution policy.
+
+If this file disagrees with the source, verify the discrepancy and update this file.
