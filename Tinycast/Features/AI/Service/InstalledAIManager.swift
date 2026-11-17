@@ -139,25 +139,6 @@ final class InstalledAIManager {
         statuses[kind] = InstalledAIStatus()
     }
 
-    /// Claude Code names its own sessions; asking it here costs one small request, not a turn.
-    func claudeTitle(for description: String) async -> String? {
-        guard status(for: .claude).isReady, let executable = status(for: .claude).executable,
-            let request = InstalledAIModel.claudeTitleRequest(description)
-        else { return nil }
-        let output = await InstalledAIProbe.request(
-            executable: executable, arguments: Self.claudeControlArguments,
-            workspace: workspace,
-            environment: ExecutableLocator.environment(
-                running: executable, inherited: launchSettings(.claude).inherited(for: .claude)),
-            input: Data(request.utf8),
-            until: { output in
-                // A whole line: the ID arrives before the title, so a chunk may split between them.
-                output.split(separator: "\n", omittingEmptySubsequences: false).dropLast()
-                    .contains { $0.contains(InstalledAIModel.claudeTitleRequestID) }
-            })
-        return InstalledAIModel.claudeTitle(output).flatMap(ChatTitle.sanitize)
-    }
-
     func provider(
         kind: InstalledAIKind, model: String, effort: String?,
         toolServers: AIToolServerSession? = nil, toolSession: AIToolSession? = nil

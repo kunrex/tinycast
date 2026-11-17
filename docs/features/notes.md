@@ -44,7 +44,7 @@ commands and global shortcuts can show, search, or extend the collection.
 - **The editor is a surface snippets expand into.** `NoteTextView` adopts `InjectableTextView`,
   so a typed keyword — and the Snippets browser's ↵ — is written straight into the text storage
   rather than posted as events at whichever app happens to be frontmost. Quick Actions also read and
-  replace its selected text in process. Only AI Chat's composer adopts it too: see
+  replace its selected text in process. See
   [snippets.md](snippets.md#text-delivery-and-pasteboard-safety).
 
 ## Storage and identity

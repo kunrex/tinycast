@@ -18,10 +18,8 @@ struct AIModelOption: Identifiable {
         let grok = installedAI.status(for: .grok)
         let openCode = installedAI.status(for: .openCode)
         let cursor = installedAI.status(for: .cursor)
-        // The default stays listed even when unticked, or the picker could not show what it holds.
         func shown(_ model: String, _ source: AIModelSource) -> Bool {
             settings.isModelShown(model, in: source)
-                || (settings.defaultModel?.source == source && settings.defaultModel?.model == model)
         }
         func shown(_ models: [InstalledAIModel], _ source: AIModelSource) -> [InstalledAIModel] {
             models.filter { shown($0.id, source) }

@@ -10,7 +10,7 @@ A **custom Quick Action** is a name, a glyph and a prompt, run through the same 
 shortcut and a launcher row like any other.
 
 Quick Actions is the provider layer's second consumer. It shares the provider connections and
-selectable Markdown renderer with AI Chat.
+selectable Markdown renderer retained from the removed conversation surfaces.
 
 ## Invariants
 
@@ -18,7 +18,7 @@ selectable Markdown renderer with AI Chat.
   is the flag and `QuickActionCoordinator` is the only place that reads it: no selection is read, no
   provider is built, no panel opens. The four commands leave the launcher's Quick Actions slice
   through `AppIndex.setCommandsVisible`, and the custom ones leave it through
-  `AppIndex.setCustomQuickActions`, the way Notes and AI Chat drop theirs. Carbon bindings stay
+  `AppIndex.setCustomQuickActions`, the way Notes drops its commands. Carbon bindings stay
   registered, so re-enabling restores every shortcut without touching the hotkey layer. The flag
   grants keystroke delivery into other apps, so like `snippetsEnabled` it is excluded from settings
   backups — an import must never arm it.
@@ -41,23 +41,24 @@ selectable Markdown renderer with AI Chat.
   replaced — by a retranslate, say — from clearing the newer handle.
 - **`Model/` stays Foundation-only.** `QuickActionTests` compiles that folder standalone, which is
   what keeps `FoundationModels`, `Translation` and `NaturalLanguage` in `Service/` and `UI/`.
-- **Quick Actions route themselves.** `quickActionModel` is a second routing decision, defaulting to
-  Apple Intelligence and falling back to chat's model. A shortcut pressed all day should not bill an
-  API every time, and that is not a choice chat's default can make on its behalf.
+- **Quick Actions route themselves.** `quickActionModel` is independent of the retired conversation default. An unset
+  or invalid route defaults only to enabled, available Apple Intelligence; otherwise it stays unset
+  and requires an explicit choice in Quick Actions settings. Repair never automatically selects an
+  HTTP provider. Valid explicit routes and per-action overrides keep their models and efforts.
 - **An action may override that route, and only by choice.** `quickActionModelOverrides` is keyed by
   `QuickAction.id`, so the built-in four and custom actions share one lookup,
   `QuickActionSettingsStore.model(for:)`. An absent entry follows `quickActionModel`, so nothing
   changes until the reader picks a model in the action's sheet. Translate never takes one.
 - **A dead override is dropped, never rerouted.** Repair walks every override beside the shared
   route: a vanished catalog model moves to its command's first model, like the shared route, but a
-  removed connection or an unavailable command deletes the entry instead of borrowing chat's model.
+  removed connection or an unavailable command deletes the entry instead of borrowing another model.
   The action then follows the route its pane names, not one the reader never chose for it.
 - **Installed providers are ordinary routes.** The model picker reads the same live Codex, Claude, Grok,
   OpenCode and Cursor catalogs as AI Settings. Execution still goes through `AIProviderFactory`, so Quick Actions
   inherit the same installed login, tool restrictions and process cleanup without owning CLI logic.
 - **The model picker is the AI picker.** Both panes render `AIModelOption.groupedCatalog`, with the
   same provider sections, model labels and provider-supported reasoning levels. An installed-model
-  selection stores its effort in `quickActionModel`, independently of chat's effort. The sheets use the
+  selection stores its effort in `quickActionModel`, independently of legacy conversation preferences. The sheets use the
   same `AIModelSelectionRows`, with **Same as Quick Actions** as the `nil` choice.
 - **The reader's own text gets permissive guardrails.** `AppCore.quickActionProvider()` asks for
   `SystemLanguageModel.Guardrails.permissiveContentTransformations`. The default filter is tuned for
@@ -103,8 +104,8 @@ A custom action previews by default, switchable to Replace per row: Tinycast can
 arbitrary prompt transforms the text or answers a question about it, and only the second destroys what
 it replaces. No diff, for the same reason.
 
-Custom instructions stay on this Mac and are excluded from settings backups, like chat's system
-prompt, because importing them would change results without the reader seeing them first.
+Custom instructions stay on this Mac and are excluded from settings backups, because importing them
+would change results without the reader seeing them first.
 
 ## Custom actions
 
@@ -190,9 +191,9 @@ which is a closed two-case enum measured once at present time — a growing stre
 Non-activating, so the target app keeps its selection while the panel holds key. Keys go through
 `sendEvent`: `↵` replaces, `⌘C` copies, `esc` dismisses; click-away dismisses like every other
 borderless surface. The panel is anchored by its **top-left** and re-measured as the reply arrives —
-centring on every measure would walk it up the screen. Summarize and custom actions use chat's
+centring on every measure would walk it up the screen. Summarize and custom actions use the shared
 `ChatMarkdownText` and `MarkdownBlock.parse`, keeping the whole result selectable across paragraphs
-and headings, with the same math as chat; `midStream` is on while it runs, so an equation still
+and headings, including math; `midStream` is on while it runs, so an equation still
 arriving is held back.
 
 The body is a `ScrollView` with its height **set** rather than capped: a scroll view has no ideal

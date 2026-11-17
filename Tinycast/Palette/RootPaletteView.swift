@@ -116,15 +116,6 @@ struct RootPaletteView: View {
             return ClipboardScreen(
                 store: store, core: core, vm: vm, openActions: openActions,
                 scrollToFollow: { scroll = ScrollIntent(kind: .follow) })
-        case .ai:
-            return AIScreen(
-                vm: vm, metrics: metrics, chat: quickAI,
-                coordinator: core.quickAICoordinator, chatCoordinator: core.aiChatCoordinator,
-                openAttachments: toggleAIAttachments)
-        case .aiHistory:
-            return ChatHistoryScreen(
-                history: core.chatHistory, chat: quickAI, coordinator: core.quickAICoordinator,
-                vm: vm, openActions: openActions, metrics: metrics)
         case .dictionary:
             return DictionaryScreen(session: dictionary, core: core, vm: vm)
         case .calculatorHistory:
@@ -276,21 +267,6 @@ struct RootPaletteView: View {
             return headerMenu(emojiCategoryContent, width: metrics.size.emojiCategoryMenuWidth)
         case .dictionaryScope:
             return headerMenu(dictionaryScopeContent, width: metrics.size.fileSearchFilterMenuWidth)
-        case .aiModel:
-            return headerMenu(
-                AIModelMenu.models(coordinator: core.aiChatCoordinator, chat: quickAI),
-                width: metrics.size.menuWidth)
-        case .aiReasoning:
-            return headerMenu(
-                AIModelMenu.reasoning(
-                    coordinator: core.aiChatCoordinator, chat: quickAI),
-                width: metrics.size.menuWidth)
-        case .aiAttachments:
-            guard !quickAI.pendingAttachments.isEmpty else { return nil }
-            return headerMenu(
-                AIModelMenu.attachments(
-                    coordinator: core.aiChatCoordinator, chat: quickAI),
-                width: metrics.size.menuWidth)
         case .argumentOptions:
             guard let field = argumentOptionsField,
                 let popover = headerAccessory?.optionsMenu(field)
@@ -743,7 +719,6 @@ struct RootPaletteView: View {
                 Task { @MainActor in focusPendingArgument() }
             }
             .onChange(of: argumentFocused) { _, field in vm.noteEditingField(field != nil) }
-            .onChange(of: quickAI.pendingAttachments.map(\.id)) { refreshAttachmentsMenu() }
     }
 
     private var compactCommands: [CommandID] {
@@ -807,10 +782,6 @@ struct RootPaletteView: View {
                 // Given room last: at the default priority it would split it with the field.
                 Spacer(minLength: 0).layoutPriority(-1)
             }
-            if tabOpensChat {
-                headerGutter(width: metrics.spacing.md)
-                quickAITabHint
-            }
             if !isCollapsed, vm.mode == .clipboard {
                 headerGutter(width: metrics.spacing.md)
                 ClipboardFilterButton(
@@ -842,21 +813,6 @@ struct RootPaletteView: View {
                     help: String(localized: "Dictionary or thesaurus  ⌘P"),
                     action: toggleDictionaryScope)
             }
-            if !isCollapsed, vm.mode == .ai {
-                headerGutter(width: metrics.spacing.md)
-                AIModelButton(
-                    title: core.aiChatCoordinator.selectedModelTitle(for: quickAI),
-                    icon: core.aiChatCoordinator.selectedModelIcon(for: quickAI),
-                    isOpen: openMenu == .aiModel,
-                    action: toggleAIModel)
-                if !core.aiChatCoordinator.reasoningEfforts(for: quickAI).isEmpty {
-                    headerGutter(width: metrics.spacing.md)
-                    AIReasoningButton(
-                        title: core.aiChatCoordinator.selectedReasoningTitle(for: quickAI),
-                        isOpen: openMenu == .aiReasoning,
-                        action: toggleAIReasoning)
-                }
-            }
             if !isCollapsed, let command = extensionCommandScreen,
                 let accessory = command.searchAccessory
             {
@@ -887,28 +843,6 @@ struct RootPaletteView: View {
         guard !isCollapsed else { return nil }
         let screen = screen
         return screen.headerAccessory(at: selection(in: screen), focus: $argumentFocused)
-    }
-
-    /// Nothing else advertises Tab, so the launcher says where it goes.
-    private var quickAITabHint: some View {
-        BarButton(chrome: .rounded, action: cycleMode) {
-            HStack(spacing: metrics.spacing.sm) {
-                Text("Quick AI")
-                    .font(metrics.typography.bar)
-                    .foregroundStyle(Theme.Colors.textSecondary)
-                KeyCapChip(text: "⇥", style: .outline)
-                    .accessibilityHidden(true)
-            }
-        }
-        .help("Press Tab to ask Quick AI")
-    }
-
-    /// Resolved through `PaletteTabAction`, so the hint cannot promise the wrong destination.
-    private var tabOpensChat: Bool {
-        guard !isCollapsed, headerAccessory?.fieldNames.isEmpty ?? true else { return false }
-        return PaletteTabAction.resolve(
-            mode: vm.mode, aiEnabled: settings.aiEnabled,
-            clipboardEnabled: settings.clipboardEnabled) == .ask
     }
 
     private var hidesSearchField: Bool { !isCollapsed && screen.hidesSearchField }
@@ -952,7 +886,7 @@ struct RootPaletteView: View {
 
     private var searchPrompt: String {
         // Squeezed to the caret, the field has no room for a prompt; beside one it keeps it.
-        if headerAccessory?.placement == .afterQuery, vm.mode != .ai { return "" }
+        if headerAccessory?.placement == .afterQuery { return "" }
         if vm.mode == .extensionCommand, let placeholder = extensionScreen.searchPlaceholder {
             return placeholder
         }
@@ -1120,7 +1054,6 @@ struct RootPaletteView: View {
         case .fileSearchFilter: toggleFileSearchFilter()
         case .emojiCategory: toggleEmojiCategory()
         case .dictionaryScope: toggleDictionaryScope()
-        case .aiModel: toggleAIModel()
         case .ignored: return false
         }
         return true
@@ -1153,46 +1086,6 @@ struct RootPaletteView: View {
         guard let accessory = extensionCommandScreen?.searchAccessory else { return }
         let value = extensions.accessorySelection(accessory)
         open(.extensionAccessory, highlighting: accessory.index(of: value))
-    }
-
-    private func toggleAIModel() {
-        if openMenu == .aiModel {
-            closeMenus()
-            return
-        }
-        let refreshTask = core.aiChatCoordinator.prepareModelSwitcher()
-        open(.aiModel, highlighting: aiModelHighlight)
-        Task { @MainActor in
-            await refreshTask.value
-            guard openMenu == .aiModel else { return }
-            menuSelection = aiModelHighlight
-            syncMenuPanel(presenting: false)
-        }
-    }
-
-    private var quickAI: AIChatState { core.aiChats.quickAI }
-
-    private var aiModelHighlight: Int {
-        AIModelMenu.modelHighlight(coordinator: core.aiChatCoordinator, chat: quickAI)
-    }
-
-    private func toggleAIAttachments() {
-        if openMenu == .aiAttachments {
-            closeMenus()
-            return
-        }
-        open(.aiAttachments, highlighting: 0)
-    }
-
-    private func toggleAIReasoning() {
-        if openMenu == .aiReasoning {
-            closeMenus()
-            return
-        }
-        open(
-            .aiReasoning,
-            highlighting: AIModelMenu.reasoningHighlight(
-                coordinator: core.aiChatCoordinator, chat: quickAI))
     }
 
     /// Every header menu states its own width, so resizing one never moves another.
@@ -1353,26 +1246,14 @@ struct RootPaletteView: View {
         syncMenuPanel(presenting: false)
     }
 
-    /// A row is addressed by index, so a file staged or dropped under the open menu re-lays it.
-    private func refreshAttachmentsMenu() {
-        guard openMenu == .aiAttachments else { return }
-        guard let content = menuContent else {
-            closeMenus()
-            return
-        }
-        menuSelection = min(menuSelection, max(content.rowCount - 1, 0))
-        syncMenuPanel(presenting: false)
-    }
-
     private var menuCorner: MenuPanelCorner? {
         switch openMenu {
         case .app: .bottomLeading
         case .actions: .bottomTrailing
         case .argumentOptions: .belowHeaderTrailing
         case .inputOptions(let corner): corner
-        case .clipboardFilter, .fileSearchFilter, .emojiCategory, .dictionaryScope, .aiModel,
-            .aiReasoning,
-            .aiAttachments, .extensionAccessory:
+        case .clipboardFilter, .fileSearchFilter, .emojiCategory, .dictionaryScope,
+            .extensionAccessory:
             .belowHeaderTrailing
         case nil: nil
         }
@@ -1468,15 +1349,12 @@ struct RootPaletteView: View {
     /// A ring hop leaves a step back — except the hop closing the ring on the launcher, its root.
     private func cycleMode() {
         switch PaletteTabAction.resolve(
-            mode: vm.mode, aiEnabled: settings.aiEnabled,
-            clipboardEnabled: settings.clipboardEnabled)
+            mode: vm.mode, clipboardEnabled: settings.clipboardEnabled)
         {
         case .carryQuery(.launcher):
             vm.mode = .launcher
             vm.resetNavigation()
         case .carryQuery(let mode): vm.pushCarryingQuery(mode: mode)
-        case .freshScreen(let mode): vm.push(mode: mode)
-        case .ask: core.quickAICoordinator.ask(vm.query)
         }
     }
 
@@ -1605,9 +1483,6 @@ private enum OpenMenu: Equatable {
     case fileSearchFilter
     case emojiCategory
     case dictionaryScope
-    case aiModel
-    case aiReasoning
-    case aiAttachments
 }
 
 /// Reads visibility in its own body, so a summon never re-renders the palette's.

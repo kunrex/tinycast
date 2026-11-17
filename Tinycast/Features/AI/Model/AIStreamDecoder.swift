@@ -48,7 +48,7 @@ struct SSEParser: Sendable {
     }
 }
 
-/// Sources an API cites beside its text, inlined as the Markdown links `ChatReferences` reads.
+/// Sources an API cites beside its text, inlined as Markdown links.
 struct AICitationLinker: Sendable {
     private var text = ""
     private var linked: Set<String> = []
@@ -63,7 +63,9 @@ struct AICitationLinker: Sendable {
             !text.contains(string), linked.insert(string).inserted
         else { return nil }
         let target = string.replacing("(", with: "%28").replacing(")", with: "%29")
-        return " ([\(ChatReference.host(of: url))](\(target)))"
+        let host = url.host() ?? url.absoluteString
+        let label = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
+        return " ([\(label)](\(target)))"
     }
 }
 

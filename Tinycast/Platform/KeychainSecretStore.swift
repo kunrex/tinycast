@@ -12,7 +12,6 @@ struct KeychainSecretStore: Sendable {
     /// Every scope the app stores under, named here so the whole keychain surface is one list.
     static let aiAPIKeys = KeychainSecretStore(scope: "ai-api-keys")
     static let aiRequestHeaders = KeychainSecretStore(scope: "ai-request-headers")
-    static let mcpSecrets = KeychainSecretStore(scope: "mcp-secrets")
     static let installedAIEnvironment = KeychainSecretStore(scope: "installed-ai-environment")
 
     init(scope: String, bundleIdentifier: String? = Bundle.main.bundleIdentifier) {

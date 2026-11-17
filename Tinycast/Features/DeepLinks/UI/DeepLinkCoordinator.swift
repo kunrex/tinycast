@@ -52,9 +52,6 @@ final class DeepLinkCoordinator {
         case .note(let name):
             guard isAllowed(.command(.showNotes)) else { return }
             core.notesCoordinator.open(NoteID(rawValue: name))
-        case .chat(let id):
-            guard isAllowed(.command(.aiChat)) else { return }
-            core.aiChatCoordinator.showChat(id: id)
         case .windowSize(let size):
             runWindowSize(size, source: source)
         case .entry(let action, let input):
@@ -71,11 +68,6 @@ final class DeepLinkCoordinator {
 
     func copyLink(toNote id: NoteID) {
         guard let url = DeepLink.url(forNote: id.rawValue, scheme: scheme) else { return }
-        copy(url)
-    }
-
-    func copyLink(toChat id: UUID) {
-        guard let url = DeepLink.url(forChat: id, scheme: scheme) else { return }
         copy(url)
     }
 
@@ -284,11 +276,6 @@ final class DeepLinkCoordinator {
             hidePalette()
             core.notesCoordinator.createNote(text: text)
             return true
-        case .aiChat:
-            guard let text = input.fallbackText else { return false }
-            hidePalette()
-            core.aiChatCoordinator.showWindow(appendingDraft: text)
-            return true
         default:
             guard let text = input.fallbackText else { return false }
             return open(id, with: text)
@@ -305,7 +292,6 @@ final class DeepLinkCoordinator {
         case .searchQuicklinks: paletteCoordinator.togglePalette(mode: .quicklinks, seeding: text)
         case .searchFiles: core.fileSearchCoordinator.show(query: text)
         case .define: core.dictionaryCoordinator.show(term: text)
-        case .quickAI: core.quickAICoordinator.show(draft: text)
         case .searchSnippets: core.snippetCoordinator.showSnippets(query: text)
         case .searchCustomCommands: core.customCommandCoordinator.showCustomCommands(query: text)
         case .searchMenuItems: core.menuSearchCoordinator.show(query: text)

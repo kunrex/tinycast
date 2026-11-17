@@ -59,7 +59,8 @@ struct FallbackTests {
     // MARK: - Ordering
 
     static func ordering() {
-        let ai = Fallback.builtin(.quickAI)
+        let ai = Fallback.builtin(.define)
+        check("retired Quick AI fallback is ignored", Fallback(id: "command:ai-chat") == nil)
         let files = Fallback.builtin(.searchFiles)
         let shell = Fallback.builtin(.runShellCommand)
         let link = Fallback.quicklink(UUID())

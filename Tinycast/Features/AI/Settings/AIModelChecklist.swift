@@ -7,8 +7,6 @@ struct AIModelChecklist: NSViewRepresentable {
         let id: String
         let title: String
         let isOn: Bool
-        /// The default model: always listed, so its box cannot be cleared.
-        let isLocked: Bool
     }
 
     let items: [Item]
@@ -113,12 +111,11 @@ private final class ChecklistContainer: NSView {
     }
 }
 
-/// A reused row: a stock checkbox, the default's tag, and the hairline a `Form` row would draw.
+/// A reused row: a stock checkbox and the hairline a `Form` row would draw.
 private final class ChecklistCellView: NSTableCellView {
     static let reuseID = NSUserInterfaceItemIdentifier("modelChecklistRow")
     var onToggle: (String, Bool) -> Void = { _, _ in }
     private let checkbox = NSButton(checkboxWithTitle: "", target: nil, action: nil)
-    private let defaultTag = NSTextField(labelWithString: String(localized: "Default"))
     private let divider = NSBox()
     private var itemID = ""
 
@@ -128,24 +125,19 @@ private final class ChecklistCellView: NSTableCellView {
         checkbox.target = self
         checkbox.action = #selector(toggled)
         checkbox.lineBreakMode = .byTruncatingMiddle
-        defaultTag.textColor = .secondaryLabelColor
         divider.boxType = .separator
-        for view in [checkbox, defaultTag, divider] as [NSView] {
+        for view in [checkbox, divider] as [NSView] {
             view.translatesAutoresizingMaskIntoConstraints = false
             addSubview(view)
         }
         NSLayoutConstraint.activate([
             checkbox.leadingAnchor.constraint(equalTo: leadingAnchor),
             checkbox.centerYAnchor.constraint(equalTo: centerYAnchor),
-            checkbox.trailingAnchor.constraint(
-                lessThanOrEqualTo: defaultTag.leadingAnchor, constant: -Theme.Spacing.lg),
-            defaultTag.trailingAnchor.constraint(equalTo: trailingAnchor),
-            defaultTag.centerYAnchor.constraint(equalTo: centerYAnchor),
+            checkbox.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor),
             divider.leadingAnchor.constraint(equalTo: leadingAnchor),
             divider.trailingAnchor.constraint(equalTo: trailingAnchor),
             divider.topAnchor.constraint(equalTo: topAnchor)
         ])
-        defaultTag.setContentCompressionResistancePriority(.required, for: .horizontal)
     }
 
     @available(*, unavailable)
@@ -154,9 +146,7 @@ private final class ChecklistCellView: NSTableCellView {
     func show(_ item: AIModelChecklist.Item, showsDivider: Bool) {
         itemID = item.id
         checkbox.title = item.title
-        checkbox.state = item.isOn || item.isLocked ? .on : .off
-        checkbox.isEnabled = !item.isLocked
-        defaultTag.isHidden = !item.isLocked
+        checkbox.state = item.isOn ? .on : .off
         divider.isHidden = !showsDivider
     }
 

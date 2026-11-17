@@ -4,19 +4,19 @@ import Foundation
 @MainActor
 enum SettingsFileSchema {
     static func bindings(
-        settings: AppSettings, ai: AISettingsStore, quickActions: QuickActionSettingsStore,
+        settings: AppSettings, quickActions: QuickActionSettingsStore,
         shortcuts: HotKeySettingsFile, launcher: LauncherSettingsFile,
         windowManagement: WindowManagementSettingsFile
     ) -> [SettingsFileBinding] {
         SettingsFileKey.allCases.map { key in
             binding(
-                for: key, settings: settings, ai: ai, quickActions: quickActions,
+                for: key, settings: settings, quickActions: quickActions,
                 shortcuts: shortcuts, launcher: launcher, windowManagement: windowManagement)
         }
     }
 
     private static func binding(
-        for key: SettingsFileKey, settings: AppSettings, ai: AISettingsStore,
+        for key: SettingsFileKey, settings: AppSettings,
         quickActions: QuickActionSettingsStore, shortcuts: HotKeySettingsFile,
         launcher: LauncherSettingsFile, windowManagement: WindowManagementSettingsFile
     ) -> SettingsFileBinding {
@@ -43,9 +43,7 @@ enum SettingsFileSchema {
         case .interfaceSize: return bind(settings, \.interfaceSize)
         case .compactMode: return bind(settings, \.compactMode)
         case .compactBarCommands:
-            return bind(settings, \.compactBarCommands) {
-                CommandID.validCompactBarCommands($0) ? $0 : nil
-            }
+            return .compactBarCommands(settings, \.compactBarCommands)
         case .openOnCursorScreen: return bind(settings, \.openOnCursorScreen)
         case .paletteDraggable: return bind(settings, \.paletteDraggable)
         case .hyperKey: return bind(settings, \.hyperKey)
@@ -74,17 +72,6 @@ enum SettingsFileSchema {
         case .quicklinkConfirmsBeforeDelete: return bind(settings, \.quicklinkConfirmsBeforeDelete)
         case .quicklinkCommands: return launcher.commandsBinding(for: key, owner: .quicklinks)
         case .appleShortcutsEnabled: return bind(settings, \.appleShortcutsEnabled)
-        case .aiEnabled: return bind(settings, \.aiEnabled)
-        case .aiWebSearch: return bind(ai, \.webSearchEnabled)
-        case .aiChoices: return bind(ai, \.choicesEnabled)
-        case .aiExpandsReasoning: return bind(ai, \.expandsReasoning)
-        case .aiSystemPrompt: return bind(ai, \.systemPrompt)
-        case .aiSystemPromptEnabled: return bind(ai, \.systemPromptEnabled)
-        case .aiRetention: return bind(ai, \.retention)
-        case .aiOpensTo: return bind(ai, \.opensTo)
-        case .aiNewChatAfter: return bind(ai, \.newChatAfter)
-        case .aiToolRounds: return bind(ai, \.toolRounds)
-        case .aiCommands: return launcher.commandsBinding(for: key, owner: .ai)
         case .quickActionLanguage: return bind(quickActions, \.settings.targetLanguage)
         case .quickActionCommands: return launcher.commandsBinding(for: key, owner: .quickActions)
         case .fileSearchEnabled: return bind(settings, \.fileSearchEnabled)
@@ -205,50 +192,6 @@ extension ClipboardRetention: SettingsFileToken {
         case .sixMonths: 180
         case .year: 365
         case .forever: "forever"
-        }
-    }
-}
-
-extension AIRetention: SettingsFileToken {
-    var settingsToken: SettingsFileJSON {
-        switch self {
-        case .week: 7
-        case .month: 30
-        case .threeMonths: 90
-        case .forever: "forever"
-        }
-    }
-}
-
-extension AIOpensTo: SettingsFileToken {
-    var settingsToken: SettingsFileJSON {
-        switch self {
-        case .recent: "recent"
-        case .newConversation: "newConversation"
-        }
-    }
-}
-
-extension AINewChatAfter: SettingsFileToken {
-    var settingsToken: SettingsFileJSON {
-        switch self {
-        case .twoMinutes: 2
-        case .fiveMinutes: 5
-        case .tenMinutes: 10
-        case .thirtyMinutes: 30
-        case .never: "never"
-        }
-    }
-}
-
-extension AIToolRounds: SettingsFileToken {
-    var settingsToken: SettingsFileJSON {
-        switch self {
-        case .ten: 10
-        case .twentyFive: 25
-        case .fifty: 50
-        case .hundred: 100
-        case .unlimited: "unlimited"
         }
     }
 }

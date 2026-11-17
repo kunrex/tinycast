@@ -116,8 +116,10 @@ struct AIProvidersPanel: View {
         .onAppear {
             selection = selection ?? initialSelection
             loadKeyStatuses()
-            core.applyInstalledAILifecycle()
+            core.beginAIProviderManagement()
         }
+        .onDisappear { core.endAIProviderManagement() }
+        .onChange(of: settings.enabledInstalledProviders) { core.applyInstalledAILifecycle() }
         .onChange(of: selection) { modelQuery = "" }
         .onChange(of: settings.connections.map(\.id)) { _, ids in
             if case .api(let id) = selection, !ids.contains(id) { selection = .installed(.codex) }
@@ -632,23 +634,13 @@ struct AIProvidersPanel: View {
                         items: matches.map { model in
                             AIModelChecklist.Item(
                                 id: model.id, title: model.name,
-                                isOn: shownSet?.contains(model.id) ?? true,
-                                isLocked: isDefault(model.id, route: route))
+                                isOn: shownSet?.contains(model.id) ?? true)
                         },
                         onToggle: { id, isOn in
                             settings.setModel(
                                 id, shown: isOn, in: source, available: models.map(\.id))
                         })
                 }
-            } footer: {
-                Text(
-                    """
-                    Ticked models appear in the model picker. The default model always does; \
-                    choose it on the AI pane.
-                    """
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
             }
         }
     }
@@ -663,11 +655,6 @@ struct AIProvidersPanel: View {
             $0.name.localizedCaseInsensitiveContains(query)
                 || $0.id.localizedCaseInsensitiveContains(query)
         }
-    }
-
-    private func isDefault(_ model: String, route: AIProviderRoute) -> Bool {
-        guard let selection = settings.defaultModel else { return false }
-        return selection.source == route.source && selection.model == model
     }
 
     // MARK: - Titles and glyphs
@@ -760,16 +747,7 @@ struct AIProvidersPanel: View {
 
     // MARK: - Actions
 
-    /// Opens on whichever route the default model uses, since that is the one most often checked.
-    private var initialSelection: AIProviderRoute {
-        switch settings.defaultModel?.source {
-        case .appleIntelligence?: return .appleIntelligence
-        case .api(let id)?: return .api(id)
-        case let source?:
-            return source.installedKind.map(AIProviderRoute.installed) ?? .installed(.codex)
-        case nil: return .installed(.codex)
-        }
-    }
+    private var initialSelection: AIProviderRoute { .appleIntelligence }
 
     private var selectedConnection: AIConnection? {
         guard case .api(let id) = selection else { return nil }
@@ -842,7 +820,6 @@ struct AIProvidersPanel: View {
             editor = nil
             selection = .api(connection.id)
             loadKeyStatuses()
-            settings.reconcile(subscription: subscription, installedAI: installedAI)
             return nil
         } catch {
             keyError = true
@@ -930,25 +907,6 @@ private struct AIProviderTile: View {
             Image(systemName: name).resizable().scaledToFit()
         case .file, .thumbnail, .blank:
             Image(systemName: "sparkles").resizable().scaledToFit()
-        }
-    }
-}
-
-extension AISettingsStore {
-    /// Moves the default model off any route that just went away, or onto its current catalogue.
-    func reconcile(subscription: ChatGPTSubscriptionManager, installedAI: InstalledAIManager) {
-        let enabled = enabledInstalledProviders
-        reconcile(
-            codexModels: enabled.contains(.codex) ? subscription.models : [],
-            isUnavailable: !enabled.contains(.codex) || subscription.phase == .signedOut
-                || subscription.phase.isUnavailable)
-        for kind in InstalledAIKind.managedCLIKinds {
-            let status = installedAI.status(for: kind)
-            reconcile(
-                installed: kind,
-                models: enabled.contains(kind) ? status.models : [],
-                isUnavailable: !enabled.contains(kind) || status.phase == .signInRequired
-                    || status.phase == .notInstalled)
         }
     }
 }

@@ -4,47 +4,22 @@ import SwiftUI
 /// One AppKit text view per segment, since SwiftUI's `Text` selects only within one paragraph.
 struct ChatMarkdownText: View {
     @Environment(\.metrics) private var metrics
-    @Environment(\.chatTextHighlight) private var highlight
-    @Environment(\.chatCitations) private var citations
-    @Environment(\.chatFindPath) private var path
     let blocks: [MarkdownBlock]
     var failedFrom: Int?
-
-    /// Where the current find match sits in this text, so the transcript can scroll to it.
-    @State private var currentMatch: CGRect?
-
-    private var holdsCurrentMatch: Bool {
-        guard let leaf = highlight?.current?.leaf else { return false }
-        return leaf.starts(with: path)
-    }
 
     var body: some View {
         ChatTextRepresentable(
             source: ChatMarkdownSource(
-                blocks: blocks, highlight: highlight, citations: citations, prefix: path,
-                failedFrom: failedFrom, metrics: metrics)
-        ) { rect in
-            if rect != currentMatch { currentMatch = rect }
-        }
-        .overlay(alignment: .topLeading) {
-            if holdsCurrentMatch, let rect = currentMatch {
-                Color.clear
-                    .frame(width: max(rect.width, 1), height: max(rect.height, 1))
-                    .offset(x: rect.minX, y: rect.minY)
-                    .id(ChatTextHighlight.currentAnchor)
-            }
-        }
+                blocks: blocks, failedFrom: failedFrom, metrics: metrics))
     }
 }
 
 private struct ChatTextRepresentable: NSViewRepresentable {
     let source: ChatMarkdownSource
-    let onCurrentMatch: (CGRect?) -> Void
 
     func makeNSView(context: Context) -> ChatSelectableTextView { ChatSelectableTextView() }
 
     func updateNSView(_ view: ChatSelectableTextView, context: Context) {
-        view.onCurrentMatch = onCurrentMatch
         view.show(source)
     }
 
@@ -59,12 +34,10 @@ private struct ChatTextRepresentable: NSViewRepresentable {
 
 /// Read-only and backgroundless; it wraps to its frame and leaves scrolling to the transcript.
 final class ChatSelectableTextView: NSTextView {
-    var onCurrentMatch: ((CGRect?) -> Void)?
     private var source: ChatMarkdownSource?
     private var rendered: ChatRenderedText?
     private var headers: [ChatCodeHeader] = []
     private var codeBoxes: [CGRect] = []
-    private var reportedMatch: CGRect?
     /// A second layout of the same storage, so SwiftUI's size probes never re-wrap the drawn one.
     private let measurer = NSLayoutManager()
     private let measuringContainer = NSTextContainer(size: .zero)
@@ -212,7 +185,7 @@ final class ChatSelectableTextView: NSTextView {
         }
     }
 
-    /// Code boxes, headers and find's anchor sit on the drawn layout, which tracks the frame.
+    /// Code boxes and headers sit on the drawn layout, which tracks the frame.
     private func layoutOverlays() {
         guard frame.width > 0, let layout = layoutManager, let container = textContainer else {
             return
@@ -224,16 +197,6 @@ final class ChatSelectableTextView: NSTextView {
             needsDisplay = true
         }
         placeHeaders()
-        let match = rendered?.current.map { range in
-            layout.boundingRect(
-                forGlyphRange: layout.glyphRange(forCharacterRange: range, actualCharacterRange: nil),
-                in: container)
-        }
-        guard match != reportedMatch else { return }
-        reportedMatch = match
-        let report = onCurrentMatch
-        // After this pass: state set while SwiftUI lays a view out is dropped with a warning.
-        Task { @MainActor in report?(match) }
     }
 
     /// A block's bounds take in its margin, which is the indent of the list or quote it sits in.

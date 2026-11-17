@@ -78,11 +78,10 @@ struct PaletteEscapeTests {
             resolve(),
             .hidePalette,
             "an empty launcher query hides the palette")
-        // The surface where the field is not a search field: a chat draft.
         expect(
-            resolve(query: "why is the sky", mode: .ai),
+            resolve(query: "swift", mode: .dictionary),
             .clearQuery,
-            "an unsent chat draft clears before chat itself is left")
+            "a dictionary query clears before the screen itself is left")
 
         // Provenance, not the mode, decides whether there is anywhere to go back to.
         expect(
@@ -94,13 +93,13 @@ struct PaletteEscapeTests {
             .hidePalette,
             "the same screen summoned by its own hotkey is a root, so it hides")
         expect(
-            resolve(mode: .ai, canGoBack: true),
+            resolve(mode: .dictionary, canGoBack: true),
             .goBack,
-            "chat is no different: reached from the root, it goes back to it")
+            "a dictionary opened from the root goes back to it")
         expect(
-            resolve(mode: .ai),
+            resolve(mode: .dictionary),
             .hidePalette,
-            "chat summoned by its own hotkey hides rather than falling back to the launcher")
+            "a dictionary summoned by its own hotkey hides rather than falling back to the launcher")
         expect(
             resolve(query: "notes", mode: .clipboard, canGoBack: true),
             .clearQuery,
@@ -125,9 +124,9 @@ struct PaletteEscapeTests {
             "a menu outranks the behavior setting beneath it")
 
         expect(
-            resolve(menuOpen: true, mode: .ai),
+            resolve(menuOpen: true, mode: .dictionary),
             .closeMenu,
-            "a menu outranks the chat screen it is drawn over")
+            "a menu outranks the dictionary screen it is drawn over")
         expect(
             resolve(menuOpen: true, mode: .extensionCommand),
             .closeMenu,

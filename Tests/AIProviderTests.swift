@@ -15,94 +15,6 @@ struct AIProviderTests {
         }
     }
 
-    static func instructionsFollowTheSetting() {
-        let cloud = AIModelSelection.codex(model: "gpt-5", effort: nil)
-        for prompt in [nil, "", "   \n\t "] as [String?] {
-            expect(
-                AIInstructions.compose(
-                    userPrompt: prompt, isEnabled: true, offersChoices: false, model: cloud)
-                    == AIPreamble.text,
-                "an absent or blank user prompt with choices off sends the preamble alone")
-        }
-        expect(
-            AIInstructions.compose(
-                userPrompt: "  Answer only in haiku.  ", isEnabled: true, offersChoices: true,
-                model: cloud)
-                == AIPreamble.text + "\n\n" + AIPreamble.choices + "\n\nAnswer only in haiku.",
-            "instructions put the preamble and its choices before the trimmed user prompt")
-        for prompt in [nil, "Answer only in haiku."] as [String?] {
-            expect(
-                AIInstructions.compose(
-                    userPrompt: prompt, isEnabled: false, offersChoices: true, model: cloud)
-                    == nil,
-                "disabled instructions withhold the preamble, its choices and the user prompt")
-            expect(
-                AIInstructions.compose(
-                    userPrompt: prompt, isEnabled: true, offersChoices: true,
-                    model: .appleIntelligence)
-                    == nil,
-                "the on-device model gets no preamble, choices or user prompt")
-        }
-        expect(
-            (AIPreamble.text + AIPreamble.choices).count < 1_800,
-            "the preamble stays within its per-turn budget")
-    }
-
-    static func presetInstructionsReplaceTheUserPrompt() {
-        let cloud = AIModelSelection.codex(model: "gpt-5", effort: nil)
-        expect(
-            AIInstructions.compose(
-                presetInstructions: " Review for SEO. ", preambleEnabled: true, offersChoices: false,
-                model: cloud)
-                == AIPreamble.text + "\n\nReview for SEO.",
-            "a preset's text follows the preamble in place of the user prompt")
-        expect(
-            AIInstructions.compose(
-                presetInstructions: "Review for SEO.", preambleEnabled: false, offersChoices: true,
-                model: cloud)
-                == "Review for SEO.",
-            "with the system prompt off, the preset's text still rides, alone")
-        expect(
-            AIInstructions.compose(
-                presetInstructions: "Review for SEO.", preambleEnabled: true, offersChoices: true,
-                model: .appleIntelligence)
-                == nil,
-            "the on-device model gets no preset")
-    }
-
-    static func presetsPersistAndNeverOverwriteAnUnreadableFile() {
-        let directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("tinycast-presets-\(UUID().uuidString)", isDirectory: true)
-        defer { try? FileManager.default.removeItem(at: directory) }
-        let store = ChatPresetStore(directory: directory)
-        expect(
-            (try? store.add(ChatPreset(name: " ", instructions: "Review."))) == nil,
-            "a blank name is refused")
-        expect(
-            (try? store.add(ChatPreset(name: "SEO", instructions: " \n"))) == nil,
-            "blank instructions are refused")
-        let saved = try? store.add(
-            ChatPreset(name: "  SEO  ", iconSymbol: " ", instructions: " Review. "))
-        expect(
-            saved?.name == "SEO" && saved?.iconSymbol == nil && saved?.instructions == "Review.",
-            "a saved preset is trimmed")
-        let reopened = ChatPresetStore(directory: directory)
-        reopened.load()
-        expect(reopened.presets == store.presets, "presets survive a relaunch")
-        if let saved { _ = try? store.remove(id: saved.id) }
-        let afterDelete = ChatPresetStore(directory: directory)
-        afterDelete.load()
-        expect(afterDelete.presets.isEmpty, "a deleted preset stays deleted")
-
-        try? Data("not json".utf8).write(to: directory.appendingPathComponent("chat-presets.json"))
-        let unreadable = ChatPresetStore(directory: directory)
-        unreadable.load()
-        expect(
-            !unreadable.isAvailable
-                && (try? unreadable.add(ChatPreset(name: "SEO", instructions: "Review."))) == nil,
-            "an unreadable file is reported, never written over")
-    }
-
     /// A wrong document shape must fail here rather than mid-conversation.
     static func requestBodiesCarryDocuments() {
         let pdf = AIDocument(
@@ -173,9 +85,6 @@ struct AIProviderTests {
             try codexPeer()
             return
         }
-        instructionsFollowTheSetting()
-        presetInstructionsReplaceTheUserPrompt()
-        presetsPersistAndNeverOverwriteAnUnreadableFile()
         providerPresetsResolveEndpoints()
         modelCatalogBuildsProviderRequests()
         requestHeadersAreValidated()
@@ -204,9 +113,7 @@ struct AIProviderTests {
         installedOverridesPersistAndResolve()
         aFailedKeychainReadIsNeverSavedOver()
         aLaunchInheritsTheReadersVariablesNotTinycastsOwn()
-        subscriptionSelectionsReconcile()
         onDeviceSelectionsRoundTripAndLead()
-        conversationSettingsPersistAndDecide()
         toolCatalogsAndTurnsEncodePerProvider()
         toolArgumentsSurviveArrivingInFragments()
         geminiThoughtSignaturesRoundTrip()
@@ -391,10 +298,10 @@ struct AIProviderTests {
                 .finished
             ],
             "a server search reports its query, and a block's sources follow it once")
+        var linker = AICitationLinker()
         expect(
-            ChatReferences.extract(from: "Swift 6 shipped." + link).map(\.url.absoluteString)
-                == ["https://swift.org/a_%28b%29"],
-            "the inlined citation is a source the transcript reads")
+            link == linker.link(to: "https://swift.org/a_(b)"),
+            "HTTP citation normalization escapes parentheses in the target")
         expect(
             !events.contains {
                 if case .toolCallRequested = $0 { return true }; return false
@@ -1779,87 +1686,6 @@ struct AIProviderTests {
         }
     }
 
-    static func conversationSettingsPersistAndDecide() {
-        let now = Date(timeIntervalSince1970: 1_000_000)
-        func decide(
-            _ opensTo: AIOpensTo, _ after: AINewChatAfter, idle: TimeInterval?
-        )
-            -> AIConversationOpenPolicy.Decision
-        {
-            AIConversationOpenPolicy.decide(
-                opensTo: opensTo, newAfter: after,
-                lastActiveAt: idle.map { now.addingTimeInterval(-$0) }, now: now)
-        }
-
-        expect(
-            decide(.newConversation, .never, idle: 0) == .startNew,
-            "A New Conversation always starts fresh")
-        expect(
-            decide(.recent, .never, idle: 400 * 86_400) == .resume,
-            "Never means no amount of idling starts a new chat")
-        expect(decide(.recent, .fiveMinutes, idle: nil) == .startNew, "nothing to resume is new")
-        expect(
-            decide(.recent, .fiveMinutes, idle: 299) == .resume,
-            "inside the window the conversation resumes")
-        expect(
-            decide(.recent, .fiveMinutes, idle: 301) == .startNew,
-            "past the window the next summon starts fresh")
-        expect(
-            decide(.recent, .fiveMinutes, idle: 300) == .startNew,
-            "the boundary itself starts fresh, so the window is exclusive at its end")
-        // A backwards clock yields a negative interval; it must not strand a reader in a chat.
-        expect(
-            decide(.recent, .twoMinutes, idle: -3_600) == .resume,
-            "a clock that moved backwards resumes rather than misreading the idle time")
-
-        expect(
-            AIRetention.allCases.allSatisfy { !$0.title.isEmpty },
-            "every retention names itself")
-        expect(
-            AIRetention.week.cutoff(from: now) == now.addingTimeInterval(-7 * 86_400),
-            "a week's cutoff is seven days back")
-        expect(
-            AINewChatAfter.allCases.filter { $0.rawValue == 0 }.isEmpty,
-            "no timeout uses 0, which an unset key would swallow before the default applied")
-
-        let suite = "AIProviderTests.conversations"
-        let defaults = isolatedDefaults(suite)
-        defer { discardSuite(suite, defaults) }
-
-        let fresh = AISettingsStore(defaults: defaults)
-        expect(fresh.retention == .forever, "retention defaults to Forever, so upgrading deletes nothing")
-        expect(fresh.opensTo == .recent, "chat reopens on the recent conversation by default")
-        expect(fresh.newChatAfter == .fiveMinutes, "the idle window defaults to five minutes")
-        expect(fresh.toolRounds == .twentyFive, "a reply's tool rounds default to 25")
-        expect(!fresh.expandsReasoning, "thinking starts folded by default")
-
-        fresh.retention = .week
-        fresh.opensTo = .newConversation
-        fresh.newChatAfter = .never
-        fresh.toolRounds = .fifty
-        fresh.expandsReasoning = true
-        let reopened = AISettingsStore(defaults: defaults)
-        expect(reopened.toolRounds == .fifty, "the tool round cap persists")
-        reopened.toolRounds = .unlimited
-        expect(
-            AISettingsStore(defaults: defaults).toolRounds == .unlimited,
-            "Unlimited persists rather than reading as the default")
-        expect(AIToolRounds.unlimited.limit == nil, "and hands the loop no cap")
-        expect(AIToolRounds.fifty.limit == 50, "while a step hands it its own number")
-        defaults.set(7, forKey: AppSettingsKey.aiToolRounds.rawValue)
-        expect(
-            AISettingsStore(defaults: defaults).toolRounds == .twentyFive,
-            "a stored cap no case carries reads as the default rather than an arbitrary number")
-        defaults.set(0, forKey: AppSettingsKey.aiToolRounds.rawValue)
-        expect(
-            AISettingsStore(defaults: defaults).toolRounds == .twentyFive,
-            "and so does a 0, which is neither a step nor Unlimited")
-        expect(reopened.retention == .week, "retention persists")
-        expect(reopened.opensTo == .newConversation, "the open policy persists")
-        expect(reopened.newChatAfter == .never, "Never persists rather than reading as the default")
-        expect(reopened.expandsReasoning, "Expand thinking persists")
-    }
-
     static func onDeviceSelectionsRoundTripAndLead() {
         let encoded = try? JSONEncoder().encode(AIModelSelection.appleIntelligence)
         let decoded = encoded.flatMap { try? JSONDecoder().decode(AIModelSelection.self, from: $0) }
@@ -1886,30 +1712,7 @@ struct AIProviderTests {
         defer { discardSuite(suite, defaults) }
 
         let store = AISettingsStore(defaults: defaults, isAppleIntelligenceAvailable: { true })
-        expect(
-            store.defaultModel == .appleIntelligence,
-            "the on-device route is the default on an unconfigured Mac")
-
-        // A configured connection must not be displaced by resolution running a second time.
-        let connectionID = UUID()
-        store.save(AIConnection(id: connectionID, name: "Local", models: ["m"]))
-        store.select(.api(connection: connectionID, model: "m", effort: nil))
-        store.resolveDefaultModel()
-        expect(
-            store.defaultModel == .api(connection: connectionID, model: "m", effort: nil),
-            "resolution never overrides a selection the reader made")
-
-        // A removed connection falls forward to the route that is always configured.
-        store.removeConnection(id: connectionID)
-        expect(
-            store.defaultModel == .appleIntelligence,
-            "a removed connection falls forward to the on-device route")
-
-        let without = AISettingsStore(defaults: defaults, isAppleIntelligenceAvailable: { false })
-        without.resolveDefaultModel()
-        expect(
-            without.defaultModel == .appleIntelligence,
-            "an unavailable model does not silently reroute a stored on-device selection")
+        expect(store.isRouteEnabled(.appleIntelligence), "the on-device route starts enabled")
     }
 
     static func settingsPersistAndRepairSelections() {
@@ -1934,20 +1737,10 @@ struct AIProviderTests {
         expect(
             store.connections.first?.models == ["model-a", "model-b"],
             "models are trimmed and deduplicated")
-        expect(
-            store.defaultModel == .api(connection: firstID, model: "model-a", effort: nil),
-            "the first saved model becomes the default")
-        store.select(.api(connection: firstID, model: "model-b", effort: "low"))
-
         let reopened = AISettingsStore(defaults: defaults)
         expect(reopened.connections == store.connections, "connection metadata survives a restart")
-        expect(reopened.defaultModel == store.defaultModel, "the default model survives a restart")
         reopened.removeConnection(id: firstID)
-        expect(
-            reopened.defaultModel
-                == .api(
-                    connection: secondID, model: "gemini-model", effort: nil),
-            "removing the default connection falls forward to another API model")
+        expect(reopened.connections.map(\.id) == [secondID], "removing one connection keeps the other")
     }
 
     static func installedModelLoadingPreferencePersists() {
@@ -2094,11 +1887,7 @@ struct AIProviderTests {
         let second = AIConnection(provider: .gemini, models: ["second-model"])
         store.save(first)
         store.save(second)
-        expect(store.defaultModel?.source == .api(first.id), "the first connection is the default")
         store.setRoute(.api(first.id), enabled: false)
-        expect(
-            store.defaultModel?.source == .api(second.id),
-            "switching the default's connection off moves the default to one still on")
         let reopened = AISettingsStore(defaults: defaults)
         expect(
             !reopened.isRouteEnabled(.api(first.id)) && reopened.isRouteEnabled(.api(second.id)),
@@ -2109,9 +1898,6 @@ struct AIProviderTests {
             "the on-device model can be switched off like a connection")
         reopened.setRoute(.api(first.id), enabled: true)
         reopened.removeConnection(id: second.id)
-        expect(
-            reopened.defaultModel?.source == .api(first.id),
-            "with the other one gone, the connection switched back on becomes the default")
         reopened.removeConnection(id: first.id)
         expect(
             !reopened.disabledRoutes.contains(AIModelSource.api(first.id).storageKey),
@@ -2146,7 +1932,7 @@ struct AIProviderTests {
         reopened.hideAllModels(in: .openCode)
         expect(
             available.allSatisfy { !reopened.isModelShown($0, in: .openCode) },
-            "Hide All leaves nothing but the default listed")
+            "Hide All leaves no models listed")
         let connection = AIConnection(provider: .openRouter, models: ["x", "y"])
         reopened.save(connection)
         reopened.setModel("y", shown: false, in: .api(connection.id), available: connection.models)
@@ -2154,36 +1940,6 @@ struct AIProviderTests {
         expect(
             reopened.shownModels[AIModelSource.api(connection.id).storageKey] == nil,
             "removing a connection forgets which of its models were shown")
-    }
-
-    static func subscriptionSelectionsReconcile() {
-        let suite = "AIProviderTests.subscription"
-        let defaults = isolatedDefaults(suite)
-        defer { discardSuite(suite, defaults) }
-        let store = AISettingsStore(defaults: defaults)
-        let model = ChatGPTSubscription.Model(
-            id: "gpt", name: "GPT",
-            efforts: [
-                .init(id: "low", detail: nil), .init(id: "high", detail: nil)
-            ], defaultEffort: "high", isDefault: true)
-        store.select(.codex(model: "gpt", effort: "missing"))
-        store.reconcile(codexModels: [model], isUnavailable: false)
-        expect(
-            store.defaultModel == .codex(model: "gpt", effort: "high"),
-            "a removed reasoning tier falls back to the model default")
-        store.reconcile(codexModels: [], isUnavailable: true)
-        expect(store.defaultModel == nil, "signing out clears an unusable Codex default")
-
-        store.select(.claude(model: "removed", effort: nil))
-        store.reconcile(
-            installed: .claude,
-            models: [InstalledAIModel(id: "sonnet", name: "Claude Sonnet")],
-            isUnavailable: false)
-        expect(
-            store.defaultModel == .claude(model: "sonnet", effort: nil),
-            "an installed catalog replaces a model alias that disappeared")
-        store.reconcile(installed: .claude, models: [], isUnavailable: true)
-        expect(store.defaultModel == nil, "signing out clears an unusable Claude default")
     }
 
     static func installedCLIStreamsDecode() {

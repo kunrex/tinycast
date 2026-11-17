@@ -39,12 +39,6 @@ struct PaletteFilterTests {
             resolve(mode: .dictionary), .dictionaryScope,
             "the dictionary screen switches between dictionary and thesaurus through ⌘P")
         expect(
-            resolve(mode: .ai), .aiModel,
-            "Quick AI opens its model selector through ⌘P")
-        expect(
-            resolve(mode: .ai, accessory: true), .aiModel,
-            "a stale extension accessory cannot replace Quick AI's model selector")
-        expect(
             resolve(mode: .extensionCommand, accessory: true), .extensionAccessory,
             "a running command's own dropdown answers ⌘P on its own screen")
 
@@ -63,7 +57,7 @@ struct PaletteFilterTests {
 
         // Every other mode was untouched by ⌘P before and has to stay that way.
         for mode in [
-            PaletteMode.launcher, .aiHistory, .calculatorHistory,
+            PaletteMode.launcher, .calculatorHistory,
             .quicklinks, .snippets, .schedule, .uninstall
         ] {
             expect(
@@ -75,7 +69,7 @@ struct PaletteFilterTests {
         }
 
         // Collapsed there is no header to hang a button off, so no filter may open.
-        for mode in [PaletteMode.clipboard, .fileSearch, .emoji, .ai, .extensionCommand, .launcher] {
+        for mode in [PaletteMode.clipboard, .fileSearch, .emoji, .extensionCommand, .launcher] {
             expect(
                 resolve(collapsed: true, mode: mode, accessory: true), .ignored,
                 "the compact bar draws no filter button, so ⌘P opens nothing on \(mode.rawValue)")

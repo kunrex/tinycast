@@ -71,8 +71,8 @@ final class QuickActionCoordinator {
         }
         core.applyInstalledAILifecycle()
         store.resolveModel(
-            appleIntelligenceAvailable: core.aiSettings.isAppleIntelligenceAvailable(),
-            fallback: core.aiSettings.defaultModel)
+            appleIntelligenceEnabled: core.aiSettings.isRouteEnabled(.appleIntelligence),
+            appleIntelligenceAvailable: core.aiSettings.isAppleIntelligenceAvailable())
         loadLanguages()
     }
 

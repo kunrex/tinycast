@@ -130,36 +130,6 @@ struct InstalledAIModel: Equatable, Identifiable, Sendable {
         #"{"type":"control_request","request_id":"tinycast-models","request":{"subtype":"initialize"}}"#
         + "\n"
 
-    static let claudeTitleRequestID = "tinycast-title"
-
-    /// Claude Code's own session namer, asked without persisting anything to its history.
-    static func claudeTitleRequest(_ description: String) -> String? {
-        let request: [String: Any] = [
-            "type": "control_request", "request_id": claudeTitleRequestID,
-            "request": [
-                "subtype": "generate_session_title", "description": description,
-                "persist": false
-            ]
-        ]
-        guard let data = try? JSONSerialization.data(withJSONObject: request),
-            let line = String(bytes: data, encoding: .utf8)
-        else { return nil }
-        return line + "\n"
-    }
-
-    static func claudeTitle(_ output: String) -> String? {
-        for line in output.split(whereSeparator: \.isNewline) {
-            guard let object = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any],
-                let response = object["response"] as? [String: Any],
-                response["request_id"] as? String == claudeTitleRequestID,
-                let payload = response["response"] as? [String: Any],
-                let title = payload["title"] as? String
-            else { continue }
-            return title
-        }
-        return nil
-    }
-
     /// The CLI's own picker, one row per resolved model: `default` only restates another entry.
     static func claudeCatalog(_ output: String) -> [InstalledAIModel] {
         for line in output.split(whereSeparator: \.isNewline) {

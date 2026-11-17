@@ -152,13 +152,12 @@ driven imperatively from AppKit. Extension menu extras are dynamic `NSStatusItem
   Markdown over the literal source, switches among local Markdown files and stays visible on focus
   loss. The displayed string is the canonical file source; there is no source/display mapping.
   See [features/notes.md](features/notes.md).
-- **AI Chat** — a titled `AppWindowController` window owned by `AIChatCoordinator`: an
-  `NSSplitViewController` with a collapsible sidebar of saved chats beside the open conversation, as
-  Settings is built. The conversation lives on `AppCore.aiChats`, not the window, so closing it cancels
-  nothing. Quick AI is the same feature's palette screen. See [features/ai.md](features/ai.md).
-- **The main menu** — shaped by `TinycastApp`'s `.commands`, which rebinds ⌘Q to Close Window: the AI
-  Chat window when it is key, otherwise Settings. It is only ever on screen while a titled window is
-  open, so it is those windows' menu bar. It must stay declarative.
+- **AI providers** — a provider-only Settings pane opens the provider manager. Quick Actions owns
+  generation, not a conversation surface. No chat stores, windows, observers or MCP runtime are
+  constructed. Existing saved history/presets and credentials are untouched. See
+  [features/ai.md](features/ai.md) and [the removal inventory](ai-removal-inventory.md).
+- **The main menu** — shaped by `TinycastApp`'s `.commands`, which rebinds ⌘Q to close Settings.
+  It is only ever on screen while a titled window is open and must stay declarative.
 - **Dialogs** — borderless `DialogPanel`s driven by `DialogController`, the app's only presenter for
   confirmations, failure reports and value prompts outside Settings, whose panes ask with SwiftUI's
   sheet-style `confirmationDialog` or `alert`. Presentation is `async`, so nothing blocks the main

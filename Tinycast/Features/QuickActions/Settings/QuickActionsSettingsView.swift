@@ -72,13 +72,12 @@ struct QuickActionsSettingsView: View {
         }
         .onAppear {
             core.quickActionCoordinator.loadLanguages()
-            store.repairModel(against: aiSettings.connections, fallback: aiSettings.defaultModel)
-            store.resolveModel(
-                appleIntelligenceAvailable: aiSettings.isAppleIntelligenceAvailable(),
-                fallback: aiSettings.defaultModel)
+            store.repairModel(
+                against: aiSettings.connections,
+                appleIntelligenceEnabled: aiSettings.isRouteEnabled(.appleIntelligence),
+                appleIntelligenceAvailable: aiSettings.isAppleIntelligenceAvailable())
             core.applyInstalledAILifecycle()
         }
-        .onChange(of: appSettings.aiEnabled) { repairInstalledModel() }
         .onChange(of: aiSettings.enabledInstalledProviders) {
             core.applyInstalledAILifecycle()
             repairInstalledModel()
@@ -179,7 +178,7 @@ struct QuickActionsSettingsView: View {
         } header: {
             SettingsSectionHeader(.quickActionsModel)
         } footer: {
-            Text("Separate from AI Chat's, so frequent use needn't bill an API.")
+            Text("Only the selected provider is contacted.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -280,7 +279,8 @@ struct QuickActionsSettingsView: View {
         }
         store.repairInstalledModel(
             available: options, unavailableSources: unavailable,
-            fallback: aiSettings.defaultModel)
+            appleIntelligenceEnabled: aiSettings.isRouteEnabled(.appleIntelligence),
+            appleIntelligenceAvailable: aiSettings.isAppleIntelligenceAvailable())
     }
 
     private struct InstructionsEditorPanel: View {

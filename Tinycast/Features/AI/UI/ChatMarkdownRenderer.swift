@@ -4,9 +4,6 @@ import SwiftUI
 /// Everything the text is drawn from; the view re-renders only when one of these changes.
 struct ChatMarkdownSource: Equatable {
     let blocks: [MarkdownBlock]
-    let highlight: ChatTextHighlight?
-    let citations: [String: Int]
-    let prefix: [Int]
     let failedFrom: Int?
     let metrics: InterfaceMetrics
 }
@@ -14,7 +11,6 @@ struct ChatMarkdownSource: Equatable {
 struct ChatRenderedText {
     let string: NSAttributedString
     let codeBlocks: [CodeBlock]
-    let current: NSRange?
 
     struct CodeBlock {
         let block: NSTextBlock
@@ -24,13 +20,11 @@ struct ChatRenderedText {
     }
 }
 
-/// Markdown into one attributed string; each text takes `ChatFindIndex.leaves`' path for find.
+/// Selectable Markdown with native tables, code blocks and math.
 @MainActor
 struct ChatMarkdownRenderer {
     /// The strip a code block leaves above its code for the language and the Copy button.
     static let codeHeaderHeight: CGFloat = 16
-    /// Marks the current match while the string is built; citations inserted later move it.
-    private static let currentMatch = NSAttributedString.Key("TinycastChatFindCurrent")
     /// A reply is untrusted text, so a `file:` or app-scheme link must never open on a click.
     private static let openableSchemes: Set<String> = ["http", "https", "mailto"]
     /// The source a formula's attachment character stands for, which is what copying it gives.
@@ -67,23 +61,15 @@ struct ChatMarkdownRenderer {
     func render() -> ChatRenderedText {
         let output = Output()
         let split = min(source.failedFrom ?? source.blocks.count, source.blocks.count)
-        render(Array(source.blocks[..<split]), at: source.prefix, in: Context(), into: output)
+        render(Array(source.blocks[..<split]), in: Context(), into: output)
         render(
-            Array(source.blocks[split...]), at: source.prefix, in: Context(failed: true),
+            Array(source.blocks[split...]), in: Context(failed: true),
             into: output, first: split)
         // The last paragraph's own break would draw an empty line under the reply.
         if output.string.string.hasSuffix("\n") {
             output.string.deleteCharacters(in: NSRange(location: output.string.length - 1, length: 1))
         }
-        var current: NSRange?
-        output.string.enumerateAttribute(
-            Self.currentMatch, in: NSRange(location: 0, length: output.string.length)
-        ) { value, range, stop in
-            guard value != nil else { return }
-            current = range
-            stop.pointee = true
-        }
-        return ChatRenderedText(string: output.string, codeBlocks: output.codeBlocks, current: current)
+        return ChatRenderedText(string: output.string, codeBlocks: output.codeBlocks)
     }
 
     private var bodyFont: NSFont { typography.textNSFont(.body) }
@@ -95,29 +81,28 @@ struct ChatMarkdownRenderer {
 
     /// `first` numbers the blocks when a list item renders its later blocks one at a time.
     private func render(
-        _ blocks: [MarkdownBlock], at path: [Int], in context: Context, into output: Output,
+        _ blocks: [MarkdownBlock], in context: Context, into output: Output,
         first: Int = 0, spacingAfter: CGFloat? = nil
     ) {
         for (offset, block) in blocks.enumerated() {
             let position = first + offset
-            let leaf = path + [position]
             let after = spacingAfter ?? spacing.lg
             switch block {
             case .heading(let level, let text):
-                inline(text, font: headingFont(level), leaf: leaf, in: context, into: output) { style in
+                inline(text, font: headingFont(level), in: context, into: output) { style in
                     style.paragraphSpacingBefore = position > 0 ? spacing.sm : 0
                     style.paragraphSpacing = after
                 }
             case .paragraph(let text):
-                inline(text, font: bodyFont, leaf: leaf, in: context, into: output) { style in
+                inline(text, font: bodyFont, in: context, into: output) { style in
                     style.paragraphSpacing = after
                 }
             case .bulletList(let items):
-                list(items, start: nil, at: leaf, in: context, into: output, after: after)
+                list(items, start: nil, in: context, into: output, after: after)
             case .numberedList(let start, let items):
-                list(items, start: start, at: leaf, in: context, into: output, after: after)
+                list(items, start: start, in: context, into: output, after: after)
             case .code(let language, let text):
-                code(language: language, text: text, leaf: leaf, in: context, into: output, after: after)
+                code(language: language, text: text, in: context, into: output, after: after)
             case .quote(let inner):
                 let bar = Self.fullWidthBlock()
                 bar.setWidth(Theme.Size.markdownQuoteBar, type: .absoluteValueType, for: .border, edge: .minX)
@@ -129,9 +114,9 @@ struct ChatMarkdownRenderer {
                 inside.textBlocks.append(bar)
                 inside.indent = 0
                 inside.secondary = true
-                render(inner, at: leaf, in: inside, into: output, spacingAfter: spacing.sm)
+                render(inner, in: inside, into: output, spacingAfter: spacing.sm)
             case .table(let table):
-                self.table(table, at: leaf, in: context, into: output, after: after)
+                self.table(table, in: context, into: output, after: after)
             case .math(let formula):
                 let line = NSMutableAttributedString(
                     attributedString: self.formula(
@@ -196,14 +181,12 @@ struct ChatMarkdownRenderer {
     }
 
     private func inline(
-        _ text: String, font: NSFont, leaf: [Int], in context: Context, into output: Output,
+        _ text: String, font: NSFont, in context: Context, into output: Output,
         marker: String? = nil, extraBlocks: [NSTextBlock] = [], alignment: NSTextAlignment = .natural,
         style configure: (NSMutableParagraphStyle) -> Void = { _ in }
     ) {
         let parsed = MarkdownBlock.inline(text)
         let drawn = attributed(parsed, font: font, color: textColor(context))
-        mark(drawn, leaf: leaf)
-        insertCitations(into: drawn, from: parsed)
         let style = paragraphStyle(in: context, extra: extraBlocks)
         style.alignment = alignment
         configure(style)
@@ -285,38 +268,8 @@ struct ChatMarkdownRenderer {
         return string
     }
 
-    /// Every match takes the find tint; the current one the solid mark, and the tag found later.
-    private func mark(_ text: NSMutableAttributedString, leaf: [Int]) {
-        guard let highlight = source.highlight else { return }
-        let plain = text.string
-        for (index, range) in ChatFindIndex.ranges(of: highlight.query, in: plain).enumerated() {
-            let span = NSRange(range, in: plain)
-            let isCurrent = highlight.current?.leaf == leaf && highlight.current?.index == index
-            let tint = isCurrent ? Theme.Colors.findCurrent : Theme.Colors.findMatch
-            text.addAttribute(.backgroundColor, value: NSColor(tint), range: span)
-            guard isCurrent else { continue }
-            text.addAttribute(.foregroundColor, value: NSColor(Theme.Colors.findCurrentInk), range: span)
-            text.addAttribute(Self.currentMatch, value: true, range: span)
-        }
-    }
-
-    /// After find, whose matches count the text as the reply wrote it, without the numbers.
-    private func insertCitations(into text: NSMutableAttributedString, from parsed: AttributedString) {
-        let plain = String(parsed.characters)
-        for anchor in ChatCitations.anchors(in: parsed, numbers: source.citations).reversed() {
-            let index = plain.index(plain.startIndex, offsetBy: anchor.offset)
-            let marker = NSAttributedString(
-                string: "[\(anchor.number)]",
-                attributes: [
-                    .font: typography.textNSFont(.caption1), .baselineOffset: spacing.xs,
-                    .link: anchor.url
-                ])
-            text.insert(marker, at: NSRange(index..<index, in: plain).location)
-        }
-    }
-
     private func list(
-        _ items: [MarkdownBlock.Item], start: Int?, at path: [Int], in context: Context,
+        _ items: [MarkdownBlock.Item], start: Int?, in context: Context,
         into output: Output, after: CGFloat
     ) {
         // Wide enough for the list's longest number, so every item's text starts on one line.
@@ -333,18 +286,17 @@ struct ChatMarkdownRenderer {
             } else {
                 marker = "•"
             }
-            let itemPath = path + [offset]
             for (index, block) in item.blocks.enumerated() {
                 let isEnd = offset == items.count - 1 && index == item.blocks.count - 1
                 let blockAfter = isEnd ? after : spacing.xs
                 guard index == 0, case .paragraph(let text) = block else {
                     render(
-                        [block], at: itemPath, in: inside, into: output, first: index,
+                        [block], in: inside, into: output, first: index,
                         spacingAfter: blockAfter)
                     continue
                 }
                 inline(
-                    text, font: bodyFont, leaf: itemPath + [0], in: inside, into: output,
+                    text, font: bodyFont, in: inside, into: output,
                     marker: "\(marker)\t"
                 ) { style in
                     style.firstLineHeadIndent = context.indent
@@ -356,7 +308,7 @@ struct ChatMarkdownRenderer {
     }
 
     private func code(
-        language: String?, text: String, leaf: [Int], in context: Context, into output: Output,
+        language: String?, text: String, in context: Context, into output: Output,
         after: CGFloat
     ) {
         // Only the layout: `ChatSelectableTextView` draws the rounded box over this frame.
@@ -376,7 +328,6 @@ struct ChatMarkdownRenderer {
         let body = NSMutableAttributedString(
             string: text, attributes: [.font: font, .foregroundColor: textColor(context)])
         if !context.failed { colorSyntax(of: body, language: language) }
-        mark(body, leaf: leaf)
         let start = output.string.length
         body.append(NSAttributedString(string: "\n", attributes: [.font: font]))
         body.addAttribute(.paragraphStyle, value: style, range: NSRange(location: 0, length: body.length))
@@ -425,7 +376,7 @@ struct ChatMarkdownRenderer {
     }
 
     private func table(
-        _ table: MarkdownBlock.Table, at path: [Int], in context: Context, into output: Output,
+        _ table: MarkdownBlock.Table, in context: Context, into output: Output,
         after: CGFloat
     ) {
         let grid = NSTextTable()
@@ -454,7 +405,7 @@ struct ChatMarkdownRenderer {
                 inline(
                     column < cells.count ? cells[column] : "",
                     font: row == 0 ? typography.textNSFont(.subheadline, weight: .medium) : bodyFont,
-                    leaf: path + [row, column], in: inside, into: output, extraBlocks: [cell],
+                    in: inside, into: output, extraBlocks: [cell],
                     alignment: alignment(table, column))
             }
         }

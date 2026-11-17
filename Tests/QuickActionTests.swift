@@ -21,6 +21,8 @@ struct QuickActionTests {
         previewChoicesRememberOnlyWhatWasChosen()
         settingsPersistAndRepairTheirRoute()
         actionsOverrideTheirRoute()
+        routesNeverAutomaticallyChooseHTTP()
+        overridesDecodeIndependently()
         refusalsNameTheirOwnCause()
         customActionsCarryTheirOwnIdentity()
         customActionsKeepTheBoundary()
@@ -65,14 +67,13 @@ struct QuickActionTests {
         let store = QuickActionSettingsStore(defaults: defaults)
         expect(store.model == nil, "a fresh store names no route until one is resolved")
 
-        // Nothing configured takes the route that needs no account, like chat's own default.
-        store.resolveModel(appleIntelligenceAvailable: true, fallback: nil)
+        store.resolveModel(appleIntelligenceEnabled: true, appleIntelligenceAvailable: true)
         expect(store.model == .appleIntelligence, "on-device is what an unconfigured Mac resolves to")
 
         // Resolution never overrides a choice, and never re-runs over one.
         let connectionID = UUID()
         store.select(.api(connection: connectionID, model: "m", effort: nil))
-        store.resolveModel(appleIntelligenceAvailable: true, fallback: nil)
+        store.resolveModel(appleIntelligenceEnabled: true, appleIntelligenceAvailable: true)
         expect(
             store.model == .api(connection: connectionID, model: "m", effort: nil),
             "resolution leaves a route the reader chose alone")
@@ -95,13 +96,15 @@ struct QuickActionTests {
             "an action's instructions survive a relaunch")
 
         // A removed connection must not leave this pointing at a route that cannot answer.
-        reopened.repairModel(against: [], fallback: .appleIntelligence)
+        reopened.repairModel(
+            against: [], appleIntelligenceEnabled: true, appleIntelligenceAvailable: true)
         expect(
             reopened.model == .appleIntelligence,
             "a removed connection falls forward rather than failing at press time")
 
         let onDevice = QuickActionSettingsStore(defaults: defaults)
-        onDevice.repairModel(against: [], fallback: nil)
+        onDevice.repairModel(
+            against: [], appleIntelligenceEnabled: true, appleIntelligenceAvailable: true)
         expect(
             onDevice.model == .appleIntelligence,
             "repair leaves a route that names no connection untouched")
@@ -109,20 +112,21 @@ struct QuickActionTests {
         onDevice.select(.claude(model: "old", effort: nil))
         onDevice.repairInstalledModel(
             available: [.claude(model: "sonnet", effort: nil)], unavailableSources: [],
-            fallback: .appleIntelligence)
+            appleIntelligenceEnabled: true, appleIntelligenceAvailable: true)
         expect(
             onDevice.model == .claude(model: "sonnet", effort: nil),
             "an installed model removed from the catalog moves to that command's first model")
         onDevice.select(.openCode(model: "provider/old", effort: nil))
         onDevice.repairInstalledModel(
-            available: [], unavailableSources: [.openCode], fallback: .appleIntelligence)
+            available: [], unavailableSources: [.openCode],
+            appleIntelligenceEnabled: true, appleIntelligenceAvailable: true)
         expect(
             onDevice.model == .appleIntelligence,
             "an unavailable installed command does not leave Quick Actions on a dead route")
         onDevice.select(.claude(model: "haiku", effort: nil))
         onDevice.repairInstalledModel(
             available: [], unavailableSources: [.claude],
-            fallback: .claude(model: "sonnet", effort: nil))
+            appleIntelligenceEnabled: false, appleIntelligenceAvailable: true)
         expect(
             onDevice.model == nil,
             "an unavailable installed command is not replaced by another dead model")
@@ -165,7 +169,8 @@ struct QuickActionTests {
                 && reopened.model(for: custom) == api,
             "per-action routes and their efforts survive a relaunch")
 
-        reopened.repairModel(against: [], fallback: .codex(model: "gpt", effort: nil))
+        reopened.repairModel(
+            against: [], appleIntelligenceEnabled: true, appleIntelligenceAvailable: true)
         expect(
             reopened.modelOverride(for: custom) == nil,
             "a route through a removed connection is dropped, not rerouted to chat's model")
@@ -174,7 +179,8 @@ struct QuickActionTests {
         reopened.setModelOverride(.openCode(model: "old", effort: nil), for: .rewrite)
         reopened.repairInstalledModel(
             available: [.claude(model: "sonnet", effort: "medium")],
-            unavailableSources: [.openCode], fallback: .appleIntelligence)
+            unavailableSources: [.openCode],
+            appleIntelligenceEnabled: true, appleIntelligenceAvailable: true)
         expect(
             reopened.modelOverride(for: .summarize) == .claude(model: "sonnet", effort: "medium"),
             "a model removed from its catalog moves to that command's first model")
@@ -186,6 +192,92 @@ struct QuickActionTests {
         expect(
             defaults.data(forKey: AppSettingsKey.quickActionModelOverrides.rawValue) == nil,
             "clearing the last route leaves nothing stored")
+    }
+
+    static func routesNeverAutomaticallyChooseHTTP() {
+        let suite = "QuickActionTests.routing.\(UUID().uuidString)"
+        let defaults = isolatedDefaults(suite)
+        defer { discardSuite(suite, defaults) }
+        let connection = AIConnection(models: ["paid"])
+        let api = AIModelSelection.api(connection: connection.id, model: "paid", effort: "high")
+        defaults.set(
+            try! JSONEncoder().encode(api), forKey: "aiDefaultModel")
+
+        for enabled in [false, true] {
+            for available in [false, true] {
+                let store = QuickActionSettingsStore(defaults: defaults)
+                store.select(nil)
+                store.repairModel(
+                    against: [connection], appleIntelligenceEnabled: enabled,
+                    appleIntelligenceAvailable: available)
+                let expected: AIModelSelection? = enabled && available ? .appleIntelligence : nil
+                expect(store.model == expected, "an unset route defaults only to enabled, available Apple")
+                expect(
+                    QuickActionSettingsStore(defaults: defaults).model == expected,
+                    "the independent default survives restart without borrowing chat's HTTP route")
+
+                store.select(api)
+                store.setModelOverride(api, for: .summarize)
+                store.repairModel(
+                    against: [connection], appleIntelligenceEnabled: enabled,
+                    appleIntelligenceAvailable: available)
+                expect(store.model == api, "repair preserves an explicit HTTP route and effort")
+                expect(store.model(for: .summarize) == api, "repair preserves explicit HTTP overrides")
+                let reopened = QuickActionSettingsStore(defaults: defaults)
+                expect(
+                    reopened.model == api && reopened.modelOverride(for: .summarize) == api,
+                    "explicit HTTP selections survive restart independently of Apple status")
+
+                store.repairModel(
+                    against: [], appleIntelligenceEnabled: enabled,
+                    appleIntelligenceAvailable: available)
+                expect(store.model == expected, "a missing connection never falls back to HTTP")
+                expect(store.modelOverride(for: .summarize) == nil, "a missing override connection is dropped")
+                store.select(.api(connection: connection.id, model: "removed", effort: nil))
+                store.repairModel(
+                    against: [connection], appleIntelligenceEnabled: enabled,
+                    appleIntelligenceAvailable: available)
+                expect(store.model == expected, "a missing HTTP model uses only the on-device default")
+
+                store.select(.openCode(model: "old", effort: "max"))
+                store.repairInstalledModel(
+                    available: [api], unavailableSources: [.openCode],
+                    appleIntelligenceEnabled: enabled, appleIntelligenceAvailable: available)
+                expect(store.model == expected, "installed repair never chooses an available HTTP route")
+                expect(
+                    QuickActionSettingsStore(defaults: defaults).model == expected,
+                    "installed repair persists the independent route across restart")
+            }
+        }
+    }
+
+    static func overridesDecodeIndependently() {
+        let suite = "QuickActionTests.decoding.\(UUID().uuidString)"
+        let defaults = isolatedDefaults(suite)
+        defer { discardSuite(suite, defaults) }
+        let api = AIModelSelection.api(connection: UUID(), model: "chosen", effort: "low")
+        let valid = try! JSONEncoder().encode([QuickAction.summarize.id: api])
+        var entries = try! JSONSerialization.jsonObject(with: valid) as! [String: Any]
+        entries[QuickAction.rewrite.id] = ["futureSource": ["model": "unknown"]]
+        entries[QuickAction.fixGrammar.id] = "malformed"
+        defaults.set(
+            try! JSONSerialization.data(withJSONObject: entries),
+            forKey: AppSettingsKey.quickActionModelOverrides.rawValue)
+        defaults.set(
+            Data("{\"futureSource\":{}}".utf8), forKey: AppSettingsKey.quickActionModel.rawValue)
+
+        let store = QuickActionSettingsStore(defaults: defaults)
+        expect(store.model == nil, "an unknown shared source requires independent resolution")
+        expect(store.modelOverride(for: .summarize) == api, "unknown entries do not wipe valid overrides")
+        expect(store.modelOverrides.count == 1, "malformed and unknown entries are skipped individually")
+        store.resolveModel(appleIntelligenceEnabled: false, appleIntelligenceAvailable: true)
+        expect(store.model == nil, "an invalid shared route cannot select disabled Apple")
+        store.setModelOverride(.claude(model: "sonnet", effort: "high"), for: .rewrite)
+        let reopened = QuickActionSettingsStore(defaults: defaults)
+        expect(reopened.modelOverride(for: .summarize) == api, "valid overrides survive a later save and restart")
+        expect(
+            reopened.modelOverride(for: .rewrite) == .claude(model: "sonnet", effort: "high"),
+            "CLI overrides remain supported")
     }
 
     static func everyActionDescribesItself() {

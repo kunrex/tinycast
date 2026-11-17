@@ -1,6 +1,6 @@
 import Foundation
 
-/// Chat's `AIPreamble` is not sent here: it describes a launcher nobody is asking the model about.
+/// Each action sends only its transformation instructions and the selected text.
 enum QuickActionPrompt {
     static func instructions(for action: QuickAction, override: String? = nil) -> String {
         switch action {

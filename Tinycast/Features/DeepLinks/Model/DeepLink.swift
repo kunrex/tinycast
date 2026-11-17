@@ -8,7 +8,6 @@ enum DeepLink: Equatable, Sendable {
     case settings(slug: String)
     /// A note by its file name, which is all a note is known by.
     case note(name: String)
-    case chat(id: UUID)
     case windowSize(CustomWindowSize)
 
     /// Extension links own this host, so built-in parsing must never claim it.
@@ -16,7 +15,6 @@ enum DeepLink: Equatable, Sendable {
     static let searchHost = "search"
     static let windowSizeHost = "window-size"
     private static let noteHost = "note"
-    private static let chatHost = "chat"
 
     init?(url: URL, scheme: String) {
         guard url.scheme?.lowercased() == scheme else { return nil }
@@ -43,10 +41,6 @@ enum DeepLink: Equatable, Sendable {
         url(scheme: scheme, host: noteHost, path: name, input: .none)
     }
 
-    static func url(forChat id: UUID, scheme: String) -> URL? {
-        url(scheme: scheme, host: chatHost, path: id.uuidString.lowercased(), input: .none)
-    }
-
     private static func url(scheme: String, host: String, path: String, input: DeepLinkInput) -> URL? {
         var components = URLComponents()
         components.scheme = scheme
@@ -65,8 +59,6 @@ enum DeepLink: Equatable, Sendable {
             return path.contains("/") ? nil : .settings(slug: path.lowercased())
         case (noteHost, false):
             return path.contains("/") || path == "." || path == ".." ? nil : .note(name: path)
-        case (chatHost, false):
-            return UUID(uuidString: path).map { .chat(id: $0) }
         case (windowSizeHost, true):
             guard case .named(let fields)? = input.arguments else { return nil }
             return CustomWindowSize(linkFields: fields).map { .windowSize($0) }
