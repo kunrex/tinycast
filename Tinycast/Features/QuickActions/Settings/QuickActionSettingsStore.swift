@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// Apart from `AISettingsStore`: a peer of chat, with its own switch, route and settings pane.
+/// Quick Actions owns its route independently of provider connection settings.
 @MainActor
 @Observable
 final class QuickActionSettingsStore {
@@ -10,7 +10,7 @@ final class QuickActionSettingsStore {
     var settings: QuickActionSettings {
         didSet { persistSettings() }
     }
-    /// A grammar fix fires far oftener than a chat turn, so billing it per press is no default.
+    /// An unset route defaults only to enabled, available on-device inference.
     private(set) var model: AIModelSelection? {
         didSet { persistModel() }
     }
@@ -75,25 +75,6 @@ final class QuickActionSettingsStore {
             appleIntelligenceAvailable: appleIntelligenceAvailable)
     }
 
-    /// A dead override is dropped rather than rerouted, so its action follows `model` again.
-    func repairInstalledModel(
-        available: [AIModelSelection], unavailableSources: Set<AIModelSource>,
-        appleIntelligenceEnabled: Bool, appleIntelligenceAvailable: Bool
-    ) {
-        if let model {
-            let repaired = Self.repaired(
-                model, available: available, unavailableSources: unavailableSources)
-            if repaired != model { self.model = repaired }
-        }
-        updateOverrides {
-            Self.repaired(
-                $0, available: available, unavailableSources: unavailableSources)
-        }
-        resolveModel(
-            appleIntelligenceEnabled: appleIntelligenceEnabled,
-            appleIntelligenceAvailable: appleIntelligenceAvailable)
-    }
-
     private func updateOverrides(_ transform: (AIModelSelection) -> AIModelSelection?) {
         let updated = modelOverrides.compactMapValues(transform)
         if updated != modelOverrides { modelOverrides = updated }
@@ -104,18 +85,6 @@ final class QuickActionSettingsStore {
     ) -> Bool {
         guard case .api(let id, let name, _) = selection else { return true }
         return connections.contains { $0.id == id && $0.models.contains(name) }
-    }
-
-    private static func repaired(
-        _ selection: AIModelSelection, available: [AIModelSelection],
-        unavailableSources: Set<AIModelSource>
-    ) -> AIModelSelection? {
-        guard selection.source.installedKind != nil else { return selection }
-        let sourceModels = available.filter { $0.source == selection.source }
-        if sourceModels.contains(where: { $0.model == selection.model }) { return selection }
-        if let replacement = sourceModels.first { return replacement }
-        guard unavailableSources.contains(selection.source) else { return selection }
-        return nil
     }
 
     private func persistSettings() {

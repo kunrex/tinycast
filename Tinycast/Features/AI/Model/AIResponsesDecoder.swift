@@ -45,17 +45,9 @@ struct AIResponsesDecoder: Sendable {
             return [.text(link)]
         case "response.completed":
             guard let response = event["response"] as? [String: Any],
-                let output = response["output"] as? [[String: Any]]
+                response["output"] is [[String: Any]]
             else { throw AIProviderError.malformedResponse }
             var events: [AIStreamEvent] = []
-            for item in output where item["type"] as? String == "function_call" {
-                guard let id = item["call_id"] as? String, !id.isEmpty,
-                    let name = item["name"] as? String, !name.isEmpty,
-                    let arguments = item["arguments"] as? String
-                else { throw AIProviderError.malformedResponse }
-                events.append(.toolCallRequested(AIToolCall(id: id, name: name, arguments: arguments)))
-            }
-            if !events.isEmpty { events.insert(.responseOutput(output.map(JSONValue.init)), at: 0) }
             if let usage = response["usage"] as? [String: Any] {
                 events.append(.usage(Self.usage(usage)))
             }

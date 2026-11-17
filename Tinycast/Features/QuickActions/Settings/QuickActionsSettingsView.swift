@@ -76,15 +76,7 @@ struct QuickActionsSettingsView: View {
                 against: aiSettings.connections,
                 appleIntelligenceEnabled: aiSettings.isRouteEnabled(.appleIntelligence),
                 appleIntelligenceAvailable: aiSettings.isAppleIntelligenceAvailable())
-            core.applyInstalledAILifecycle()
         }
-        .onChange(of: aiSettings.enabledInstalledProviders) {
-            core.applyInstalledAILifecycle()
-            repairInstalledModel()
-        }
-        .onChange(of: core.chatGPTSubscription.models) { repairInstalledModel() }
-        .onChange(of: core.chatGPTSubscription.phase) { repairInstalledModel() }
-        .onChange(of: core.installedAI.statuses) { repairInstalledModel() }
     }
 
     private var actionsSection: some View {
@@ -214,7 +206,7 @@ struct QuickActionsSettingsView: View {
     private func routeTitle(_ selection: AIModelSelection) -> String {
         let model = modelChoices.first { $0.matches(selection) }?.title ?? selection.model
         guard let effort = selection.effort else { return model }
-        return "\(model) (\(ChatGPTSubscription.Effort(id: effort, detail: nil).title))"
+        return "\(model) (\(AIEffort(id: effort, detail: nil).title))"
     }
 
     private var enabledBinding: Binding<Bool> {
@@ -248,39 +240,8 @@ struct QuickActionsSettingsView: View {
     }
 
     private var modelChoices: [AIModelOption] {
-        AIModelOption.availableGroups(
-            settings: aiSettings, subscription: core.chatGPTSubscription,
-            installedAI: core.installedAI
-        )
+        AIModelOption.availableGroups(settings: aiSettings)
         .flatMap(\.options)
-    }
-
-    private func repairInstalledModel() {
-        // Catalog rows name a route without an effort; a repaired selection must carry the default.
-        let options = modelChoices.map {
-            AIModelOption.withDefaultEffort(
-                $0.selection, settings: aiSettings, subscription: core.chatGPTSubscription,
-                installedAI: core.installedAI)
-        }
-        var unavailable = Set<AIModelSource>()
-        if !aiSettings.enabledInstalledProviders.contains(.codex)
-            || core.chatGPTSubscription.phase == .signedOut
-            || core.chatGPTSubscription.phase.isUnavailable
-        {
-            unavailable.insert(.codex)
-        }
-        for kind in InstalledAIKind.managedCLIKinds {
-            let phase = core.installedAI.status(for: kind).phase
-            guard
-                !aiSettings.enabledInstalledProviders.contains(kind)
-                    || phase == .signInRequired || phase == .notInstalled
-            else { continue }
-            unavailable.insert(kind.source)
-        }
-        store.repairInstalledModel(
-            available: options, unavailableSources: unavailable,
-            appleIntelligenceEnabled: aiSettings.isRouteEnabled(.appleIntelligence),
-            appleIntelligenceAvailable: aiSettings.isAppleIntelligenceAvailable())
     }
 
     private struct InstructionsEditorPanel: View {

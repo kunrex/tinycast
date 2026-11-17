@@ -123,3 +123,25 @@ Toolchain: the default `xcode-select` is CommandLineTools; full Xcode was discov
 Follow-up: install SwiftLint and rerun lint; resolve the unchanged InfoPlist localization baseline;
 perform the manual provider/Quick Action/Translation/removed-entry-point checks in `features/ai.md`.
 CLI provider/tool contract deletion belongs to the next checkpoint, not this one.
+
+## CLI provider removal checkpoint
+
+Removed: Codex, Claude, Grok, OpenCode and Cursor — discovery/probes, subprocess and app-server
+transports, launch/protocol/MCP-bridge files, tool-loop and tool contracts, the installed-provider and
+Codex managers, their lifecycle wiring in `AppCore`, provider-panel sections, path/environment
+overrides, the temporary `AIProviderDiscovery`, exclusive harnesses, brand assets (Cursor, Grok,
+OpenCode) and `Features/MCP` documentation. HTTP effort labels were extracted to
+`AI/Model/AIEffort.swift` first. Retained: direct HTTP connections, Foundation Models, Apple
+Translation, shared Markdown and citation helpers, and unrelated subprocess features.
+
+Untouched on disk and unread: `aiInstalledProviders`, `aiInstalledOverrides`, the
+`installed-ai-environment` and `mcp-secrets` Keychain scopes, `ai-chats.sqlite3`, `chat-presets.json`
+and the old workspace folders. `ai-api-keys` and `ai-request-headers` remain live.
+
+Policy: a saved CLI selection no longer decodes. A retired shared route resolves like an unset one
+(enabled, available Apple Intelligence, otherwise an explicit choice, never HTTP automatically); a
+retired override is dropped so its action follows the shared route; overrides decode entry by entry,
+so valid HTTP overrides and their efforts survive restart without any migration.
+`QuickActionTests.retiredSelectionsRequireIndependentResolution` pins this.
+
+T5 is documented only as a future possibility in `features/ai.md`.

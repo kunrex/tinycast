@@ -338,7 +338,7 @@ struct AIConnectionEditorPanel: View {
         return Menu {
             ForEach(connection.declarableLevels, id: \.self) { level in
                 Toggle(
-                    ChatGPTSubscription.Effort(id: level, detail: nil).title,
+                    AIEffort(id: level, detail: nil).title,
                     isOn: Binding(
                         get: { declared.contains(level) },
                         set: { isOn in

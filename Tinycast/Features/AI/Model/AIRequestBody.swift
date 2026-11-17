@@ -23,24 +23,11 @@ enum AIRequestBody {
         ]
         if let instructions = input.instructions?.nonEmpty { body["instructions"] = instructions }
         if let effort = configuration.requestedEffort { body["reasoning"] = ["effort": effort] }
-        var tools: [[String: Any]] = input.tools.map {
-            [
-                "type": "function", "name": $0.name, "description": $0.description,
-                "parameters": $0.parameters.jsonObject, "strict": false
-            ]
-        }
-        if input.webSearch { tools.append(["type": "web_search"]) }
-        if !tools.isEmpty { body["tools"] = tools }
+        if input.webSearch { body["tools"] = [["type": "web_search"]] }
         return body
     }
 
     private static func responseMessages(_ message: AIMessage) -> [[String: Any]] {
-        if !message.responseItems.isEmpty {
-            return message.responseItems.compactMap { $0.jsonObject as? [String: Any] }
-        }
-        if let result = message.toolResult {
-            return [["type": "function_call_output", "call_id": result.callID, "output": result.content]]
-        }
         var items: [[String: Any]] = []
         if !message.images.isEmpty || !message.documents.isEmpty {
             var parts: [[String: Any]] = []
@@ -52,9 +39,6 @@ enum AIRequestBody {
             items.append(["role": message.role.rawValue, "content": parts])
         } else if let text = message.text.nonEmpty {
             items.append(["role": message.role.rawValue, "content": text])
-        }
-        items += message.toolCalls.map {
-            ["type": "function_call", "call_id": $0.id, "name": $0.name, "arguments": $0.arguments]
         }
         return items
     }
@@ -85,17 +69,6 @@ enum AIRequestBody {
         if configuration.disablesThinking {
             body["thinking"] = ["type": "disabled"]
         }
-        if !input.tools.isEmpty {
-            body["tools"] = input.tools.map {
-                [
-                    "type": "function",
-                    "function": [
-                        "name": $0.name, "description": $0.description,
-                        "parameters": $0.parameters.jsonObject
-                    ]
-                ]
-            }
-        }
         return body
     }
 
@@ -113,38 +86,19 @@ enum AIRequestBody {
             .compactMap { $0?.nonEmpty }
         var body: [String: Any] = [
             "model": configuration.model,
-            "messages": anthropicMessages(input.messages),
+            "messages": input.messages.compactMap(anthropicMessage),
             "max_tokens": configuration.maxOutputTokens ?? input.maxOutputTokens,
             "stream": true
         ]
         if !systemParts.isEmpty { body["system"] = systemParts.joined(separator: "\n\n") }
         if let effort = configuration.requestedEffort { body["output_config"] = ["effort": effort] }
-        var tools: [[String: Any]] = input.tools.map {
-            [
-                "name": $0.name, "description": $0.description,
-                "input_schema": $0.parameters.jsonObject
-            ]
-        }
-        if input.webSearch { tools.append(anthropicWebSearch) }
-        if !tools.isEmpty { body["tools"] = tools }
+        if input.webSearch { body["tools"] = [anthropicWebSearch] }
         return body
     }
 
     /// Plain text stays a string; only a message with images takes the content-part array.
     private static func openAIMessage(_ message: AIMessage) -> [String: Any]? {
-        if let result = message.toolResult {
-            return [
-                "role": "tool", "tool_call_id": result.callID, "content": result.content
-            ]
-        }
         let text = message.text.nonEmpty
-        if !message.toolCalls.isEmpty {
-            return [
-                "role": message.role.rawValue,
-                "content": text ?? "",
-                "tool_calls": message.toolCalls.map(openAIToolCall)
-            ]
-        }
         let hasAttachments = !message.images.isEmpty || !message.documents.isEmpty
         guard text != nil || hasAttachments else { return nil }
         guard hasAttachments else {
@@ -159,52 +113,9 @@ enum AIRequestBody {
         return ["role": message.role.rawValue, "content": parts]
     }
 
-    private static func openAIToolCall(_ call: AIToolCall) -> [String: Any] {
-        var encoded: [String: Any] = [
-            "id": call.id, "type": "function",
-            "function": ["name": call.name, "arguments": call.arguments]
-        ]
-        if let signature = call.thoughtSignature {
-            encoded["extra_content"] = ["google": ["thought_signature": signature]]
-        }
-        return encoded
-    }
-
-    /// Anthropic takes tool results as user content, and a run of them has to arrive as one turn.
-    private static func anthropicMessages(_ messages: [AIMessage]) -> [[String: Any]] {
-        var encoded: [[String: Any]] = []
-        var results: [[String: Any]] = []
-        for message in messages {
-            if let result = message.toolResult {
-                results.append([
-                    "type": "tool_result", "tool_use_id": result.callID,
-                    "content": result.content, "is_error": result.isError
-                ])
-                continue
-            }
-            if !results.isEmpty {
-                encoded.append(["role": "user", "content": results])
-                results = []
-            }
-            if let value = anthropicMessage(message) { encoded.append(value) }
-        }
-        if !results.isEmpty { encoded.append(["role": "user", "content": results]) }
-        return encoded
-    }
-
     private static func anthropicMessage(_ message: AIMessage) -> [String: Any]? {
         guard message.role != .system else { return nil }
         let text = message.text.nonEmpty
-        if !message.toolCalls.isEmpty {
-            var parts: [[String: Any]] = text.map { [["type": "text", "text": $0]] } ?? []
-            parts += message.toolCalls.map {
-                [
-                    "type": "tool_use", "id": $0.id, "name": $0.name,
-                    "input": JSONValue(data: Data($0.arguments.utf8))?.jsonObject ?? [:]
-                ]
-            }
-            return ["role": message.role.rawValue, "content": parts]
-        }
         let hasAttachments = !message.images.isEmpty || !message.documents.isEmpty
         guard text != nil || hasAttachments else { return nil }
         guard hasAttachments else {

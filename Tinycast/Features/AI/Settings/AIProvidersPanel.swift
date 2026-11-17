@@ -3,13 +3,11 @@ import SwiftUI
 
 enum AIProviderRoute: Hashable {
     case appleIntelligence
-    case installed(InstalledAIKind)
     case api(UUID)
 
     var source: AIModelSource {
         switch self {
         case .appleIntelligence: return .appleIntelligence
-        case .installed(let kind): return kind.source
         case .api(let id): return .api(id)
         }
     }
@@ -19,7 +17,6 @@ enum AIProviderRoute: Hashable {
 enum AIProviderTab: String, CaseIterable, Identifiable {
     case overview
     case models
-    case advanced
 
     var id: String { rawValue }
 
@@ -27,24 +24,19 @@ enum AIProviderTab: String, CaseIterable, Identifiable {
         switch self {
         case .overview: return String(localized: "Overview")
         case .models: return String(localized: "Models")
-        case .advanced: return String(localized: "Advanced")
         }
     }
 
     static func tabs(for route: AIProviderRoute) -> [AIProviderTab] {
         switch route {
         case .appleIntelligence: return [.overview]
-        case .installed: return [.overview, .models, .advanced]
         case .api: return [.overview, .models]
         }
     }
 }
 
 struct AIProvidersPanel: View {
-    @Environment(AppCore.self) private var core
     @Environment(AISettingsStore.self) private var settings
-    @Environment(ChatGPTSubscriptionManager.self) private var subscription
-    @Environment(InstalledAIManager.self) private var installedAI
 
     let onDone: () -> Void
 
@@ -65,7 +57,7 @@ struct AIProvidersPanel: View {
         VStack(spacing: 0) {
             SettingsEditorHeader(
                 title: "AI Providers",
-                subtitle: "Installed tools, API connections, and the models each one offers."
+                subtitle: "On-device models and API connections."
             )
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, Theme.Spacing.dialogInset)
@@ -116,13 +108,10 @@ struct AIProvidersPanel: View {
         .onAppear {
             selection = selection ?? initialSelection
             loadKeyStatuses()
-            core.beginAIProviderManagement()
         }
-        .onDisappear { core.endAIProviderManagement() }
-        .onChange(of: settings.enabledInstalledProviders) { core.applyInstalledAILifecycle() }
         .onChange(of: selection) { modelQuery = "" }
         .onChange(of: settings.connections.map(\.id)) { _, ids in
-            if case .api(let id) = selection, !ids.contains(id) { selection = .installed(.codex) }
+            if case .api(let id) = selection, !ids.contains(id) { selection = .appleIntelligence }
         }
     }
 
@@ -133,9 +122,6 @@ struct AIProvidersPanel: View {
             List(selection: $selection) {
                 Section("On This Mac") {
                     listRow(.appleIntelligence)
-                }
-                Section(String(localized: "ai-installed-tools", defaultValue: "Installed")) {
-                    ForEach(InstalledAIKind.allCases) { listRow(.installed($0)) }
                 }
                 Section("API Connections") {
                     if settings.connections.isEmpty {
@@ -210,8 +196,6 @@ struct AIProvidersPanel: View {
         switch selection {
         case .appleIntelligence?:
             detailForm(.appleIntelligence) { _ in appleIntelligenceSections }
-        case .installed(let kind)?:
-            detailForm(.installed(kind)) { installedSections(kind, tab: $0) }
         case .api(let id)?:
             if let connection = settings.connection(id: id) {
                 detailForm(.api(id)) { connectionSections(connection, tab: $0) }
@@ -260,15 +244,6 @@ struct AIProvidersPanel: View {
             }
             Spacer(minLength: Theme.Spacing.lg)
             switch route {
-            case .installed(let kind):
-                if let version = installedAI.status(for: kind).version,
-                    settings.enabledInstalledProviders.contains(kind)
-                {
-                    Text("v" + version)
-                        .font(.callout.monospaced())
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
-                }
             case .api(let id):
                 if let connection = settings.connection(id: id) {
                     Button("Edit…") { edit(connection) }
@@ -307,40 +282,9 @@ struct AIProvidersPanel: View {
         } header: {
             Text("Status")
         } footer: {
-            Text("Choose the default model on the AI pane.")
+            Text("Choose a model in Quick Actions settings.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-        }
-    }
-
-    // MARK: Installed commands
-
-    @ViewBuilder
-    private func installedSections(_ kind: InstalledAIKind, tab: AIProviderTab) -> some View {
-        let isOn = settings.enabledInstalledProviders.contains(kind)
-        switch tab {
-        case .advanced:
-            AIProviderAdvancedSection(kind: kind, detected: isOn ? executable(for: kind) : nil)
-        case .overview, .models:
-            if !isOn {
-                turnedOffSection(footer: installedFooter(kind))
-            } else if tab == .models {
-                modelsSection(route: .installed(kind), models: installedModels(kind))
-            } else {
-                Section {
-                    if kind == .codex {
-                        codexStatusRows
-                    } else {
-                        installedStatusRows(kind)
-                    }
-                } header: {
-                    Text("Status")
-                } footer: {
-                    Text(installedFooter(kind))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
         }
     }
 
@@ -359,192 +303,6 @@ struct AIProvidersPanel: View {
                     .foregroundStyle(.secondary)
             }
         }
-    }
-
-    @ViewBuilder
-    private var codexStatusRows: some View {
-        switch subscription.phase {
-        case .idle, .starting:
-            checkingRow("Codex")
-        case .signedOut:
-            signInRow(.codex, check: { subscription.refresh() })
-        case .connected:
-            LabeledContent {
-                Button("Refresh") { subscription.refresh() }
-            } label: {
-                Text("Ready")
-                Text("\(subscription.models.count) models available")
-            }
-            if let account = subscription.account {
-                LabeledContent {
-                    Text(
-                        account.usesAPIKey
-                            ? String(localized: "Codex API key") : "ChatGPT \(account.planTitle)"
-                    )
-                    .foregroundStyle(.secondary)
-                } label: {
-                    Text("Account")
-                    if let email = account.email {
-                        RedactedText(
-                            value: email,
-                            revealHelp: String(localized: "Click to reveal the signed-in account"),
-                            hideHelp: String(localized: "Click to hide the signed-in account"))
-                    }
-                }
-            }
-            if let limits = subscription.rateLimits {
-                if let primary = limits.primary {
-                    usageRow(primary, fallbackTitle: String(localized: "Primary window"))
-                }
-                if let secondary = limits.secondary {
-                    usageRow(secondary, fallbackTitle: String(localized: "Secondary window"))
-                }
-            }
-            if let executable = subscription.executable { commandRow(executable) }
-        case .unavailable(let message):
-            LabeledContent {
-                HStack(spacing: Theme.Spacing.sm) {
-                    Button("Install Codex CLI…") { NSWorkspace.shared.open(InstalledAIKind.codex.installURL) }
-                    Button("Check Again") { subscription.refresh() }
-                }
-                .fixedSize()
-            } label: {
-                Text("Not installed")
-                Text(message)
-            }
-        case .failed(let message):
-            failedRow(message, retry: { subscription.refresh() })
-        }
-    }
-
-    @ViewBuilder
-    private func installedStatusRows(_ kind: InstalledAIKind) -> some View {
-        let status = installedAI.status(for: kind)
-        switch status.phase {
-        case .idle, .checking:
-            checkingRow(kind.title)
-        case .ready:
-            LabeledContent {
-                Button("Refresh") { installedAI.refresh(kind: kind) }
-            } label: {
-                Text("Ready")
-                Text("\(status.models.count) models available")
-            }
-            if let account = status.account { accountRow(account, kind: kind) }
-        case .signInRequired:
-            signInRow(kind, check: { installedAI.refresh(kind: kind) })
-        case .notInstalled:
-            LabeledContent {
-                HStack(spacing: Theme.Spacing.sm) {
-                    Button("Install…") { NSWorkspace.shared.open(kind.installURL) }
-                    Button("Check Again") { installedAI.refresh(kind: kind) }
-                }
-                .fixedSize()
-            } label: {
-                Text("Not installed")
-                Text("Tinycast could not find the \(kind.command) command.")
-            }
-        case .failed(let message):
-            failedRow(message, retry: { installedAI.refresh(kind: kind) })
-        }
-        if let executable = status.executable { commandRow(executable) }
-    }
-
-    private func commandRow(_ executable: URL) -> some View {
-        LabeledContent("Command") {
-            Text((executable.path as NSString).abbreviatingWithTildeInPath)
-                .font(.callout.monospaced())
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .textSelection(.enabled)
-        }
-    }
-
-    private func accountRow(_ account: InstalledAIAccount, kind: InstalledAIKind) -> some View {
-        LabeledContent {
-            if let plan = account.planTitle {
-                Text(verbatim: "\(kind.title) \(plan)").foregroundStyle(.secondary)
-            }
-        } label: {
-            Text("Account")
-            if let email = account.email {
-                RedactedText(
-                    value: email,
-                    revealHelp: String(localized: "Click to reveal the signed-in account"),
-                    hideHelp: String(localized: "Click to hide the signed-in account"))
-            }
-        }
-    }
-
-    private func executable(for kind: InstalledAIKind) -> URL? {
-        kind == .codex ? subscription.executable : installedAI.status(for: kind).executable
-    }
-
-    private func checkingRow(_ title: String) -> some View {
-        HStack(spacing: Theme.Spacing.md) {
-            ProgressView().controlSize(.small)
-            Text("Checking \(title)…").foregroundStyle(.secondary)
-        }
-    }
-
-    private func signInRow(_ kind: InstalledAIKind, check: @escaping () -> Void) -> some View {
-        LabeledContent {
-            HStack(spacing: Theme.Spacing.sm) {
-                Button("Copy Sign-In Command") { copySignInCommand(kind) }
-                Button("Check Again", action: check)
-            }
-            .fixedSize()
-        } label: {
-            Text("Sign in required")
-            Text("Run \(kind.signInCommand) in Terminal, then check again.")
-        }
-    }
-
-    private func failedRow(_ message: String, retry: @escaping () -> Void) -> some View {
-        LabeledContent {
-            Button("Try Again", action: retry)
-        } label: {
-            Label("Check failed", systemImage: "exclamationmark.triangle")
-                .foregroundStyle(.orange)
-            Text(message)
-        }
-    }
-
-    private func usageRow(
-        _ window: ChatGPTSubscription.UsageWindow, fallbackTitle: String
-    ) -> some View {
-        LabeledContent {
-            HStack(spacing: Theme.Spacing.md) {
-                ProgressView(value: Double(window.remainingPercent), total: 100)
-                    .frame(width: Theme.Size.aiUsageBar)
-                Text("\(window.remainingPercent)% left")
-                    .monospacedDigit()
-            }
-        } label: {
-            Text(usageTitle(window, fallback: fallbackTitle))
-            if let reset = window.resetsAt {
-                Text("Resets \(reset, style: .relative)")
-            }
-        }
-    }
-
-    private func installedFooter(_ kind: InstalledAIKind) -> String {
-        kind.isolationCaveat(hasManagedMCPPolicy: InstalledAIManager.hasManagedMCPPolicy)
-            ?? String(
-                localized: """
-                    Uses the \(kind.command) command signed in on this Mac. Its keys are never stored.
-                    """)
-    }
-
-    private func installedModels(_ kind: InstalledAIKind) -> [ProviderModel] {
-        if kind == .codex {
-            guard subscription.isConnected else { return [] }
-            return subscription.models.map { ProviderModel(id: $0.id, name: $0.name) }
-        }
-        let status = installedAI.status(for: kind)
-        guard status.isReady else { return [] }
-        return status.models.map { ProviderModel(id: $0.id, name: $0.name) }
     }
 
     // MARK: API connections
@@ -645,7 +403,7 @@ struct AIProvidersPanel: View {
         }
     }
 
-    /// Past a screenful, OpenCode alone lists hundreds, so the list gets the Settings filter row.
+    /// Keep larger catalogs searchable without adding a filter to short lists.
     private static let filterThreshold = 8
 
     private func filtered(_ models: [ProviderModel]) -> [ProviderModel] {
@@ -662,7 +420,6 @@ struct AIProvidersPanel: View {
     private func title(for route: AIProviderRoute) -> String {
         switch route {
         case .appleIntelligence: return AppleIntelligence.title
-        case .installed(let kind): return kind.title
         case .api(let id):
             return settings.connection(id: id)?.title ?? String(localized: "API Connection")
         }
@@ -671,7 +428,6 @@ struct AIProvidersPanel: View {
     private func kindCaption(for route: AIProviderRoute) -> String {
         switch route {
         case .appleIntelligence: return String(localized: "On this Mac · No account needed")
-        case .installed(let kind): return String(localized: "Installed command · \(kind.command)")
         case .api(let id):
             let provider = settings.connection(id: id)?.provider.title ?? ""
             return String(localized: "API connection · \(provider)")
@@ -685,11 +441,6 @@ struct AIProvidersPanel: View {
             guard settings.isRouteEnabled(.appleIntelligence) else { return String(localized: "Off") }
             return settings.isAppleIntelligenceAvailable()
                 ? String(localized: "Ready · Runs on this Mac") : String(localized: "Unavailable")
-        case .installed(let kind):
-            guard settings.enabledInstalledProviders.contains(kind) else {
-                return String(localized: "Off")
-            }
-            return kind == .codex ? codexCaption : installedCaption(kind)
         case .api(let id):
             guard let connection = settings.connection(id: id) else { return "" }
             guard settings.isRouteEnabled(.api(id)) else { return String(localized: "Off") }
@@ -699,39 +450,9 @@ struct AIProvidersPanel: View {
         }
     }
 
-    private var codexCaption: String {
-        switch subscription.phase {
-        case .idle, .starting: return String(localized: "Checking…")
-        case .signedOut: return String(localized: "Sign in required")
-        case .unavailable: return String(localized: "Not installed")
-        case .failed: return String(localized: "Check failed")
-        case .connected:
-            let count = modelCount(subscription.models.count)
-            guard let account = subscription.account else { return String(localized: "Ready · \(count)") }
-            let plan = account.usesAPIKey ? account.planTitle : "ChatGPT \(account.planTitle)"
-            return "\(plan) · \(count)"
-        }
-    }
-
-    private func installedCaption(_ kind: InstalledAIKind) -> String {
-        let status = installedAI.status(for: kind)
-        switch status.phase {
-        case .idle, .checking: return String(localized: "Checking…")
-        case .ready: return String(localized: "Ready · \(modelCount(status.models.count))")
-        case .signInRequired: return String(localized: "Sign in required")
-        case .notInstalled: return String(localized: "Not installed")
-        case .failed: return String(localized: "Check failed")
-        }
-    }
-
     private func icon(for route: AIProviderRoute) -> PopoverMenuIcon {
         switch route {
         case .appleIntelligence: return AIModelOption.appleIntelligenceIcon
-        case .installed(.codex): return .asset(AIBrand.openAI.assetName)
-        case .installed(.claude): return .asset(AIBrand.claude.assetName)
-        case .installed(.grok): return .asset(AIBrand.grok.assetName)
-        case .installed(.openCode): return .asset(AIBrand.openCode.assetName)
-        case .installed(.cursor): return AIModelOption.cursorIcon
         case .api(let id):
             guard let connection = settings.connection(id: id) else { return .symbol("sparkles") }
             // OpenRouter is its own brand; resolving by model would show whichever vendor came first.
@@ -839,20 +560,6 @@ struct AIProvidersPanel: View {
         } catch {
             keyError = true
         }
-    }
-
-    private func copySignInCommand(_ kind: InstalledAIKind) {
-        Paster.copyPlainText(kind.signInCommand)
-        core.showMessage(String(localized: "Copied \(kind.signInCommand)"))
-    }
-
-    private func usageTitle(
-        _ window: ChatGPTSubscription.UsageWindow, fallback: String
-    ) -> String {
-        guard let minutes = window.durationMinutes else { return fallback }
-        if minutes >= 1_440 { return String(localized: "\(minutes / 1_440)-day window") }
-        if minutes >= 60 { return String(localized: "\(minutes / 60)-hour window") }
-        return String(localized: "\(minutes)-minute window")
     }
 
     private func loadKeyStatuses() {

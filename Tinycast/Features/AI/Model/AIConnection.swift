@@ -159,7 +159,7 @@ struct AIConnection: Codable, Equatable, Identifiable, Sendable {
             images: provider != .openRouter || visionModels.contains(model),
             // Only the two shapes whose bodies Tinycast writes; a gateway bills the upload first.
             documents: provider == .openAI || provider == .anthropic,
-            webSearch: provider.offersWebSearch(at: URL(string: baseURL)), tools: true)
+            webSearch: provider.offersWebSearch(at: URL(string: baseURL)))
     }
 }
 
@@ -169,29 +169,13 @@ struct AIModelCapabilities: Equatable, Sendable {
     /// A PDF as a native block; four routes have no field for one, so it is refused, never dropped.
     let documents: Bool
     let webSearch: Bool
-    /// Every route but the on-device one and the three CLIs with no MCP switch of their own.
-    let tools: Bool
-
-    static let none = AIModelCapabilities(
-        images: false, documents: false, webSearch: false, tools: false)
-    static let chatGPT = AIModelCapabilities(
-        images: true, documents: false, webSearch: true, tools: false)
-    static let codex = AIModelCapabilities(
-        images: true, documents: false, webSearch: true, tools: true)
-    /// Pictures ride in its stream-json input; its own client runs Tinycast's MCP servers.
-    static let claudeCommand = AIModelCapabilities(
-        images: true, documents: false, webSearch: false, tools: true)
+    static let none = AIModelCapabilities(images: false, documents: false, webSearch: false)
     /// The on-device model is text-only and reaches nothing, so it offers none of the three.
     static let appleIntelligence = AIModelCapabilities.none
 }
 
 enum AIModelSource: Codable, Equatable, Hashable, Sendable {
     case appleIntelligence
-    case codex
-    case claude
-    case grok
-    case openCode
-    case cursor
     case api(UUID)
 }
 
@@ -200,11 +184,6 @@ extension AIModelSource {
     var storageKey: String {
         switch self {
         case .appleIntelligence: return "appleIntelligence"
-        case .codex: return "codex"
-        case .claude: return "claude"
-        case .grok: return "grok"
-        case .openCode: return "openCode"
-        case .cursor: return "cursor"
         case .api(let id): return "api:" + id.uuidString
         }
     }
@@ -212,29 +191,11 @@ extension AIModelSource {
 
 enum AIModelSelection: Codable, Equatable, Hashable, Sendable {
     case appleIntelligence
-    case codex(model: String, effort: String?)
-    case claude(model: String, effort: String?)
-    case grok(model: String, effort: String?)
-    case openCode(model: String, effort: String?)
-    case cursor(model: String, effort: String?)
     case api(connection: UUID, model: String, effort: String?)
-
-    /// The routes whose own client is the MCP client, handed servers rather than Tinycast's loop.
-    var runsItsOwnTools: Bool {
-        switch self {
-        case .codex, .claude: return true
-        case .appleIntelligence, .grok, .openCode, .cursor, .api: return false
-        }
-    }
 
     var source: AIModelSource {
         switch self {
         case .appleIntelligence: return .appleIntelligence
-        case .codex: return .codex
-        case .claude: return .claude
-        case .grok: return .grok
-        case .openCode: return .openCode
-        case .cursor: return .cursor
         case .api(let connection, _, _): return .api(connection)
         }
     }
@@ -242,16 +203,14 @@ enum AIModelSelection: Codable, Equatable, Hashable, Sendable {
     var model: String {
         switch self {
         case .appleIntelligence: return AppleIntelligence.modelID
-        case .codex(let model, _), .claude(let model, _), .grok(let model, _),
-            .openCode(let model, _), .cursor(let model, _), .api(_, let model, _):
+        case .api(_, let model, _):
             return model
         }
     }
 
     var effort: String? {
         switch self {
-        case .codex(_, let effort), .claude(_, let effort), .grok(_, let effort),
-            .openCode(_, let effort), .cursor(_, let effort), .api(_, _, let effort):
+        case .api(_, _, let effort):
             return effort
         case .appleIntelligence:
             return nil
@@ -260,11 +219,6 @@ enum AIModelSelection: Codable, Equatable, Hashable, Sendable {
 
     func withEffort(_ effort: String?) -> AIModelSelection {
         switch self {
-        case .codex(let model, _): return .codex(model: model, effort: effort)
-        case .claude(let model, _): return .claude(model: model, effort: effort)
-        case .grok(let model, _): return .grok(model: model, effort: effort)
-        case .openCode(let model, _): return .openCode(model: model, effort: effort)
-        case .cursor(let model, _): return .cursor(model: model, effort: effort)
         case .api(let connection, let model, _):
             return .api(connection: connection, model: model, effort: effort)
         case .appleIntelligence: return self
@@ -276,12 +230,6 @@ enum AIModelSelection: Codable, Equatable, Hashable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case appleIntelligence
-        case codex
-        case chatGPT
-        case claude
-        case grok
-        case openCode
-        case cursor
         case api
     }
 
@@ -297,42 +245,6 @@ enum AIModelSelection: Codable, Equatable, Hashable, Sendable {
             self = .appleIntelligence
             return
         }
-        if container.contains(.codex) || container.contains(.chatGPT) {
-            let key: CodingKeys = container.contains(.codex) ? .codex : .chatGPT
-            let value = try container.nestedContainer(keyedBy: ValueKeys.self, forKey: key)
-            self = .codex(
-                model: try value.decode(String.self, forKey: .model),
-                effort: try value.decodeIfPresent(String.self, forKey: .effort))
-            return
-        }
-        if container.contains(.claude) {
-            let value = try container.nestedContainer(keyedBy: ValueKeys.self, forKey: .claude)
-            self = .claude(
-                model: try value.decode(String.self, forKey: .model),
-                effort: try value.decodeIfPresent(String.self, forKey: .effort))
-            return
-        }
-        if container.contains(.grok) {
-            let value = try container.nestedContainer(keyedBy: ValueKeys.self, forKey: .grok)
-            self = .grok(
-                model: try value.decode(String.self, forKey: .model),
-                effort: try value.decodeIfPresent(String.self, forKey: .effort))
-            return
-        }
-        if container.contains(.openCode) {
-            let value = try container.nestedContainer(keyedBy: ValueKeys.self, forKey: .openCode)
-            self = .openCode(
-                model: try value.decode(String.self, forKey: .model),
-                effort: try value.decodeIfPresent(String.self, forKey: .effort))
-            return
-        }
-        if container.contains(.cursor) {
-            let value = try container.nestedContainer(keyedBy: ValueKeys.self, forKey: .cursor)
-            self = .cursor(
-                model: try value.decode(String.self, forKey: .model),
-                effort: try value.decodeIfPresent(String.self, forKey: .effort))
-            return
-        }
         let value = try container.nestedContainer(keyedBy: ValueKeys.self, forKey: .api)
         self = .api(
             connection: try value.decode(UUID.self, forKey: .connection),
@@ -345,26 +257,6 @@ enum AIModelSelection: Codable, Equatable, Hashable, Sendable {
         switch self {
         case .appleIntelligence:
             _ = container.nestedContainer(keyedBy: ValueKeys.self, forKey: .appleIntelligence)
-        case .codex(let model, let effort):
-            var value = container.nestedContainer(keyedBy: ValueKeys.self, forKey: .codex)
-            try value.encode(model, forKey: .model)
-            try value.encodeIfPresent(effort, forKey: .effort)
-        case .claude(let model, let effort):
-            var value = container.nestedContainer(keyedBy: ValueKeys.self, forKey: .claude)
-            try value.encode(model, forKey: .model)
-            try value.encodeIfPresent(effort, forKey: .effort)
-        case .grok(let model, let effort):
-            var value = container.nestedContainer(keyedBy: ValueKeys.self, forKey: .grok)
-            try value.encode(model, forKey: .model)
-            try value.encodeIfPresent(effort, forKey: .effort)
-        case .openCode(let model, let effort):
-            var value = container.nestedContainer(keyedBy: ValueKeys.self, forKey: .openCode)
-            try value.encode(model, forKey: .model)
-            try value.encodeIfPresent(effort, forKey: .effort)
-        case .cursor(let model, let effort):
-            var value = container.nestedContainer(keyedBy: ValueKeys.self, forKey: .cursor)
-            try value.encode(model, forKey: .model)
-            try value.encodeIfPresent(effort, forKey: .effort)
         case .api(let connection, let model, let effort):
             var value = container.nestedContainer(keyedBy: ValueKeys.self, forKey: .api)
             try value.encode(connection, forKey: .connection)

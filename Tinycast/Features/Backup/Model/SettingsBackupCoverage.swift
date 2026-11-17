@@ -125,19 +125,12 @@ enum SettingsBackupCoverage {
             "Arms the app to open meeting links unattended; an import must not switch that on.",
         AppSettingsKey.cameraPreview.rawValue:
             "Turns the camera on before a meeting; an import must not grant that.",
-        AppSettingsKey.aiInstalledProviders.rawValue:
-            "Installed commands and their accounts belong to this Mac; an import must not enable "
-            + "their discovery on another one.",
         AppSettingsKey.aiConnections.rawValue:
             "AI connection metadata stays on the Mac with the Keychain credentials it describes.",
         AppSettingsKey.aiShownModels.rawValue:
-            "Names the models of this Mac's own installed tools and connections, which another Mac "
-            + "may not have.",
+            "Names the models of this Mac's own connections, which another Mac may not have.",
         AppSettingsKey.aiDisabledRoutes.rawValue:
             "Names this Mac's own API connections and on-device model, which travel in no backup.",
-        AppSettingsKey.aiInstalledOverrides.rawValue:
-            "Names a command to run and the variables to run it with; an import must never decide "
-            + "which program this Mac launches.",
         AppSettingsKey.quickActionsEnabled.rawValue:
             "Grants keystroke delivery into other apps through the Accessibility permission, and a "
             + "flag that grants a capability is never carried by a backup.",

@@ -77,14 +77,6 @@ struct AIProviderTests {
     }
 
     static func main() async throws {
-        if CommandLine.arguments.contains("mcp") {
-            print("[]")
-            return
-        }
-        if CommandLine.arguments.last == "app-server" {
-            try codexPeer()
-            return
-        }
         providerPresetsResolveEndpoints()
         modelCatalogBuildsProviderRequests()
         requestHeadersAreValidated()
@@ -102,30 +94,12 @@ struct AIProviderTests {
         refusalsShowTheProvidersOwnWords()
         brandsResolveFromModelIDs()
         requestBodiesCarryDocuments()
-        codexProtocolFramesRoundTrip()
-        try await codexQueuedWritesRetire()
-        try await codexStopDropsQueuedWrites()
-        installedCLIStreamsDecode()
         settingsPersistAndRepairSelections()
-        installedModelLoadingPreferencePersists()
         shownModelsFilterThePicker()
         switchedOffRoutesLeaveTheDefault()
-        installedOverridesPersistAndResolve()
-        aFailedKeychainReadIsNeverSavedOver()
-        aLaunchInheritsTheReadersVariablesNotTinycastsOwn()
         onDeviceSelectionsRoundTripAndLead()
-        toolCatalogsAndTurnsEncodePerProvider()
-        toolArgumentsSurviveArrivingInFragments()
-        geminiThoughtSignaturesRoundTrip()
-        toolCapabilitiesFollowTheRoute()
         webSearchStaysOnTheVendorsOwnEndpoint()
         anthropicSearchesAndCitationsDecode()
-        codexLaunchNamesServersAndKeepsSecretsOffArgv()
-        codexLaunchHandsAServerItsOwnVariableNames()
-        codexVariablesNeverCollide()
-        claudeConfigurationCarriesServersAndRoutesToolNames()
-        codexElicitationsAreOnlyToolCalls()
-        claudeControlFramesAnswerOneTool()
         aGatewayOffersNoneAsItsReasoningEffort()
         declaredLevelsNeverOutliveTheirDestination()
         vendorsTakeTheirOwnDeclaredLevels()
@@ -134,111 +108,6 @@ struct AIProviderTests {
         if failures > 0 { exit(1) }
     }
 
-    /// Both providers stream a call's arguments in pieces; a half-parsed call would be uncallable.
-    static func toolArgumentsSurviveArrivingInFragments() {
-        var openAI = AIStreamDecoder(shape: .openAICompatible)
-        let openAIData = Data(
-            """
-            data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1",\
-            "function":{"name":"fs__read","arguments":"{\\"pa"}}]}}]}
-
-            data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"th\\":\\"/tmp\\"}"}}]}}]}
-
-            data: {"choices":[{"delta":{},"finish_reason":"tool_calls"}]}
-
-            data: [DONE]
-
-            """.utf8)
-        var events = (try? openAI.feed(openAIData)) ?? []
-        events += (try? openAI.finish()) ?? []
-        expect(
-            events.contains(
-                .toolCallRequested(
-                    AIToolCall(id: "call_1", name: "fs__read", arguments: #"{"path":"/tmp"}"#))),
-            "OpenAI fragments reassemble into one whole call before it leaves the decoder")
-        expect(events.last == .finished, "and the stream still terminates")
-
-        var anthropic = AIStreamDecoder(shape: .anthropic)
-        let anthropicData = Data(
-            """
-            data: {"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"toolu_1","name":"fs__read"}}
-
-            data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{\\"path"}}
-
-            data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"\\":\\"/tmp\\"}"}}
-
-            data: {"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"output_tokens":9}}
-
-            """.utf8)
-        var anthropicEvents = (try? anthropic.feed(anthropicData)) ?? []
-        anthropicEvents += (try? anthropic.finish()) ?? []
-        expect(
-            anthropicEvents.contains(
-                .toolCallRequested(
-                    AIToolCall(id: "toolu_1", name: "fs__read", arguments: #"{"path":"/tmp"}"#))),
-            "an Anthropic tool_use block reassembles the same way")
-        expect(
-            !anthropicEvents.contains(.finished),
-            "a tool turn ends without message_stop, so the loop decides whether the turn is over")
-
-        var plain = AIStreamDecoder(shape: .openAICompatible)
-        let none = (try? plain.feed(Data("data: [DONE]\n\n".utf8))) ?? []
-        expect(
-            none == [.finished],
-            "a turn that called nothing emits no tool event at all")
-    }
-
-    /// Gemini 3 400s on the follow-up turn if a call's signature doesn't come back unchanged.
-    static func geminiThoughtSignaturesRoundTrip() {
-        var decoder = AIStreamDecoder(shape: .openAICompatible)
-        let data = Data(
-            """
-            data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"c1",\
-            "function":{"name":"exa__search","arguments":"{}"},\
-            "extra_content":{"google":{"thought_signature":"sig=="}}},\
-            {"index":1,"id":"c2","function":{"name":"exa__fetch","arguments":"{}"}}]}}]}
-
-            data: {"choices":[{"delta":{},"finish_reason":"tool_calls"}]}
-
-            data: [DONE]
-
-            """.utf8)
-        var events = (try? decoder.feed(data)) ?? []
-        events += (try? decoder.finish()) ?? []
-        let calls = events.compactMap { event -> AIToolCall? in
-            if case .toolCallRequested(let call) = event { return call }
-            return nil
-        }
-        expect(
-            calls.first?.thoughtSignature == "sig==",
-            "the signature Gemini attaches to a call survives decoding")
-        expect(
-            calls.count == 2 && calls.last?.thoughtSignature == nil,
-            "and a parallel call that arrived without one stays without one")
-
-        let body = AIRequestBody.make(
-            AIRequest(messages: [
-                AIMessage(role: .user, text: "search"),
-                AIMessage(role: .assistant, text: "", toolCalls: calls)
-            ]),
-            configuration: AIHTTPConfiguration(
-                provider: .gemini,
-                baseURL: URL(string: "https://generativelanguage.googleapis.com/v1beta/openai")!,
-                model: "gemini-3.5-flash-lite"))
-        let encoded =
-            (body["messages"] as? [[String: Any]])?
-            .first { $0["tool_calls"] != nil }?["tool_calls"] as? [[String: Any]] ?? []
-        let google =
-            (encoded.first?["extra_content"] as? [String: Any])?["google"] as? [String: Any]
-        expect(
-            google?["thought_signature"] as? String == "sig==",
-            "and goes back on the assistant turn exactly as it arrived")
-        expect(
-            encoded.count == 2 && encoded.last?["extra_content"] == nil,
-            "while a call with no signature sends no extra_content at all")
-    }
-
-    /// Only a route that can actually run one is ever offered a tool.
     static func webSearchStaysOnTheVendorsOwnEndpoint() {
         let routes: [(AIProviderKind, String?, Bool)] = [
             (.openAI, nil, true),
@@ -259,15 +128,14 @@ struct AIProviderTests {
         let anthropic = AIHTTPConfiguration(
             provider: .anthropic, baseURL: URL(string: AIProviderKind.anthropic.defaultBaseURL)!,
             model: "claude")
-        let tool = AITool(name: "files__read", description: "Read", parameters: .object([:]), origin: "Files")
         let body = AIRequestBody.make(
-            AIRequest(messages: [AIMessage(role: .user, text: "news")], webSearch: true, tools: [tool]),
+            AIRequest(messages: [AIMessage(role: .user, text: "news")], webSearch: true),
             configuration: anthropic)
         let tools = body["tools"] as? [[String: Any]] ?? []
         expect(
-            tools.map { $0["name"] as? String } == [tool.name, "web_search"]
+            tools.map { $0["name"] as? String } == ["web_search"]
                 && tools.last?["type"] as? String == "web_search_20250305",
-            "Anthropic's search rides beside the client tools as its server tool")
+            "Anthropic's hosted search retains its server-tool format")
         let quiet = AIRequestBody.make(
             AIRequest(messages: [AIMessage(role: .user, text: "news")]), configuration: anthropic)
         expect(quiet["tools"] == nil, "search off adds no tool")
@@ -302,135 +170,8 @@ struct AIProviderTests {
         expect(
             link == linker.link(to: "https://swift.org/a_(b)"),
             "HTTP citation normalization escapes parentheses in the target")
-        expect(
-            !events.contains {
-                if case .toolCallRequested = $0 { return true }; return false
-            },
-            "a server tool never reaches Tinycast's own tool loop")
     }
 
-    static func toolCapabilitiesFollowTheRoute() {
-        let connection = AIConnection(provider: .anthropic, models: ["claude"])
-        expect(
-            connection.capabilities(for: "claude").tools,
-            "both HTTP shapes speak tool calling natively")
-        expect(
-            !AIModelCapabilities.appleIntelligence.tools,
-            "the on-device model reaches nothing, so it is offered nothing to reach with")
-        expect(
-            !AIModelCapabilities.chatGPT.tools,
-            "and the hosted ChatGPT route declines tools by design")
-        expect(
-            AIModelCapabilities.codex.tools && AIModelCapabilities.claudeCommand.tools,
-            "the two CLI routes are offered servers, which their own client runs")
-        expect(!AIModelCapabilities.none.tools, "an unconfigured route offers nothing either")
-        expect(
-            AIModelSelection.codex(model: "gpt", effort: nil).runsItsOwnTools
-                && AIModelSelection.claude(model: "sonnet", effort: nil).runsItsOwnTools,
-            "and they are the routes Tinycast never wraps in its own loop")
-        expect(
-            !AIModelSelection.grok(model: "grok", effort: nil).runsItsOwnTools
-                && !AIModelSelection.cursor(model: "auto", effort: nil).runsItsOwnTools
-                && !AIModelSelection.openCode(model: "m", effort: nil).runsItsOwnTools
-                && !AIModelSelection.appleIntelligence.runsItsOwnTools
-                && !AIModelSelection.api(connection: UUID(), model: "m", effort: nil)
-                    .runsItsOwnTools,
-            "every other route either runs Tinycast's loop or has nothing to call")
-
-        expect(
-            AIRequest(messages: []).tools.isEmpty,
-            "a request carries no tools unless a caller put them there")
-    }
-
-    /// Every provider 400s on a call without its result, or a result without its call.
-    static func toolCatalogsAndTurnsEncodePerProvider() {
-        let tool = AITool(
-            name: "fs__read", description: "Reads a file.",
-            parameters: .object(["type": .string("object")]), origin: "Files", title: "read")
-        let call = AIToolCall(id: "c1", name: "fs__read", arguments: #"{"path":"/tmp"}"#)
-        let turn = AIRequest(
-            messages: [
-                AIMessage(role: .user, text: "read it"),
-                AIMessage(role: .assistant, text: "", toolCalls: [call]),
-                AIMessage(
-                    role: .tool, text: "",
-                    toolResult: AIToolResult(callID: "c1", content: "hi", isError: false)),
-                AIMessage(
-                    role: .tool, text: "",
-                    toolResult: AIToolResult(callID: "c2", content: "no", isError: true))
-            ],
-            tools: [tool])
-
-        let openAI = AIRequestBody.make(
-            turn,
-            configuration: AIHTTPConfiguration(
-                provider: .openAICompatible, baseURL: URL(string: "https://api.openai.com/v1")!,
-                model: "gpt-5"))
-        let catalog = (openAI["tools"] as? [[String: Any]])?.first
-        expect(
-            catalog?["type"] as? String == "function",
-            "OpenAI takes a tool wrapped as a function")
-        expect(
-            (catalog?["function"] as? [String: Any])?["parameters"] is [String: Any],
-            "and the server's own schema is handed through as the parameters, unrewritten")
-        let openAIMessages = openAI["messages"] as? [[String: Any]] ?? []
-        let assistant = openAIMessages.first { $0["tool_calls"] != nil }
-        expect(
-            ((assistant?["tool_calls"] as? [[String: Any]])?.first?["id"] as? String) == "c1",
-            "the assistant turn keeps the id its result has to quote")
-        let results = openAIMessages.filter { $0["role"] as? String == "tool" }
-        expect(results.count == 2, "each result is its own tool turn")
-        expect(
-            results.first?["tool_call_id"] as? String == "c1",
-            "addressed by the call it answers")
-
-        let anthropic = AIRequestBody.make(
-            turn,
-            configuration: AIHTTPConfiguration(
-                provider: .anthropic, baseURL: URL(string: "https://api.anthropic.com")!,
-                model: "claude"))
-        let anthropicTool = (anthropic["tools"] as? [[String: Any]])?.first
-        expect(
-            anthropicTool?["input_schema"] != nil && anthropicTool?["type"] == nil,
-            "Anthropic names the same schema input_schema and takes no wrapper")
-        let anthropicMessages = anthropic["messages"] as? [[String: Any]] ?? []
-        let use =
-            (anthropicMessages.first { $0["role"] as? String == "assistant" }?["content"]
-            as? [[String: Any]])?.first
-        expect(use?["type"] as? String == "tool_use", "a call is a content block, not a field")
-        expect(
-            (use?["input"] as? [String: Any])?["path"] as? String == "/tmp",
-            "and its arguments are parsed back into the object Anthropic expects")
-        let resultBlocks =
-            anthropicMessages.last?["content"] as? [[String: Any]] ?? []
-        expect(
-            anthropicMessages.last?["role"] as? String == "user",
-            "Anthropic takes results as a user turn")
-        expect(
-            resultBlocks.count == 2,
-            "and a run of them arrives as one turn, because two would be rejected")
-        expect(
-            resultBlocks.last?["is_error"] as? Bool == true,
-            "a tool's own failure stays marked so the model can work around it")
-
-        let plain = AIRequestBody.make(
-            AIRequest(messages: [AIMessage(role: .user, text: "hi")]),
-            configuration: AIHTTPConfiguration(
-                provider: .openAI, baseURL: URL(string: "https://api.openai.com/v1")!,
-                model: "gpt-5"))
-        expect(plain["tools"] == nil, "a turn with no tools sends no tools key at all")
-
-        let router = AIRequestBody.make(
-            AIRequest(messages: [AIMessage(role: .user, text: "hi")]),
-            configuration: AIHTTPConfiguration(
-                provider: .openRouter, baseURL: URL(string: "https://openrouter.ai/api/v1")!,
-                model: "openai/gpt-5", effort: "low"))
-        expect(
-            (router["reasoning"] as? [String: String])?["effort"] == "low",
-            "OpenRouter receives the reasoning effort its catalog offered")
-    }
-
-    /// A body that named the default would 400 on every endpoint without a thinking mode.
     static func aGatewayOffersNoneAsItsReasoningEffort() {
         let gateway = AIConnection(
             provider: .openAI, baseURL: "https://gateway.example/v1", models: ["m"])
@@ -1187,10 +928,9 @@ struct AIProviderTests {
         expect(
             toolEvents == [
                 .thinking, .reasoning("r"),
-                .toolCallRequested(AIToolCall(id: "c1", name: "read", arguments: "{}")),
                 .usage(AIUsage(inputTokens: 2, outputTokens: 3)), .finished
             ],
-            "think tags: reasoning precedes tools without changing tool, usage or completion order")
+            "think tags: unrequested function calls are ignored without changing reasoning or usage")
         let native = Data(
             """
             data: {"choices":[{"delta":{"reasoning_content":"native"}}]}
@@ -1540,152 +1280,6 @@ struct AIProviderTests {
             "a compatible endpoint resolves the brand from the model id")
     }
 
-    static func codexQueuedWritesRetire() async throws {
-        let (client, root) = try await pausedCodexClient()
-        defer {
-            client.stop()
-            try? FileManager.default.removeItem(at: root)
-        }
-        var filling = false
-        let bulk = Task {
-            filling = true
-            return try await client.request(
-                method: "bulk", params: ["data": String(repeating: "x", count: 4_000_000)],
-                timeout: .seconds(5))
-        }
-        while !filling { await Task.yield() }
-        var queued = false
-        let cancelled = Task {
-            queued = true
-            return try await client.request(method: "cancelled")
-        }
-        while !queued { await Task.yield() }
-        cancelled.cancel()
-        do {
-            _ = try await cancelled.value
-            expect(false, "cancellation finishes the waiting request")
-        } catch {
-            expect(error is CancellationError, "cancellation preserves CancellationError")
-        }
-        do {
-            _ = try await client.request(method: "expired", timeout: .milliseconds(50))
-            expect(false, "a queued request can time out while stdin is blocked")
-        } catch CodexAppServerClient.ClientError.timedOut {
-        } catch {
-            expect(false, "a queued request reports its timeout: \(error)")
-        }
-        let alreadyCancelled = Task { try await client.request(method: "already-cancelled") }
-        alreadyCancelled.cancel()
-        _ = await alreadyCancelled.result
-        try Data().write(to: root.appendingPathComponent("resume"))
-        _ = try await bulk.value
-        _ = try await client.request(method: "barrier")
-        let received = try String(contentsOf: root.appendingPathComponent("received"), encoding: .utf8)
-        expect(!received.contains("cancelled"), "cancelled writes never reach the peer")
-        expect(!received.contains("expired"), "expired writes never reach the peer")
-        expect(received.contains("bulk\nbarrier"), "an in-flight frame finishes before the next write")
-    }
-
-    static func codexStopDropsQueuedWrites() async throws {
-        let (client, root) = try await pausedCodexClient()
-        defer {
-            client.stop()
-            try? FileManager.default.removeItem(at: root)
-        }
-        var filling = false
-        let bulk = Task {
-            filling = true
-            return try await client.request(
-                method: "bulk", params: ["data": String(repeating: "x", count: 4_000_000)])
-        }
-        while !filling { await Task.yield() }
-        var queued = false
-        let queuedWrite = Task {
-            queued = true
-            return try await client.request(method: "stopped")
-        }
-        while !queued { await Task.yield() }
-        client.stop()
-        _ = await bulk.result
-        _ = await queuedWrite.result
-        try Data().write(to: root.appendingPathComponent("resume"))
-        let deadline = ContinuousClock.now.advanced(by: .seconds(3))
-        while !FileManager.default.fileExists(atPath: root.appendingPathComponent("exited").path),
-            ContinuousClock.now < deadline
-        {
-            try await Task.sleep(for: .milliseconds(10))
-        }
-        expect(
-            FileManager.default.fileExists(atPath: root.appendingPathComponent("exited").path),
-            "Stop closes stdin after the in-flight frame")
-        let received = try String(contentsOf: root.appendingPathComponent("received"), encoding: .utf8)
-        expect(!received.contains("stopped"), "Stop retires writes still waiting on the queue")
-    }
-
-    static func pausedCodexClient() async throws -> (CodexAppServerClient, URL) {
-        let root = FileManager.default.temporaryDirectory
-            .appendingPathComponent("ai-provider-codex-\(UUID().uuidString)")
-        let client = CodexAppServerClient(workspace: root)
-        client.launchSettings = {
-            InstalledAILaunch(
-                commandPath: CommandLine.arguments[0], environment: ["TINYCAST_TEST_CODEX_ROOT": root.path])
-        }
-        try await client.start()
-        _ = try await client.request(method: "pause")
-        return (client, root)
-    }
-
-    static func codexPeer() throws {
-        guard let path = ProcessInfo.processInfo.environment["TINYCAST_TEST_CODEX_ROOT"] else {
-            throw CocoaError(.fileNoSuchFile)
-        }
-        let root = URL(fileURLWithPath: path)
-        let log = root.appendingPathComponent("received")
-        FileManager.default.createFile(atPath: log.path, contents: nil)
-        let handle = try FileHandle(forWritingTo: log)
-        defer {
-            try? handle.close()
-            try? Data().write(to: root.appendingPathComponent("exited"))
-        }
-        while let line = readLine() {
-            guard let data = line.data(using: .utf8),
-                let request = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                let method = request["method"] as? String
-            else { continue }
-            try handle.write(contentsOf: Data("\(method)\n".utf8))
-            if let id = request["id"] as? Int {
-                var reply = try JSONSerialization.data(withJSONObject: ["id": id, "result": [:]])
-                reply.append(0x0A)
-                try FileHandle.standardOutput.write(contentsOf: reply)
-            }
-            if method == "pause" {
-                while !FileManager.default.fileExists(atPath: root.appendingPathComponent("resume").path) {
-                    Thread.sleep(forTimeInterval: 0.002)
-                }
-            }
-        }
-    }
-
-    static func codexProtocolFramesRoundTrip() {
-        let request = try? CodexAppServerProtocol.request(
-            id: 7, method: "account/read", params: ["refreshToken": false])
-        let requestObject = request.flatMap {
-            try? JSONSerialization.jsonObject(with: $0) as? [String: Any]
-        }
-        expect((requestObject?["id"] as? Int) == 7, "Codex requests keep numeric IDs")
-        expect(
-            requestObject?["method"] as? String == "account/read",
-            "Codex requests keep their method")
-
-        let response = Data("{\"id\":7,\"result\":{\"ok\":true}}".utf8)
-        if case .response(let id, let result) = CodexAppServerProtocol.parse(response) {
-            expect(id == 7, "Codex responses route to the pending request")
-            expect(result["ok"]?.boolValue == true, "Codex response values preserve booleans")
-        } else {
-            expect(false, "a valid Codex response parses")
-        }
-    }
-
     static func onDeviceSelectionsRoundTripAndLead() {
         let encoded = try? JSONEncoder().encode(AIModelSelection.appleIntelligence)
         let decoded = encoded.flatMap { try? JSONDecoder().decode(AIModelSelection.self, from: $0) }
@@ -1696,16 +1290,13 @@ struct AIProviderTests {
         expect(
             AIModelSelection.appleIntelligence.source == .appleIntelligence,
             "the on-device selection is its own source")
-        expect(
-            AIModelSelection.appleIntelligence.isOnDevice
-                && !AIModelSelection.codex(model: "gpt-5", effort: nil).isOnDevice,
-            "only the on-device selection reads as on device")
-
-        let legacy = Data(#"{"chatGPT":{"model":"gpt-5","effort":"high"}}"#.utf8)
-        expect(
-            (try? JSONDecoder().decode(AIModelSelection.self, from: legacy))
-                == .codex(model: "gpt-5", effort: "high"),
-            "the old ChatGPT selection migrates to the installed Codex route")
+        expect(AIModelSelection.appleIntelligence.isOnDevice, "on-device remains identifiable")
+        for source in ["codex", "chatGPT", "claude", "grok", "openCode", "cursor"] {
+            let legacy = Data("{\"\(source)\":{\"model\":\"old\",\"effort\":\"high\"}}".utf8)
+            expect(
+                (try? JSONDecoder().decode(AIModelSelection.self, from: legacy)) == nil,
+                "retired \(source) selections are not executable")
+        }
 
         let suite = "AIProviderTests.onDevice"
         let defaults = isolatedDefaults(suite)
@@ -1743,141 +1334,6 @@ struct AIProviderTests {
         expect(reopened.connections.map(\.id) == [secondID], "removing one connection keeps the other")
     }
 
-    static func installedModelLoadingPreferencePersists() {
-        let suite = "AIProviderTests.installedModelLoading"
-        let defaults = isolatedDefaults(suite)
-        defer { discardSuite(suite, defaults) }
-        let store = AISettingsStore(defaults: defaults)
-        expect(
-            store.enabledInstalledProviders.isEmpty,
-            "installed providers are disabled by default")
-        store.setInstalledProviderEnabled(true, for: .claude)
-        store.setInstalledProviderEnabled(false, for: .openCode)
-        let reopened = AISettingsStore(defaults: defaults)
-        expect(
-            reopened.enabledInstalledProviders == [.claude],
-            "an enabled provider survives a restart")
-        expect(
-            !reopened.enabledInstalledProviders.contains(.openCode),
-            "a provider toggle survives a restart")
-    }
-
-    static func installedOverridesPersistAndResolve() {
-        let suite = "AIProviderTests.installedOverrides"
-        let defaults = isolatedDefaults(suite)
-        defer { discardSuite(suite, defaults) }
-        let kept = KeptVariables()
-        let environmentStore = InstalledAIEnvironmentStore(
-            values: { kept.values[$0] ?? [:] }, save: { kept.values[$1] = $0 })
-        let store = AISettingsStore(defaults: defaults, environmentStore: environmentStore)
-        expect(store.launch(for: .codex) == InstalledAILaunch(), "a tool left alone has no override")
-        store.setCommandPath("  ~/bin/codex \n", for: .codex)
-        expect(store.override(for: .codex).commandPath == "~/bin/codex", "a path is kept trimmed")
-        expect(store.launchRevisions[.codex] == 1, "and setting it counts as a change to the launch")
-        store.setCommandPath("~/bin/codex", for: .codex)
-        expect(store.launchRevisions[.codex] == 1, "the same path again is no change")
-        try? store.setEnvironment(
-            [
-                InstalledAIVariable(name: "HTTPS_PROXY", value: "http://127.0.0.1:9"),
-                InstalledAIVariable(name: "HTTPS_PROXY", value: "a second one"),
-                InstalledAIVariable(name: "not a name", value: "x"),
-                InstalledAIVariable(name: "CODEX_HOME", value: "/tmp/home")
-            ], for: .codex)
-        expect(
-            store.override(for: .codex).environmentNames == ["HTTPS_PROXY", "CODEX_HOME"],
-            "variables keep their order, without a repeated or an unusable name")
-        expect(
-            defaults.data(forKey: AppSettingsKey.aiInstalledOverrides.rawValue)
-                .map { String(decoding: $0, as: UTF8.self) }?.contains("127.0.0.1") == false,
-            "and no value is written to settings")
-        let reopened = AISettingsStore(defaults: defaults, environmentStore: environmentStore)
-        expect(
-            reopened.launch(for: .codex)
-                == InstalledAILaunch(
-                    commandPath: "~/bin/codex",
-                    environment: ["HTTPS_PROXY": "http://127.0.0.1:9", "CODEX_HOME": "/tmp/home"]),
-            "a launch after a restart has the path and the values")
-        expect(
-            (try? reopened.environment(for: .codex))?.map(\.name) == ["HTTPS_PROXY", "CODEX_HOME"],
-            "and the editor lists them in the order they were entered")
-        reopened.setCommandPath("", for: .codex)
-        try? reopened.setEnvironment([], for: .codex)
-        expect(
-            defaults.object(forKey: AppSettingsKey.aiInstalledOverrides.rawValue) == nil
-                && kept.values[.codex]?.isEmpty == true,
-            "clearing both leaves nothing stored")
-
-        let home = NSHomeDirectory()
-        let present: (String) -> Bool = { $0 == home + "/bin/codex" }
-        expect(InstalledAILaunch().command(isExecutable: present) == .automatic, "no path looks up")
-        expect(
-            InstalledAILaunch(commandPath: "~/bin/codex").command(isExecutable: present)
-                == .executable(URL(fileURLWithPath: home + "/bin/codex")),
-            "a path under the home folder may be written with a tilde")
-        expect(
-            InstalledAILaunch(commandPath: "/opt/none/codex").command(isExecutable: present)
-                == .missing(path: "/opt/none/codex"),
-            "a path with nothing to run is reported, never replaced by a lookup")
-        expect(
-            InstalledAILaunch(commandPath: "codex").command(isExecutable: { _ in true })
-                == .missing(path: "codex"),
-            "a bare name is not a path")
-    }
-
-    static func aFailedKeychainReadIsNeverSavedOver() {
-        let suite = "AIProviderTests.failedKeychainRead"
-        let defaults = isolatedDefaults(suite)
-        defer { discardSuite(suite, defaults) }
-        let kept = KeptVariables()
-        kept.values[.claude] = ["HTTPS_PROXY": "http://127.0.0.1:9"]
-        let working = InstalledAIEnvironmentStore(
-            values: { kept.values[$0] ?? [:] }, save: { kept.values[$1] = $0 })
-        try? AISettingsStore(defaults: defaults, environmentStore: working).setEnvironment(
-            [InstalledAIVariable(name: "HTTPS_PROXY", value: "http://127.0.0.1:9")], for: .claude)
-        let locked = InstalledAIEnvironmentStore(
-            values: { _ in throw KeychainUnreadable() }, save: { kept.values[$1] = $0 })
-        let store = AISettingsStore(defaults: defaults, environmentStore: locked)
-        expect(
-            (try? store.environment(for: .claude)) == nil,
-            "a read that fails is an error, never a list of names without values")
-        expect(
-            (try? store.setEnvironment(
-                [InstalledAIVariable(name: "HTTPS_PROXY", value: "")], for: .claude)) == nil,
-            "and saving over values that could not be read fails")
-        expect(
-            kept.values[.claude] == ["HTTPS_PROXY": "http://127.0.0.1:9"],
-            "so the stored value survives")
-        expect(
-            store.launch(for: .claude).environment.isEmpty,
-            "a launch that cannot read the values starts without them")
-    }
-
-    static func aLaunchInheritsTheReadersVariablesNotTinycastsOwn() {
-        let launch = InstalledAILaunch(
-            environment: [
-                "PATH": "/reader/bin", "HTTPS_PROXY": "proxy", "NO_COLOR": "0",
-                "OPENCODE_CONFIG_CONTENT": "{}", "TC_MCP_0_0": "stolen", "1BAD": "x"
-            ])
-        let inherited = launch.inherited(
-            for: .openCode, base: ["PATH": "/usr/bin", "HOME": "/Users/reader", "NO_COLOR": "1"])
-        expect(
-            inherited["PATH"] == "/reader/bin" && inherited["HTTPS_PROXY"] == "proxy"
-                && inherited["HOME"] == "/Users/reader",
-            "the reader's variables lie over the app's own")
-        expect(
-            inherited["OPENCODE_CONFIG_CONTENT"] == nil && inherited["TC_MCP_0_0"] == nil
-                && inherited["NO_COLOR"] == "1" && inherited["1BAD"] == nil,
-            "but never one Tinycast sets itself, nor one that is not a variable name")
-        expect(
-            launch.inherited(for: .claude, base: [:])["OPENCODE_CONFIG_CONTENT"] == "{}",
-            "a name only another tool reserves is an ordinary variable here")
-        expect(
-            InstalledAIKind.allCases.allSatisfy { kind in
-                kind.managedEnvironment.keys.allSatisfy(kind.isManagedVariable)
-            },
-            "every variable a tool is launched with is one the reader cannot replace")
-    }
-
     static func switchedOffRoutesLeaveTheDefault() {
         let suite = "AIProviderTests.disabledRoutes"
         let defaults = isolatedDefaults(suite)
@@ -1910,28 +1366,29 @@ struct AIProviderTests {
         defer { discardSuite(suite, defaults) }
         let store = AISettingsStore(defaults: defaults)
         let available = ["a", "b", "c"]
+        let source = AIModelSource.api(UUID())
         expect(
-            available.allSatisfy { store.isModelShown($0, in: .openCode) },
+            available.allSatisfy { store.isModelShown($0, in: source) },
             "a route nobody has trimmed lists every model")
-        store.setModel("b", shown: false, in: .openCode, available: available)
+        store.setModel("b", shown: false, in: source, available: available)
         let reopened = AISettingsStore(defaults: defaults)
         expect(
-            reopened.isModelShown("a", in: .openCode) && !reopened.isModelShown("b", in: .openCode),
+            reopened.isModelShown("a", in: source) && !reopened.isModelShown("b", in: source),
             "an unticked model stays out of the picker after a restart")
         expect(
-            !reopened.isModelShown("d", in: .openCode),
+            !reopened.isModelShown("d", in: source),
             "a trimmed route does not list a model it adds later")
         expect(
-            reopened.isModelShown("b", in: .claude),
+            reopened.isModelShown("b", in: .api(UUID())),
             "trimming one route leaves the others listing everything")
-        reopened.setModel("b", shown: true, in: .openCode, available: available)
+        reopened.setModel("b", shown: true, in: source, available: available)
         expect(
-            reopened.shownModels[AIModelSource.openCode.storageKey] == nil
-                && reopened.isModelShown("d", in: .openCode),
+            reopened.shownModels[source.storageKey] == nil
+                && reopened.isModelShown("d", in: source),
             "ticking every model back returns the route to listing all, later ones included")
-        reopened.hideAllModels(in: .openCode)
+        reopened.hideAllModels(in: source)
         expect(
-            available.allSatisfy { !reopened.isModelShown($0, in: .openCode) },
+            available.allSatisfy { !reopened.isModelShown($0, in: source) },
             "Hide All leaves no models listed")
         let connection = AIConnection(provider: .openRouter, models: ["x", "y"])
         reopened.save(connection)
@@ -1941,584 +1398,8 @@ struct AIProviderTests {
             reopened.shownModels[AIModelSource.api(connection.id).storageKey] == nil,
             "removing a connection forgets which of its models were shown")
     }
-
-    static func installedCLIStreamsDecode() {
-        let openCodeText = Data(
-            #"{"type":"text","sessionID":"ses_1","part":{"text":"Hello"}}"#.utf8)
-        expect(
-            InstalledAIStreamDecoder.decode(openCodeText, kind: .openCode)
-                == InstalledAIStreamFrame(events: [.text("Hello")], sessionID: "ses_1"),
-            "OpenCode text and its cleanup session decode together")
-        let openCodeReasoning = Data(
-            #"{"type":"reasoning","sessionID":"ses_1","part":{"text":"Weighing it"}}"#.utf8)
-        expect(
-            InstalledAIStreamDecoder.decode(openCodeReasoning, kind: .openCode).events
-                == [.reasoning("\n\nWeighing it")],
-            "OpenCode reasoning opens its own block")
-        let openCodeStep = Data(
-            #"""
-            {"type":"step_finish","sessionID":"ses_1","part":{"cost":0.25,"tokens":{"input":12,
-            "output":4,"reasoning":3,"cache":{"read":5,"write":1}}}}
-            """#.utf8)
-        let openCodeFrame = InstalledAIStreamDecoder.decode(openCodeStep, kind: .openCode)
-        expect(
-            openCodeFrame.events == [
-                .usage(
-                    AIUsage(
-                        inputTokens: 12, outputTokens: 7, cachedInputTokens: 6,
-                        reasoningTokens: 3, costUSD: 0.25))
-            ] && !openCodeFrame.completed,
-            "an OpenCode step reports usage and leaves the finish to the clean exit")
-        let openCodeError = Data(
-            #"{"type":"error","sessionID":"","error":{"type":"unknown","message":"No provider"}}"#.utf8)
-        let openCodeErrorFrame = InstalledAIStreamDecoder.decode(openCodeError, kind: .openCode)
-        expect(
-            openCodeErrorFrame.error == "No provider" && openCodeErrorFrame.sessionID == nil,
-            "an OpenCode error before any session fails the turn with nothing to delete")
-        let openCodeModels = #"""
-            {"location":{"directory":"/w"},"data":[
-            {"id":"gpt-5","providerID":"openai","name":"GPT-5",
-            "capabilities":{"tools":true,"input":["text","image"],"output":["text"]},
-            "variants":[{"id":"high"},{"id":"low"},{"id":"minimal"}]},
-            {"id":"glm-4.6","providerID":"zai","name":"GLM 4.6",
-            "capabilities":{"tools":true,"input":["text"],"output":["text"]},"variants":[]},
-            {"id":"claude-sonnet-4-5","providerID":"anthropic","name":"Claude Sonnet 4.5",
-            "capabilities":{"tools":true,"input":["text","image","pdf"],"output":["text"]},
-            "variants":[]}]}
-            """#
-        let openCodeCatalog = InstalledAIModel.openCodeCatalog(openCodeModels)
-        expect(
-            openCodeCatalog.map(\.id) == [
-                "anthropic/claude-sonnet-4-5", "openai/gpt-5", "zai/glm-4.6"
-            ],
-            "OpenCode models are listed by their provider-qualified reference")
-        expect(
-            openCodeCatalog[1].efforts.map(\.id) == ["minimal", "low", "high"],
-            "OpenCode variants become efforts in reasoning order")
-        expect(
-            openCodeCatalog.map(\.acceptsImages) == [true, true, false],
-            "OpenCode takes images only where the model's input does")
-        expect(
-            openCodeCatalog.allSatisfy(\.supportsTools),
-            "OpenCode retains advertised tool support")
-        let textOnlyModels = #"""
-            {"data":[{"id":"text","providerID":"local","capabilities":{"tools":false}},
-            {"id":"unknown","providerID":"local"}]}
-            """#
-        expect(
-            InstalledAIModel.openCodeCatalog(textOnlyModels).map(\.supportsTools) == [false, false],
-            "OpenCode models without advertised tool support do not offer tools")
-        expect(
-            InstalledAIModel.openCodeCatalog("Error: server failed to start").isEmpty,
-            "an OpenCode answer that is not the model list yields no models")
-
-        let claudeText = Data(
-            #"{"type":"stream_event","event":{"delta":{"type":"text_delta","text":"Hi"}}}"#.utf8)
-        expect(
-            InstalledAIStreamDecoder.decode(claudeText, kind: .claude).events == [.text("Hi")],
-            "Claude partial text decodes without replaying its full assistant message")
-        let claudeFinish = Data(
-            #"{"type":"result","is_error":false,"usage":{"input_tokens":8,"output_tokens":3}}"#.utf8)
-        let claudeFrame = InstalledAIStreamDecoder.decode(claudeFinish, kind: .claude)
-        expect(
-            claudeFrame.events == [.usage(AIUsage(inputTokens: 8, outputTokens: 3))]
-                && claudeFrame.completed,
-            "Claude result usage ends the stream")
-
-        let cursorDelta = Data(
-            #"{"type":"assistant","timestamp_ms":1,"message":{"content":[{"type":"text","text":"Hi"}]}}"#
-                .utf8)
-        expect(
-            InstalledAIStreamDecoder.decode(cursorDelta, kind: .cursor).events == [.text("Hi")],
-            "Cursor live deltas decode as text")
-        let cursorFlush = Data(
-            #"{"type":"assistant","message":{"content":[{"type":"text","text":"Hi"}]}}"#.utf8)
-        expect(
-            InstalledAIStreamDecoder.decode(cursorFlush, kind: .cursor).events.isEmpty,
-            "Cursor buffered flushes without timestamp_ms are ignored")
-        let cursorDone = Data(#"{"type":"result","subtype":"success","result":"Hi"}"#.utf8)
-        expect(
-            InstalledAIStreamDecoder.decode(cursorDone, kind: .cursor).completed,
-            "Cursor result ends the stream")
-        let cursorSession = Data(
-            #"{"type":"system","subtype":"init","session_id":"ses_cursor"}"#.utf8)
-        expect(
-            InstalledAIStreamDecoder.decode(cursorSession, kind: .cursor).sessionID == "ses_cursor",
-            "Cursor system init carries the session id for cleanup")
-        let grokText = Data(
-            #"{"type":"stream_event","session_id":"ses_g","event":{"delta":{"type":"text_delta","text":"Yo"}}}"#
-                .utf8)
-        let grokTextFrame = InstalledAIStreamDecoder.decode(grokText, kind: .grok)
-        expect(
-            grokTextFrame.events == [.text("Yo")] && grokTextFrame.sessionID == "ses_g",
-            "Grok partial text reuses the Claude stream shape and keeps the session id")
-        let grokFinish = Data(
-            #"{"type":"result","is_error":false,"session_id":"ses_g","usage":{"input_tokens":5,"output_tokens":1}}"#
-                .utf8)
-        let grokFrame = InstalledAIStreamDecoder.decode(grokFinish, kind: .grok)
-        expect(
-            grokFrame.events == [.usage(AIUsage(inputTokens: 5, outputTokens: 1))]
-                && grokFrame.completed && grokFrame.sessionID == "ses_g",
-            "Grok result usage ends the stream and names the session to delete")
-        let grokError = Data(
-            #"{"type":"result","subtype":"error_during_execution","is_error":true,"errors":["Not signed in."],"session_id":""}"#
-                .utf8)
-        let grokErrorFrame = InstalledAIStreamDecoder.decode(grokError, kind: .grok)
-        expect(
-            grokErrorFrame.error == "Not signed in." && grokErrorFrame.sessionID == nil
-                && !grokErrorFrame.completed,
-            "Grok execution errors name the cause, not Claude, and ignore an empty session id")
-        let grokBare = Data(#"{"type":"result","is_error":true}"#.utf8)
-        expect(
-            InstalledAIStreamDecoder.decode(grokBare, kind: .grok).error
-                == "Grok could not finish the response.",
-            "a Grok error with no cause still names Grok")
-    }
-
-    /// A secret on argv is in `ps`, and a key Codex does not know is a server that never starts.
-    static func codexLaunchNamesServersAndKeepsSecretsOffArgv() {
-        let stdio = AIToolServer(
-            handle: "files", title: "Files",
-            transport: .command(
-                path: "/usr/local/bin/node", arguments: ["server.js", "--root=/tmp"],
-                environment: ["API_KEY": "s3cret"]))
-        let oauth = AIToolServer(
-            handle: "linear", title: "Linear",
-            transport: .url(
-                "https://mcp.linear.app/mcp", headerName: "Authorization",
-                headerValue: "Bearer tok-123"))
-        let custom = AIToolServer(
-            handle: "notes", title: "Notes",
-            transport: .url(
-                "https://notes.example/mcp", headerName: "X-Api-Key", headerValue: "k1"))
-
-        let arguments = CodexMCPLaunch.arguments(
-            servers: [stdio, oauth, custom], disabling: ["computer-use", "files"])
-        expect(
-            arguments.contains("mcp_servers.computer-use.enabled=false")
-                && arguments.contains("mcp_servers.files.enabled=false"),
-            "every one of the reader's own servers is disabled by name, one named like ours too")
-        expect(
-            arguments.contains("mcp_servers.tinycast-files.enabled=true")
-                && !arguments.contains {
-                    $0.hasPrefix("mcp_servers.files.") && !$0.hasSuffix("=false")
-                },
-            "since Tinycast's go by names of their own, which no table of the reader's merges into")
-        expect(
-            arguments.contains(#"mcp_servers.tinycast-files.command="/bin/sh""#)
-                && arguments.contains(Self.renamingArguments),
-            "a local server with variables arrives through a shell that renames them, then runs it")
-        expect(
-            arguments.contains(Self.forwardedVariables),
-            "whose environment is named rather than carried: Codex forwards only what is listed")
-        expect(
-            arguments.contains(#"mcp_servers.tinycast-linear.bearer_token_env_var="TC_MCP_1_0""#),
-            "an OAuth endpoint lends its token through the variable Codex reads it from")
-        expect(
-            arguments.contains(Self.headerMapOverride),
-            "and another header name goes through the map that takes one")
-        expect(
-            !arguments.contains {
-                $0.contains("s3cret") || $0.contains("tok-123") || $0.contains("k1")
-            },
-            "no value reaches argv, where `ps` would show it")
-
-        let environment = CodexMCPLaunch.environment(servers: [stdio, oauth, custom]) ?? [:]
-        expect(
-            environment["TC_MCP_0_0"] == "s3cret" && environment["TC_MCP_2_0"] == "k1",
-            "the values ride the child's environment instead")
-        expect(
-            environment["TC_MCP_1_0"] == "tok-123",
-            "and a bearer token loses its prefix, because Codex composes that itself")
-
-        let open = AIToolServer(
-            handle: "open", title: "Open",
-            transport: .url(
-                "https://open.example/mcp", headerName: "Authorization", headerValue: ""))
-        let openArguments = CodexMCPLaunch.arguments(servers: [open], disabling: [])
-        expect(
-            openArguments.contains(#"mcp_servers.tinycast-open.url="https://open.example/mcp""#)
-                && !openArguments.contains { $0.contains("bearer_token") || $0.contains("headers") }
-                && CodexMCPLaunch.environment(servers: [open]) == [:],
-            "a server that needs no credential goes to Codex with no header and no variable")
-
-        let quoted = CodexMCPLaunch.arguments(
-            servers: [
-                AIToolServer(
-                    handle: "odd", title: "Odd",
-                    transport: .command(
-                        path: #"/tmp/we"ird\bin"#, arguments: [], environment: [:]))
-            ], disabling: [])
-        expect(
-            quoted.contains(#"mcp_servers.tinycast-odd.command="/tmp/we\"ird\\bin""#),
-            "a path with a quote in it is still one TOML string")
-
-        expect(
-            CodexMCPLaunch.quoted("a\r\nb\tc\u{1}\u{7F}é\"\\")
-                == #""a\u000D\u000Ab\u0009c\u0001\u007Fé\"\\""#,
-            "CRLF, every other control character and DEL become \\u escapes TOML accepts")
-        let crlf = CodexMCPLaunch.arguments(
-            servers: [
-                AIToolServer(
-                    handle: "lines", title: "Lines",
-                    transport: .command(path: "/bin/echo", arguments: ["a\r\nb"], environment: [:]))
-            ], disabling: [])
-        expect(
-            crlf.contains(#"mcp_servers.tinycast-lines.args=["a\u000D\u000Ab"]"#),
-            "so an argument carrying a Windows line ending still leaves Codex's config loadable")
-
-        expect(
-            CodexMCPLaunch.handle(ofServer: "tinycast-files") == "files"
-                && CodexMCPLaunch.handle(ofServer: "files") == nil
-                && CodexMCPLaunch.handle(ofServer: "tinycast-") == nil,
-            "a name Codex reports maps back to a handle only when it is one of Tinycast's")
-        expect(
-            CodexMCPLaunch.takenName(servers: [stdio], foreignNames: ["tinycast-files"])
-                == "tinycast-files"
-                && CodexMCPLaunch.takenName(servers: [stdio], foreignNames: ["files"]) == nil,
-            "and a reader's server already named like an armed one of ours is caught before launch")
-
-        expect(
-            CodexMCPLaunch.foreignNames(listing: #"[{"name":"a","enabled":true},{"name":"b c"}]"#)
-                == ["a", "b c"],
-            "the reader's servers are every name `codex mcp list --json` reports")
-        expect(
-            CodexMCPLaunch.foreignNames(listing: "warning: not json") == nil
-                && CodexMCPLaunch.foreignNames(listing: #"{"name":"a"}"#) == nil
-                && CodexMCPLaunch.foreignNames(listing: #"[{"name":"a"},{"enabled":true}]"#) == nil,
-            "and output that is not that list reads as unknown, never as an empty one")
-        expect(
-            CodexMCPLaunch.unaddressableName(["ok", "日本", "has space", "has.dot"]) == "has.dot"
-                && CodexMCPLaunch.unaddressableName(["a=b"]) == "a=b"
-                && CodexMCPLaunch.unaddressableName(["ok", "日本", "has space"]) == nil,
-            "only a dot or `=` keeps `-c` from naming a server; spaces and other scripts do not")
-    }
-
-    /// Only running the launch proves a server gets its own names; `printenv` stands in for it.
-    static func codexLaunchHandsAServerItsOwnVariableNames() {
-        let derived = ["TC_MCP_0_0": "s3cret"]
-        let launch = CodexMCPLaunch.command(
-            path: "/usr/bin/printenv", arguments: ["API_KEY"],
-            environment: ["API_KEY": "s3cret"], server: 0)
-        expect(
-            run(launch, environment: derived) == "s3cret\n",
-            "the server reads its value under its own name, which Codex alone cannot give it")
-        let leftover = CodexMCPLaunch.command(
-            path: "/usr/bin/printenv", arguments: ["TC_MCP_0_0"],
-            environment: ["API_KEY": "s3cret"], server: 0)
-        expect(
-            run(leftover, environment: derived) == "",
-            "and the derived name is gone, so the value does not reach it twice")
-
-        let odd = AIToolServer(
-            handle: "odd", title: "Odd",
-            transport: .command(
-                path: "/usr/bin/true", arguments: [], environment: ["NOT-A-NAME": "hidden"]))
-        let oddArguments = CodexMCPLaunch.arguments(servers: [odd], disabling: [])
-        expect(
-            oddArguments.contains(#"mcp_servers.tinycast-odd.command="/usr/bin/true""#)
-                && oddArguments.contains("mcp_servers.tinycast-odd." + "env" + "_vars=[]"),
-            "a name the shell cannot export is not forwarded, and the server launches directly")
-        expect(
-            CodexMCPLaunch.environment(servers: [odd]) == [:],
-            "so its value never enters the app-server's environment under a name nobody reads")
-    }
-
-    /// Two spellings of handle and key must never meet in one variable, or a secret changes hands.
-    static func codexVariablesNeverCollide() {
-        func local(_ handle: String, _ environment: [String: String]) -> AIToolServer {
-            AIToolServer(
-                handle: handle, title: handle,
-                transport: .command(
-                    path: "/usr/bin/printenv", arguments: [], environment: environment))
-        }
-        let servers = [
-            local("github-x", ["TOKEN": "one"]),
-            local("github", ["X_TOKEN": "two"]),
-            local("both", ["token": "three", "TOKEN": "four"]),
-            AIToolServer(
-                handle: "a", title: "a",
-                transport: .url("https://a.example/mcp", headerName: "B-C", headerValue: "five")),
-            local("a-b", ["C": "six"]),
-            local("日本", ["TOKEN": "seven"]),
-            local("中国", ["TOKEN": "eight"])
-        ]
-        let environment = CodexMCPLaunch.environment(servers: servers) ?? [:]
-        expect(
-            environment.count == 8
-                && Set(environment.values)
-                    == ["one", "two", "three", "four", "five", "six", "seven", "eight"],
-            "every secret gets a variable of its own, however the handles and keys are spelled")
-        var delivered: [String] = []
-        for (index, server) in servers.enumerated() {
-            guard case .command(let path, _, let values) = server.transport else { continue }
-            for key in values.keys.sorted() {
-                let launch = CodexMCPLaunch.command(
-                    path: path, arguments: [key], environment: values, server: index)
-                delivered.append(run(launch, environment: environment))
-            }
-        }
-        expect(
-            delivered == ["one\n", "two\n", "four\n", "three\n", "six\n", "seven\n", "eight\n"],
-            "and each local server reads only its own values, under its own names")
-        let shadowing = ["TC_MCP_0_0": "zero", "TC_MCP_0_1": "one", "Z": "zed"]
-        let shadowingDerived = CodexMCPLaunch.environment(servers: [local("s", shadowing)]) ?? [:]
-        let shadowingReads = ["TC_MCP_0_0", "TC_MCP_0_1", "Z", "TC_MCP_0_2"].map { key in
-            let launch = CodexMCPLaunch.command(
-                path: "/usr/bin/printenv", arguments: [key], environment: shadowing, server: 0)
-            return run(launch, environment: shadowingDerived)
-        }
-        expect(
-            shadowingReads == ["zero\n", "one\n", "zed\n", ""],
-            "a key spelled like a derived name still reads its own value, as do the keys after it")
-        let many = Dictionary(uniqueKeysWithValues: (0...10).map { ("K\($0)", "v\($0)") })
-        let manyDerived = CodexMCPLaunch.environment(servers: [local("m", many)]) ?? [:]
-        let manyReads = many.keys.sorted().map { key in
-            run(
-                CodexMCPLaunch.command(
-                    path: "/usr/bin/printenv", arguments: [key], environment: many, server: 0),
-                environment: manyDerived)
-        }
-        expect(
-            manyReads == many.keys.sorted().map { many[$0]! + "\n" },
-            "a tenth value and beyond reads whole, not as the first followed by a digit")
-        let repeated = [(name: "TC_MCP_0_0", value: "a"), (name: "TC_MCP_0_0", value: "b")]
-        expect(
-            CodexMCPLaunch.distinct(repeated) == nil,
-            "a repeated variable refuses the launch rather than keeping one of the two values")
-    }
-
-    private static func value(after flag: String, in arguments: [String]) -> String? {
-        guard let index = arguments.firstIndex(of: flag), index + 1 < arguments.count else {
-            return nil
-        }
-        return arguments[index + 1]
-    }
-
-    private static func run(
-        _ launch: (path: String, arguments: [String]), environment: [String: String]
-    ) -> String {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: launch.path)
-        process.arguments = launch.arguments
-        process.environment = environment.merging(["PATH": "/usr/bin:/bin"]) { value, _ in value }
-        let output = Pipe()
-        process.standardOutput = output
-        guard (try? process.run()) != nil else { return "<did not start>" }
-        process.waitUntilExit()
-        let data = output.fileHandleForReading.readDataToEndOfFile()
-        return String(bytes: data, encoding: .utf8) ?? ""
-    }
-
-    private static let renamingArguments =
-        #"mcp_servers.tinycast-files.args=["-c","set -- \"$TC_MCP_0_0\" \"$@\"; "#
-        + #"unset TC_MCP_0_0; export API_KEY=\"${1}\"; shift 1; "#
-        + #"exec \"$@\"","tinycast-mcp","/usr/local/bin/node","server.js","--root=/tmp"]"#
-
-    /// Spelled through a joined literal so no shell hook mistakes the key for a dotfile.
-    private static let forwardedVariables =
-        "mcp_servers.tinycast-files." + "env" + #"_vars=["TC_MCP_0_0"]"#
-    private static let headerMapOverride =
-        "mcp_servers.tinycast-notes." + "env" + #"_http_headers={"X-Api-Key"="TC_MCP_2_0"}"#
-
-    /// The file is the only place Claude's secrets go, and the tool name is what routes back.
-    static func claudeConfigurationCarriesServersAndRoutesToolNames() {
-        let servers = [
-            AIToolServer(
-                handle: "files", title: "Files",
-                transport: .command(
-                    path: "/bin/node", arguments: ["s.js"], environment: ["API_KEY": "s3cret"])),
-            AIToolServer(
-                handle: "linear", title: "Linear",
-                transport: .url(
-                    "https://mcp.linear.app/mcp", headerName: "Authorization",
-                    headerValue: "Bearer tok-123"))
-        ]
-        let text = ClaudeMCPLaunch.configuration(servers: servers)
-        guard let data = text.data(using: .utf8),
-            let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-            let entries = object["mcpServers"] as? [String: Any]
-        else {
-            expect(false, "Claude's MCP configuration is a decodable mcpServers record")
-            return
-        }
-        let files = entries["files"] as? [String: Any] ?? [:]
-        expect(
-            files["command"] as? String == "/bin/node" && files["args"] as? [String] == ["s.js"],
-            "a local server carries its command and arguments in the file")
-        expect(
-            (files["env"] as? [String: String]) == ["API_KEY": "s3cret"],
-            "and its environment, which is the only place that secret goes")
-        let linear = entries["linear"] as? [String: Any] ?? [:]
-        expect(
-            linear["type"] as? String == "http"
-                && (linear["headers"] as? [String: String]) == [
-                    "Authorization": "Bearer tok-123"
-                ],
-            "a remote one carries the header Tinycast would have sent itself")
-
-        let bare = ClaudeMCPLaunch.configuration(servers: [
-            AIToolServer(
-                handle: "open", title: "Open",
-                transport: .url(
-                    "https://open.example/mcp", headerName: "Authorization", headerValue: ""))
-        ])
-        expect(
-            bare == #"{"mcpServers":{"open":{"type":"http","url":"https:\/\/open.example\/mcp"}}}"#,
-            "and one that needs no credential goes to Claude with no headers at all")
-
-        let arguments = ClaudeMCPLaunch.arguments(
-            configurationPath: "/tmp/m.json", handles: ["files", "linear"], rounds: 25)
-        expect(
-            arguments.contains("--strict-mcp-config") && arguments.contains("/tmp/m.json")
-                && arguments.contains("--permission-prompt-tool")
-                && arguments.contains("stdio")
-                && value(after: "--max-turns", in: arguments) == "25",
-            "the flags name the file, route consent to Tinycast and cap the turn")
-        let uncapped = ClaudeMCPLaunch.arguments(
-            configurationPath: "/tmp/m.json", handles: ["files"], rounds: nil)
-        expect(
-            uncapped.contains("--mcp-config") && !uncapped.contains("--max-turns"),
-            "Unlimited passes no --max-turns at all, since Claude has no cap without one")
-        expect(
-            !arguments.contains("--disallowedTools"),
-            "and never deny every tool, which would take the MCP ones with it")
-        expect(
-            value(after: "--permission-mode", in: arguments) == "default",
-            "the mode is pinned, so a reader's bypassPermissions default never skips the question")
-        let settings =
-            (value(after: "--settings", in: arguments)?.data(using: .utf8))
-            .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] } ?? [:]
-        expect(
-            ((settings["permissions"] as? [String: Any])?["ask"] as? [String])
-                == ["mcp__files", "mcp__linear"] && settings.count == 1,
-            "and every armed server has an ask rule, which outranks any allow rule of the reader's")
-
-        expect(
-            ClaudeMCPLaunch.route("mcp__files__read_file")
-                == AIToolServerCall(handle: "files", tool: "read_file"),
-            "a wire name routes back to the server and the tool")
-        expect(
-            ClaudeMCPLaunch.route("mcp__files__read__file")
-                == AIToolServerCall(handle: "files", tool: "read__file"),
-            "the first separator is the split: a handle is letters, digits and `-`, a tool is not")
-        expect(
-            ClaudeMCPLaunch.route("Bash") == nil && ClaudeMCPLaunch.route("mcp__files") == nil,
-            "and a name that is not one of ours routes nowhere")
-    }
-
-    /// Every other server request stays declined, so only a tool call may become a question.
-    static func codexElicitationsAreOnlyToolCalls() {
-        let call = CodexElicitation(
-            params: [
-                "serverName": .string("files"),
-                "message": .string(
-                    "Allow the files MCP server to run tool \u{201C}read\u{201D}?"),
-                "_meta": .object([
-                    "codex_approval_kind": .string("mcp_tool_call"),
-                    "persist": .array([.string("session"), .string("always")])
-                ])
-            ])
-        expect(
-            call?.serverName == "files" && call?.toolName == "read" && call?.namedTool == nil,
-            "a tool-call elicitation names its server, and the message names its tool")
-        let named = CodexElicitation(
-            params: [
-                "serverName": .string("files"),
-                "_meta": .object([
-                    "codex_approval_kind": .string("mcp_tool_call"),
-                    "tool_name": .string("write"), "tool_title": .string("Write")
-                ])
-            ])
-        expect(
-            named?.namedTool == "write" && named?.toolName == "write",
-            "and `_meta.tool_name`, when sent, is the name tied to this call")
-        expect(
-            CodexElicitation(
-                params: [
-                    "serverName": .string("files"),
-                    "_meta": .object(["codex_approval_kind": .string("form")])
-                ]) == nil,
-            "a form is not a tool call and is never asked about")
-        expect(
-            CodexElicitation(params: ["message": .string("hello")]) == nil,
-            "and neither is an elicitation that names no server")
-        expect(
-            CodexElicitation.Action.accept.rawValue == "accept"
-                && CodexElicitation.Action.decline.rawValue == "decline",
-            "the two answers are the two the app-server honours")
-    }
-
-    private static let canUseToolFrame = """
-        {"type":"control_request","request_id":"r1","request":{"subtype":"can_use_tool",\
-        "tool_name":"mcp__files__read","input":{"path":"/tmp"}}}
-        """
-
-    /// The consent channel is the SDK's undocumented one; this is all of it Tinycast speaks.
-    static func claudeControlFramesAnswerOneTool() {
-        let frame =
-            (try? JSONSerialization.jsonObject(with: Data(Self.canUseToolFrame.utf8)))
-            as? [String: Any] ?? [:]
-        guard let request = ClaudeControlProtocol.request(frame) else {
-            expect(false, "a can_use_tool frame decodes into a request")
-            return
-        }
-        expect(
-            request.id == "r1" && request.call == AIToolServerCall(handle: "files", tool: "read"),
-            "carrying the id to answer and the call to ask about")
-
-        guard let allow = ClaudeControlProtocol.response(to: request, allowed: true, message: ""),
-            let decodedAllow = try? JSONSerialization.jsonObject(with: allow) as? [String: Any],
-            let allowed = (decodedAllow["response"] as? [String: Any])?["response"]
-                as? [String: Any]
-        else {
-            expect(false, "an allow encodes as a control_response")
-            return
-        }
-        expect(
-            allowed["behavior"] as? String == "allow"
-                && (allowed["updatedInput"] as? [String: Any])?["path"] as? String == "/tmp",
-            "an allow hands the arguments back untouched")
-        expect(
-            allowed["updatedPermissions"] == nil,
-            "and never a permission update, which would have the CLI write its own settings")
-        expect(
-            allow.last == 0x0A, "each answer is one line, because the channel is newline framed")
-
-        guard let deny = ClaudeControlProtocol.response(to: request, allowed: false, message: "no"),
-            let decodedDeny = try? JSONSerialization.jsonObject(with: deny) as? [String: Any],
-            let denied = (decodedDeny["response"] as? [String: Any])?["response"] as? [String: Any]
-        else {
-            expect(false, "a deny encodes as a control_response")
-            return
-        }
-        expect(
-            denied["behavior"] as? String == "deny" && denied["message"] as? String == "no",
-            "a deny says so, and the model reads the reason as the call's result")
-
-        let initialize =
-            #"{"type":"control_request","request_id":"r2","request":{"subtype":"initialize"}}"#
-        let other =
-            (try? JSONSerialization.jsonObject(with: Data(initialize.utf8))) as? [String: Any]
-            ?? [:]
-        expect(
-            ClaudeControlProtocol.request(other) == nil
-                && ClaudeControlProtocol.unsupportedRequestID(other) == "r2"
-                && ClaudeControlProtocol.unsupportedRequestID(frame) == nil,
-            "a subtype Tinycast does not know is no tool question, yet it is still answered")
-        let error =
-            ClaudeControlProtocol.error(to: "r2", message: "no")
-            .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
-        let errorResponse = error?["response"] as? [String: Any]
-        expect(
-            error?["type"] as? String == "control_response"
-                && errorResponse?["subtype"] as? String == "error"
-                && errorResponse?["request_id"] as? String == "r2",
-            "with the SDK's error response, so the CLI stops waiting on it")
-    }
 }
 
-/// `removePersistentDomain` only empties the domain; cfprefsd still leaves the plist on disk.
 private func discardSuite(_ name: String, _ defaults: UserDefaults) {
     defaults.removePersistentDomain(forName: name)
     UserDefaults.standard.removeSuite(named: name)
@@ -2528,16 +1409,8 @@ private func discardSuite(_ name: String, _ defaults: UserDefaults) {
             .appendingPathComponent("Library/Preferences/\(name).plist"))
 }
 
-/// A fixed suite name stops cfprefsd accumulating a plist per run.
 private func isolatedDefaults(_ name: String) -> UserDefaults {
     let defaults = UserDefaults(suiteName: name)!
     defaults.removePersistentDomain(forName: name)
     return defaults
 }
-
-/// Stands in for the Keychain: what a harness saved, read back the way a launch would.
-private final class KeptVariables: @unchecked Sendable {
-    var values: [InstalledAIKind: [String: String]] = [:]
-}
-
-private struct KeychainUnreadable: Error {}

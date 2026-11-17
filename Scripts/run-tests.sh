@@ -788,7 +788,6 @@ run UpdatesTests           Tinycast/Features/Updates/Model/*.swift \
                            Tinycast/Features/Updates/Service/BundleSignature.swift \
                            Tinycast/Features/Updates/Service/UpdateSignature.swift
 run RetiredAISettingsMigrationTests Tinycast/Migrations/RetiredAISettingsMigration.swift
-run AIProviderDiscoveryTests Tinycast/Features/AI/Settings/AIProviderDiscovery.swift
 run BundleIdentifierMigrationTests Tinycast/Migrations/BundleIdentifierMigration.swift \
                            Tinycast/Platform/AppPaths.swift \
                            Tinycast/Platform/LaunchAtLogin.swift
@@ -798,16 +797,7 @@ run UpdateCheckTests       Tinycast/Features/Updates/Model/*.swift \
 run SupportTests           Tinycast/Features/Support/Model/*.swift
 run AIProviderTests        Tinycast/Features/Settings/AppSettingsKey.swift \
                            Tinycast/Features/AI/Model/*.swift \
-                           Tinycast/Features/AI/Settings/AISettingsStore.swift \
-                           Tinycast/Features/AI/Service/CodexAppServerClient.swift \
-                           Tinycast/Features/AI/Service/InstalledAIProbe.swift \
-                           Tinycast/Platform/ExecutableLocator.swift Tinycast/Platform/ProcessExit.swift
-run OpenCodeMCPTests       Tinycast/Features/AI/Model/*.swift \
-                           Tinycast/Platform/ExecutableLocator.swift Tinycast/Platform/ProcessExit.swift \
-                           Tinycast/Features/AI/Service/AIProvider.swift \
-                           Tinycast/Features/AI/Service/AIToolLoopProvider.swift \
-                           Tinycast/Features/AI/Service/InstalledCLIProvider.swift \
-                           Tinycast/Features/AI/Service/OpenCodeMCPBridge.swift
+                           Tinycast/Features/AI/Settings/AISettingsStore.swift
 run AIResponsesTests       Tinycast/Features/AI/Model/AIConnection.swift \
                            Tinycast/Features/AI/Model/AppleIntelligence.swift \
                            Tinycast/Features/AI/Model/AIModelDiscovery.swift \
@@ -817,17 +807,12 @@ run AIResponsesTests       Tinycast/Features/AI/Model/AIConnection.swift \
                            Tinycast/Features/AI/Model/AIResponsesDecoder.swift \
                            Tinycast/Features/AI/Model/AIThinkTagDecoder.swift \
                            Tinycast/Features/AI/Model/AIProviderFailure.swift \
-                           Tinycast/Features/AI/Model/AITool.swift \
-                           Tinycast/Features/AI/Model/JSONValue.swift \
-                           Tinycast/Features/AI/Service/AIProvider.swift \
-                           Tinycast/Features/AI/Service/AIToolLoopProvider.swift
+                           Tinycast/Features/AI/Service/AIProvider.swift
 run ChatMarkdownTests      Tinycast/Platform/Appearance.swift \
                            Tinycast/DesignSystem/Theme.swift \
                            Tinycast/DesignSystem/InterfaceMetrics.swift \
                            Tinycast/Features/Settings/InterfaceSize.swift \
                            Tinycast/Features/AI/Model/AIRequest.swift \
-                           Tinycast/Features/AI/Model/AITool.swift \
-                           Tinycast/Features/AI/Model/JSONValue.swift \
                            Tinycast/Features/AI/Model/MarkdownBlock.swift \
                            Tinycast/Features/AI/Model/MarkdownMath.swift \
                            Tinycast/Features/AI/Model/MathFormula.swift \
@@ -849,8 +834,6 @@ run index TextDiffPerformanceTests Tinycast/Features/QuickActions/Model/TextDiff
 run QuickActionTests       Tinycast/Features/Settings/AppSettingsKey.swift \
                            Tinycast/Features/AI/Model/AIConnection.swift \
                            Tinycast/Features/AI/Model/AppleIntelligence.swift \
-                           Tinycast/Features/AI/Model/ChatGPTSubscription.swift \
-                           Tinycast/Features/AI/Model/InstalledAI.swift \
                            Tinycast/Features/QuickActions/Model/BuiltInQuickAction.swift \
                            Tinycast/Features/QuickActions/Model/CustomQuickAction.swift \
                            Tinycast/Features/QuickActions/Model/CustomQuickActionStore.swift \

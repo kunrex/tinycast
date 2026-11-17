@@ -137,7 +137,6 @@ If a change touches anything in the right column, the harness on the left is man
 | `CommandEscapeTapTests` | `Palette/CommandEscapeTap.swift` — dedicated run-loop dispatch while main is blocked, timeout recovery, stale actions, installation cancellation and teardown; private ports and unposted events only |
 | `PaletteNavigationTests` | `Palette/PaletteState.swift`'s screen motions — `prepare`, `replace`, `push`, `pop` — and hover arming, pointer drift, scroll disarming and highlight tokens |
 | `CompactBarTests` | Compact shortcut order, selection boundaries, zero-to-four slots, identifiers, retired-ID filtering after preferences restart and in settings.json, and invalid settings-file rejection |
-| `AIProviderDiscoveryTests` | Shipped AppCore discovery lifecycle with effect doubles: disabled startup, provider-manager open/close, route changes, reopen and Quick Actions ownership handoff |
 | `RetiredAISettingsMigrationTests` | Mirror-only retired-key cleanup, survivor order, unknown/provider settings preservation, malformed/missing files, symlinks and byte-idempotence |
 | `PaletteSelectionTests` | `Features/PaletteRowIndex.swift` |
 | `InterfaceSizeTests` | `DesignSystem/InterfaceMetrics.swift`, `Features/Settings/InterfaceSize.swift`, `Extensions/Model/ExtensionFormMetrics.swift` |
@@ -196,14 +195,12 @@ If a change touches anything in the right column, the harness on the left is man
 | `BundleIdentifierMigrationTests` | `Migrations/BundleIdentifierMigration.swift` — the id mapping, moving without overwriting, every spelling of a saved path into the old folders, preferences, the login-item flag, the backup and its expiry, the repair of an earlier move |
 | `UpdateCheckTests` | `UpdateCheckStore` — stopping, in-flight cancellation, cached offer suppression, restart and independent manual checking |
 | `SupportTests` | `Support/Model/` — when the support reminder comes due, and a clock moved backwards |
-| `AIProviderTests` | `AI/Model/` and `AISettingsStore` — provider requests and streams, route settings, protocol framing, CLI launch encodings and queued Codex writes across cancellation, timeout and Stop |
-| `OpenCodeMCPTests` | OpenCode's per-turn MCP bridge and installed CLI launch, authentication, scoped catalog, consent dispatch, serial calls, result budgets and cancellation |
+| `AIProviderTests` | `AI/Model/` and `AISettingsStore` — provider requests and streams, route settings, protocol framing and HTTP reasoning efforts |
 | `AppleIntelligenceTests` | On-device status, snapshot deltas, transcript assembly and error mapping; real generation is opt-in |
 | `SyntaxHighlightTests` | `AI/Model/SyntaxGrammar.swift`, `SyntaxHighlighter.swift`, `SyntaxStructuredLexers.swift` — every grammar's tokens, language aliases, the size limit and streaming prefixes |
 | `ChatMarkdownTests` | Shared selectable Markdown, safe links, code-copy blocks, math and failed-result styling without transcript/find/citation models |
 
-Conversation and app-owned MCP/OAuth/stdio harnesses were retired with those runtimes. Installed CLI
-provider/tool contract tests remain; see [the boundary](features/mcp.md). Completion checks use
+Conversation, MCP and installed-CLI provider harnesses were retired with those runtimes. Completion checks use
 bounded state waits; exclusion windows and intentional timeout cases keep their observation delays.
 
 A harness that passed before a change passes after it. There is no "I'll fix it next commit" and no

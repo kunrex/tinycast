@@ -53,12 +53,13 @@ selectable Markdown renderer retained from the removed conversation surfaces.
   route: a vanished catalog model moves to its command's first model, like the shared route, but a
   removed connection or an unavailable command deletes the entry instead of borrowing another model.
   The action then follows the route its pane names, not one the reader never chose for it.
-- **Installed providers are ordinary routes.** The model picker reads the same live Codex, Claude, Grok,
-  OpenCode and Cursor catalogs as AI Settings. Execution still goes through `AIProviderFactory`, so Quick Actions
-  inherit the same installed login, tool restrictions and process cleanup without owning CLI logic.
+- **Retired CLI selections are dropped.** A saved Codex, Claude, Grok, OpenCode or Cursor selection no longer
+  decodes. The shared route then resolves like an unset one, to enabled, available Apple Intelligence or an explicit choice,
+  never an automatic HTTP connection; a retired per-action override is dropped so its action follows the shared route.
+  Overrides decode entry by entry, so one retired entry never discards a valid HTTP override.
 - **The model picker is the AI picker.** Both panes render `AIModelOption.groupedCatalog`, with the
-  same provider sections, model labels and provider-supported reasoning levels. An installed-model
-  selection stores its effort in `quickActionModel`, independently of legacy conversation preferences. The sheets use the
+  same provider sections, model labels and provider-supported reasoning levels. An HTTP-model
+  selection stores its effort in `quickActionModel`. The sheets use the
   same `AIModelSelectionRows`, with **Same as Quick Actions** as the `nil` choice.
 - **The reader's own text gets permissive guardrails.** `AppCore.quickActionProvider()` asks for
   `SystemLanguageModel.Guardrails.permissiveContentTransformations`. The default filter is tuned for

@@ -66,10 +66,8 @@ final class QuickActionCoordinator {
         applyCustomQuickActionsPresence()
         guard settings.quickActionsEnabled else {
             cancel()
-            core.applyInstalledAILifecycle()
             return
         }
-        core.applyInstalledAILifecycle()
         store.resolveModel(
             appleIntelligenceEnabled: core.aiSettings.isRouteEnabled(.appleIntelligence),
             appleIntelligenceAvailable: core.aiSettings.isAppleIntelligenceAvailable())

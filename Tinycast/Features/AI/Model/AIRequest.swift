@@ -63,7 +63,6 @@ struct AIMessage: Equatable, Sendable {
         case system
         case user
         case assistant
-        case tool
     }
 
     let role: Role
@@ -71,25 +70,13 @@ struct AIMessage: Equatable, Sendable {
     let images: [AIImage]
     /// Only a PDF ever lands here: a text-ish file is inlined into `text` before any transport.
     let documents: [AIDocument]
-    /// Assistant only: the calls this turn asked for, alongside whatever text came with them.
-    let toolCalls: [AIToolCall]
-    /// Tool only: the answer to one of them.
-    let toolResult: AIToolResult?
-    /// Opaque Responses output lives only inside a tool turn, never in saved chat history.
-    let responseItems: [JSONValue]
-
     init(
-        role: Role, text: String, images: [AIImage] = [], documents: [AIDocument] = [],
-        toolCalls: [AIToolCall] = [], toolResult: AIToolResult? = nil,
-        responseItems: [JSONValue] = []
+        role: Role, text: String, images: [AIImage] = [], documents: [AIDocument] = []
     ) {
         self.role = role
         self.text = text
         self.images = images
         self.documents = documents
-        self.toolCalls = toolCalls
-        self.toolResult = toolResult
-        self.responseItems = responseItems
     }
 }
 
@@ -97,34 +84,23 @@ struct AIRequest: Equatable, Sendable {
     /// The highest every Claude model accepts, for one whose own ceiling the catalog never named.
     static let defaultMaxOutputTokens = 32_000
 
-    let conversationID: UUID?
     let instructions: String?
     let messages: [AIMessage]
     let maxOutputTokens: Int
     /// Lets the model search the web; each route has its own switch for that, all off by default.
     let webSearch: Bool
-    /// Empty for every route that cannot call one, so a transport need not ask whether it may.
-    let tools: [AITool]
 
     init(
         instructions: String? = nil, messages: [AIMessage],
         maxOutputTokens: Int = defaultMaxOutputTokens,
-        webSearch: Bool = false, tools: [AITool] = [], conversationID: UUID? = nil
+        webSearch: Bool = false
     ) {
-        self.conversationID = conversationID
         self.instructions = instructions
         self.messages = messages
         self.maxOutputTokens = maxOutputTokens
         self.webSearch = webSearch
-        self.tools = tools
     }
 
-    /// The same turn carried forward, armed with what the loop wrapping it may call.
-    func continuing(with messages: [AIMessage], tools: [AITool]) -> AIRequest {
-        AIRequest(
-            instructions: instructions, messages: messages, maxOutputTokens: maxOutputTokens,
-            webSearch: webSearch, tools: tools, conversationID: conversationID)
-    }
 }
 
 struct AIUsage: Equatable, Sendable {
@@ -134,8 +110,6 @@ struct AIUsage: Equatable, Sendable {
     var cachedInputTokens: Int?
     /// The part of `outputTokens` the model spent thinking.
     var reasoningTokens: Int?
-    /// The model's whole window, where a route reports it; only Claude's CLI does.
-    var contextWindow: Int?
     var costUSD: Double?
 
     var totalTokens: Int? {
@@ -156,12 +130,6 @@ enum AIStreamEvent: Equatable, Sendable {
     case reasoning(String)
     case searching(String?)
     case searched(String?)
-    /// What a transport emits; the loop consumes it and never passes it on to the transcript.
-    case toolCallRequested(AIToolCall)
-    case responseOutput([JSONValue])
-    /// What the loop emits in its place, already carrying what a row has to show.
-    case toolCall(id: String, origin: String, title: String)
-    case toolResult(id: String, isError: Bool)
     case usage(AIUsage)
     case finished
 }

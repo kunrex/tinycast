@@ -70,14 +70,6 @@ struct AICitationLinker: Sendable {
 }
 
 struct AIStreamDecoder: Sendable {
-    /// A call arrives in fragments keyed by index, with its id and name only on the first one.
-    private struct PartialToolCall {
-        var id = ""
-        var name = ""
-        var arguments = ""
-        var thoughtSignature: String?
-    }
-
     private let shape: AIHTTPConfiguration.APIShape
     /// What a provider's own error text must never show; the decoder is handed it, never reads it.
     private let secrets: [String]
@@ -85,7 +77,6 @@ struct AIStreamDecoder: Sendable {
     private var thinkTags = AIThinkTagDecoder()
     private var responses: AIResponsesDecoder
     private var usage = AIUsage()
-    private var partialToolCalls: [Int: PartialToolCall] = [:]
     private var citations = AICitationLinker()
     private var citedURLs: [Int: [String]] = [:]
     private var searchIndex: Int?
@@ -96,20 +87,6 @@ struct AIStreamDecoder: Sendable {
         self.shape = shape
         self.secrets = secrets
         responses = AIResponsesDecoder(secrets: secrets)
-    }
-
-    /// Assembled in index order, so a turn's calls reach the loop as the model listed them.
-    private mutating func flushToolCalls() -> [AIStreamEvent] {
-        guard !partialToolCalls.isEmpty else { return [] }
-        let calls = partialToolCalls.sorted { $0.key < $1.key }.map(\.value)
-        partialToolCalls.removeAll()
-        return calls.compactMap { call in
-            guard !call.name.isEmpty else { return nil }
-            return .toolCallRequested(
-                AIToolCall(
-                    id: call.id, name: call.name, arguments: call.arguments,
-                    thoughtSignature: call.thoughtSignature))
-        }
     }
 
     mutating func feed(_ data: Data) throws -> [AIStreamEvent] {
@@ -128,7 +105,6 @@ struct AIStreamDecoder: Sendable {
             if payload == "[DONE]", shape != .openAIResponses {
                 isTerminal = true
                 if shape == .openAICompatible { events += thinkTags.finish() }
-                events.append(contentsOf: flushToolCalls())
                 events.append(.finished)
                 continue
             }
@@ -172,8 +148,6 @@ struct AIStreamDecoder: Sendable {
             } else if let reasoning = choice.delta?.reasoningText {
                 events += [.thinking, .reasoning(reasoning)]
             }
-            for fragment in choice.delta?.toolCalls ?? [] { absorb(fragment) }
-            if choice.finishReason == "tool_calls" { events.append(contentsOf: flushToolCalls()) }
         }
         if let reported = chunk.usage {
             usage.inputTokens = reported.promptTokens ?? usage.inputTokens
@@ -184,18 +158,6 @@ struct AIStreamDecoder: Sendable {
             events.append(.usage(usage))
         }
         return events
-    }
-
-    /// A fragment's index is the only stable handle; a gateway may omit it when there is one call.
-    private mutating func absorb(_ fragment: OpenAIChunk.Choice.Delta.ToolCall) {
-        var partial = partialToolCalls[fragment.index ?? 0] ?? PartialToolCall()
-        if let id = fragment.id, !id.isEmpty { partial.id = id }
-        if let name = fragment.function?.name, !name.isEmpty { partial.name = name }
-        partial.arguments += fragment.function?.arguments ?? ""
-        if let signature = fragment.extraContent?.google?.thoughtSignature {
-            partial.thoughtSignature = signature
-        }
-        partialToolCalls[fragment.index ?? 0] = partial
     }
 
     private mutating func decodeAnthropic(_ payload: String) throws -> [AIStreamEvent] {
@@ -210,11 +172,6 @@ struct AIStreamDecoder: Sendable {
         switch event.type {
         case "content_block_start":
             switch event.contentBlock?.type {
-            case "tool_use":
-                partialToolCalls[index] = PartialToolCall(
-                    id: event.contentBlock?.id ?? "", name: event.contentBlock?.name ?? "",
-                    arguments: "")
-                return []
             case "server_tool_use" where event.contentBlock?.name == "web_search":
                 searchIndex = index
                 searchInput = ""
@@ -234,8 +191,6 @@ struct AIStreamDecoder: Sendable {
                 let fragment = event.delta?.partialJSON ?? ""
                 if index == searchIndex {
                     searchInput += fragment
-                } else {
-                    partialToolCalls[index]?.arguments += fragment
                 }
                 return []
             }
@@ -260,12 +215,10 @@ struct AIStreamDecoder: Sendable {
             return [.usage(usage)]
         case "message_delta":
             usage.outputTokens = event.usage?.outputTokens ?? usage.outputTokens
-            // The calls are complete here, and `message_stop` may never arrive on a tool turn.
-            guard event.delta?.stopReason == "tool_use" else { return [.usage(usage)] }
-            return [.usage(usage)] + flushToolCalls()
+            return [.usage(usage)]
         case "message_stop":
             isTerminal = true
-            return flushToolCalls() + [.finished]
+            return [.finished]
         case "error":
             isTerminal = true
             throw AIProviderError.responseFailed(
@@ -296,40 +249,10 @@ private struct OpenAIChunk: Decodable {
         struct Delta: Decodable {
             struct ReasoningDetail: Decodable { let text: String? }
 
-            struct ToolCall: Decodable {
-                struct Function: Decodable {
-                    let name: String?
-                    let arguments: String?
-                }
-
-                struct ExtraContent: Decodable {
-                    struct Google: Decodable {
-                        let thoughtSignature: String?
-
-                        enum CodingKeys: String, CodingKey {
-                            case thoughtSignature = "thought_signature"
-                        }
-                    }
-
-                    let google: Google?
-                }
-
-                let index: Int?
-                let id: String?
-                let function: Function?
-                let extraContent: ExtraContent?
-
-                enum CodingKeys: String, CodingKey {
-                    case index, id, function
-                    case extraContent = "extra_content"
-                }
-            }
-
             let content: String?
             let reasoning: String?
             let reasoningContent: String?
             let reasoningDetails: [ReasoningDetail]?
-            let toolCalls: [ToolCall]?
 
             /// OpenRouter says `reasoning`, DeepSeek and its copies `reasoning_content`.
             var reasoningText: String? {
@@ -343,7 +266,6 @@ private struct OpenAIChunk: Decodable {
                 case content, reasoning
                 case reasoningContent = "reasoning_content"
                 case reasoningDetails = "reasoning_details"
-                case toolCalls = "tool_calls"
             }
         }
 

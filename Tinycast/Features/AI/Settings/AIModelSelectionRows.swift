@@ -2,8 +2,6 @@ import SwiftUI
 
 struct AIModelSelectionRows<ModelLabel: View, EffortLabel: View>: View {
     @Environment(AISettingsStore.self) private var settings
-    @Environment(ChatGPTSubscriptionManager.self) private var subscription
-    @Environment(InstalledAIManager.self) private var installedAI
 
     let selection: AIModelSelection?
     /// Offers `nil` as a choice of its own, for a caller whose empty selection means another route.
@@ -48,14 +46,12 @@ struct AIModelSelectionRows<ModelLabel: View, EffortLabel: View>: View {
 
     private var modelGroups: [AIModelOptionGroup] {
         let groups = AIModelOption.availableGroups(
-            settings: settings, subscription: subscription, installedAI: installedAI)
+            settings: settings)
         return excludesOnDevice ? groups.filter { $0.source != .appleIntelligence } : groups
     }
 
-    private var efforts: [ChatGPTSubscription.Effort] {
-        AIModelOption.efforts(
-            for: selection, settings: settings, subscription: subscription,
-            installedAI: installedAI)
+    private var efforts: [AIEffort] {
+        AIModelOption.efforts(for: selection, settings: settings)
     }
 
     private var modelBinding: Binding<AIModelSelection?> {
@@ -65,8 +61,7 @@ struct AIModelSelectionRows<ModelLabel: View, EffortLabel: View>: View {
                 select(
                     value.map {
                         AIModelOption.withDefaultEffort(
-                            $0, settings: settings, subscription: subscription,
-                            installedAI: installedAI)
+                            $0, settings: settings)
                     })
             })
     }

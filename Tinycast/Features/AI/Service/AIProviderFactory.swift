@@ -7,12 +7,8 @@ enum AIProviderFactory {
     static func make(
         selection: AIModelSelection,
         settings: AISettingsStore,
-        subscription: ChatGPTSubscriptionManager,
-        installedAI: InstalledAIManager,
         keyStore: KeychainSecretStore = .aiAPIKeys,
-        guardrails: SystemLanguageModel.Guardrails = .default,
-        toolServers: AIToolServerSession? = nil,
-        toolSession: AIToolSession? = nil
+        guardrails: SystemLanguageModel.Guardrails = .default
     ) throws -> any AIProvider {
         switch selection {
         case .appleIntelligence:
@@ -24,35 +20,6 @@ enum AIProviderFactory {
                 throw AIProviderError.unavailable(message)
             }
             return AppleIntelligenceProvider(guardrails: guardrails)
-        case .codex(let model, let effort):
-            guard settings.enabledInstalledProviders.contains(.codex) else {
-                throw AIProviderError.unavailable(String(localized: "Codex is disabled in AI Settings."))
-            }
-            return CodexInstalledProvider(
-                turns: subscription.turns, model: model, effort: effort,
-                toolServers: toolServers)
-        case .claude(let model, let effort):
-            guard settings.enabledInstalledProviders.contains(.claude) else {
-                throw AIProviderError.unavailable(String(localized: "Claude is disabled in AI Settings."))
-            }
-            return try installedAI.provider(
-                kind: .claude, model: model, effort: effort, toolServers: toolServers)
-        case .grok(let model, let effort):
-            guard settings.enabledInstalledProviders.contains(.grok) else {
-                throw AIProviderError.unavailable(String(localized: "Grok is disabled in AI Settings."))
-            }
-            return try installedAI.provider(kind: .grok, model: model, effort: effort)
-        case .openCode(let model, let effort):
-            guard settings.enabledInstalledProviders.contains(.openCode) else {
-                throw AIProviderError.unavailable(String(localized: "OpenCode is disabled in AI Settings."))
-            }
-            return try installedAI.provider(
-                kind: .openCode, model: model, effort: effort, toolSession: toolSession)
-        case .cursor(let model, let effort):
-            guard settings.enabledInstalledProviders.contains(.cursor) else {
-                throw AIProviderError.unavailable(String(localized: "Cursor is disabled in AI Settings."))
-            }
-            return try installedAI.provider(kind: .cursor, model: model, effort: effort)
         case .api(let connectionID, let model, let savedEffort):
             guard let connection = settings.connection(id: connectionID) else {
                 throw AIProviderError.unavailable(String(localized: "Choose an API connection in Settings."))
