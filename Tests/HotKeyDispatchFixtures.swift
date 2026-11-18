@@ -12,13 +12,6 @@ struct SystemAction {
 enum SystemActionCatalog {
     static func action(id: SystemAction.ID) -> SystemAction { SystemAction(name: id.rawValue) }
 }
-struct WindowCommand {
-    enum ID: String, CaseIterable, Sendable { case sample }
-    let name: String
-}
-enum WindowCommandCatalog {
-    static func command(id: WindowCommand.ID) -> WindowCommand? { WindowCommand(name: id.rawValue) }
-}
 enum StoredSnippet { typealias ID = String }
 @MainActor
 enum AppLauncher {

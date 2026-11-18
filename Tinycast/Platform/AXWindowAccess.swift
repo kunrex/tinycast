@@ -10,7 +10,6 @@ enum AXWindowAccess {
     static let messagingTimeout: Float = 1
 
     static let fullScreenAttribute = "AXFullScreen" as CFString
-    static let fullScreenButtonAttribute = "AXFullScreenButton" as CFString
 
     // MARK: - Finding windows
 
@@ -29,13 +28,6 @@ enum AXWindowAccess {
         return application
     }
 
-    static func targetWindow(in application: AXUIElement) -> AXUIElement? {
-        for attribute in [kAXFocusedWindowAttribute, kAXMainWindowAttribute] {
-            if let window = element(application, attribute), isEligible(window) { return window }
-        }
-        return windows(in: application).first(where: isEligible)
-    }
-
     /// Every window the app reports, unfiltered and in its own order.
     static func windows(in application: AXUIElement) -> [AXUIElement] {
         var value: CFTypeRef?
@@ -45,13 +37,6 @@ enum AXWindowAccess {
             let windows = value as? [AXUIElement]
         else { return [] }
         return windows
-    }
-
-    /// A real, restorable window: not a sheet, popover or minimized one, and it reports geometry.
-    static func isEligible(_ window: AXUIElement) -> Bool {
-        guard string(window, kAXRoleAttribute) == (kAXWindowRole as String) else { return false }
-        if bool(window, kAXMinimizedAttribute) == true { return false }
-        return frame(of: window) != nil
     }
 
     static func isFullScreen(_ window: AXUIElement) -> Bool { fullScreenState(window) == true }
@@ -85,13 +70,6 @@ enum AXWindowAccess {
         AXUIElementSetAttributeValue(
             application, kAXFrontmostAttribute as CFString, kCFBooleanTrue)
         app.activate()
-    }
-
-    /// Orders a window forward across apps: a raise alone reorders it only inside its own app.
-    static func raise(_ window: AXUIElement, in application: AXUIElement) {
-        AXUIElementSetAttributeValue(
-            application, kAXFrontmostAttribute as CFString, kCFBooleanTrue)
-        AXUIElementPerformAction(window, kAXRaiseAction as CFString)
     }
 
     /// The fallback for an app that refuses `NSRunningApplication.hide()` or `unhide()`.

@@ -55,8 +55,6 @@ final class DeepLinkCoordinator {
         case .chat(let id):
             guard isAllowed(.command(.aiChat)) else { return }
             core.aiChatCoordinator.showChat(id: id)
-        case .windowSize(let size):
-            runWindowSize(size, source: source)
         case .entry(let action, let input):
             run(action, input: input, source: source)
         }
@@ -113,7 +111,6 @@ final class DeepLinkCoordinator {
     }
 
     private func consentName(forKey key: String) -> String {
-        if key == DeepLink.windowSizeHost { return String(localized: "Custom Size") }
         guard let parts = DeepLinkConsentPolicy.parts(ofKey: key),
             let action = parts.entryID == DeepLink.searchHost
                 ? .togglePalette : HotKeyAction(entryID: parts.entryID)
@@ -163,7 +160,7 @@ final class DeepLinkCoordinator {
     /// The catalogs' rows always exist; a row you made is known by the name it resolves to.
     private func exists(_ action: HotKeyAction) -> Bool {
         switch action {
-        case .command, .systemAction, .windowCommand: true
+        case .command, .systemAction: true
         default: hotKeys.displayName?(action) != nil
         }
     }
@@ -187,19 +184,6 @@ final class DeepLinkCoordinator {
             source: source
         ) { [weak self] in
             self?.paletteCoordinator.showPalette(mode: .launcher, restoreAnyMode: false, seeding: text)
-        }
-    }
-
-    private func runWindowSize(_ size: CustomWindowSize, source: DeepLinkSource) {
-        let name = String(localized: "Custom Size")
-        guard settings.windowManagementEnabled else {
-            core.showMessage(String(localized: "“\(name)” is turned off"), tone: .danger)
-            return
-        }
-        runAfterConsent(
-            name: name, input: .none, key: DeepLink.windowSizeHost, asks: true, source: source
-        ) { [weak self] in
-            self?.core.windowCommandCoordinator.runWindowSize(size)
         }
     }
 

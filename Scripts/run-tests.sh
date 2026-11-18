@@ -176,7 +176,6 @@ run LauncherSettingsFileTests \
                            Tinycast/Features/Quicklinks/Model/Quicklink.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkDestination.swift \
                            Tinycast/Features/SystemActions/Model/SystemAction.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
                            Tinycast/Features/Snippets/Model/Snippet.swift \
                            Tinycast/Platform/LocalizedResource.swift
 run AppleShortcutTests     Tinycast/Features/AppleShortcuts/Model/*.swift
@@ -345,7 +344,6 @@ run CompactBarTests        Tinycast/Features/Launcher/Model/CompactBarSelection.
                            Tinycast/Features/Quicklinks/Model/Quicklink.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkDestination.swift \
                            Tinycast/Features/SystemActions/Model/SystemAction.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
                            Tinycast/Features/Snippets/Model/Snippet.swift \
                            Tinycast/Platform/LocalizedResource.swift
 run FallbackTests          Tinycast/Features/Launcher/Model/Fallback.swift \
@@ -357,7 +355,6 @@ run FallbackTests          Tinycast/Features/Launcher/Model/Fallback.swift \
                            Tinycast/Features/Quicklinks/Model/Quicklink.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkDestination.swift \
                            Tinycast/Features/SystemActions/Model/SystemAction.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
                            Tinycast/Features/Snippets/Model/Snippet.swift \
                            Tinycast/Platform/LocalizedResource.swift
 run DictionaryTests        Tinycast/Features/Dictionary/Model/DictionaryEntry.swift \
@@ -412,7 +409,6 @@ run HotKeyTests            Tinycast/Features/HotKeys/Model/DoubleTapModifier.swi
                            Tinycast/Features/Quicklinks/Model/Quicklink.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkDestination.swift \
                            Tinycast/Features/SystemActions/Model/SystemAction.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
                            Tinycast/Features/Snippets/Model/Snippet.swift \
                            Tinycast/Platform/LocalizedResource.swift
 run CalloutTests           Tinycast/Platform/Appearance.swift \
@@ -451,41 +447,10 @@ run SystemActionTests      Tinycast/Features/SystemActions/Model/SystemAction.sw
 run MicrophoneMuteTests    Tinycast/Features/SystemActions/Service/SystemActionFailure.swift \
                            Tinycast/Features/SystemActions/Service/SystemActionRunner+Microphone.swift
 run VolumeTests            Tinycast/Features/SystemActions/Model/VolumeLevel.swift
-run WindowCommandTests     Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowCycle.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowPlacementEngine.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowActionMemory.swift \
-                           Tinycast/Platform/LocalizedResource.swift
-run WindowPresetTests      Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowShortcutPreset.swift \
-                           Tinycast/Features/HotKeys/Model/DoubleTapModifier.swift \
-                           Tinycast/Features/HotKeys/Model/ModifierKey.swift \
-                           Tinycast/Features/HotKeys/Model/HotKeyBinding.swift \
-                           Tinycast/Features/HotKeys/Model/HyperKey.swift \
-                           Tinycast/Features/HotKeys/Model/HIDKeyMapping.swift \
-                           Tinycast/Platform/ASCIIKeyboardLayout.swift \
-                           Tinycast/Features/HotKeys/Service/KeyShortcut.swift \
-                           Tinycast/Platform/LocalizedResource.swift
-run SpaceGestureTests      Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
-                           Tinycast/Features/WindowManagement/Model/SpaceGesture.swift \
-                           Tinycast/Platform/LocalizedResource.swift
-run WindowLayoutTests      Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowCycle.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowPlacementEngine.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutAnchor.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutDisplay.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayout.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutGeometry.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutPlan.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutStore.swift \
-                           Tinycast/Features/WindowManagement/Model/CustomWindowSize.swift \
-                           Tinycast/Features/WindowManagement/Model/CustomWindowSizeStore.swift \
-                           Tinycast/Platform/LocalizedResource.swift
 run DeepLinkTests          Tinycast/Features/DeepLinks/Model/DeepLink.swift \
                            Tinycast/Features/DeepLinks/Model/DeepLinkInput.swift \
                            Tinycast/Features/DeepLinks/Model/DeepLinkConsentPolicy.swift \
                            Tinycast/Features/DeepLinks/Model/DeepLinkSource.swift \
-                           Tinycast/Features/DeepLinks/Model/CustomWindowSize+DeepLink.swift \
                            Tinycast/Features/Settings/SettingsTab.swift \
                            Tinycast/Features/Launcher/Model/CommandID.swift \
                            Tinycast/Features/HotKeys/Model/HotKeyAction.swift \
@@ -499,19 +464,6 @@ run DeepLinkTests          Tinycast/Features/DeepLinks/Model/DeepLink.swift \
                            Tinycast/Features/CustomCommands/Model/CustomCommand.swift \
                            Tinycast/Features/AppleShortcuts/Model/AppleShortcut.swift \
                            Tinycast/Features/Snippets/Model/Snippet.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowCycle.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowPlacementEngine.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutAnchor.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutDisplay.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayout.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutGeometry.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomLayoutKind.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomLayoutEngine.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomGrid.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomWindow.swift \
-                           Tinycast/Features/WindowManagement/Model/Room.swift \
-                           Tinycast/Features/WindowManagement/Model/CustomWindowSize.swift \
                            Tinycast/Platform/LocalizedResource.swift
 run WindowRecoveryTests    Tinycast/Features/WindowRecovery/Model/RoomParkingLedger.swift \
                            Tinycast/Features/WindowRecovery/Model/WindowRecoveryPolicy.swift \
@@ -520,45 +472,6 @@ run WindowRecoveryTests    Tinycast/Features/WindowRecovery/Model/RoomParkingLed
                            Tinycast/Platform/AXWindowAccess.swift \
                            Tinycast/Platform/AXGeometry.swift \
                            Tinycast/Platform/AXScreens.swift
-run WindowRoomTests        Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowCycle.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowPlacementEngine.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutAnchor.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutDisplay.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayout.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutGeometry.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutPlan.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomLayoutKind.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomLayoutEngine.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomGrid.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomWindow.swift \
-                           Tinycast/Features/WindowManagement/Model/Room.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomWindowMatcher.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomParking.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomPlan.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomArrangement.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomStore.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomMinimumSizeStore.swift \
-                           Tinycast/Features/WindowRecovery/Model/RoomParkingLedger.swift \
-                           Tinycast/Features/WindowRecovery/Model/WindowRecoveryPolicy.swift \
-                           Tinycast/Platform/LocalizedResource.swift
-run WindowFileTests        Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowCycle.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowPlacementEngine.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutAnchor.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutDisplay.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayout.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowLayoutGeometry.swift \
-                           Tinycast/Features/WindowManagement/Model/CustomWindowSize.swift \
-                           Tinycast/Features/WindowManagement/Model/Room.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomWindow.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomLayoutKind.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomGrid.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomLayoutEngine.swift \
-                           Tinycast/Features/WindowManagement/Model/WindowManagementFileFormat.swift \
-                           Tinycast/Features/Settings/Model/SettingsFileJSON.swift \
-                           Tinycast/Features/Settings/Model/SettingsFileIdentity.swift \
-                           Tinycast/Platform/LocalizedResource.swift
 run CustomCommandTests     Tinycast/Platform/PseudoTerminal.swift \
                            Tinycast/Platform/ProcessExit.swift \
                            Tinycast/Features/CustomCommands/Model/CustomCommand.swift \
