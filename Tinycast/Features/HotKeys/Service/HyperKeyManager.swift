@@ -23,7 +23,7 @@ final class HyperKeyManager: HealthCheckable {
     @ObservationIgnored private let hotKeys: HotKeyManager
     @ObservationIgnored private let tap = HyperKeyTap()
     @ObservationIgnored private lazy var remapper = KeyboardRemapper(instanceLock: instanceLock)
-    @ObservationIgnored private let secureInput = SecureInputMonitor()
+    @ObservationIgnored private let secureInput: SecureInputMonitor
     @ObservationIgnored private let instanceLock = RemapInstanceLock(
         url: .temporaryDirectory.appending(path: "com.tinycast.hyper-key.lock"))
     @ObservationIgnored private var observers: [NotificationToken] = []
@@ -36,18 +36,17 @@ final class HyperKeyManager: HealthCheckable {
         case asleep, screenLocked, sessionInactive
     }
 
-    init(settings: AppSettings, hotKeys: HotKeyManager) {
+    init(settings: AppSettings, hotKeys: HotKeyManager, secureInput: SecureInputMonitor) {
         self.settings = settings
         self.hotKeys = hotKeys
+        self.secureInput = secureInput
     }
 
     func start() {
-        secureInput.onChange = { [weak self] _ in self?.secureInputChanged() }
         tap.onUnmappedCapsLock = { [weak self] in self?.repairRemap() }
         remapper.clearLeftovers()
         observeSettings()
         observeSystem()
-        secureInput.start()
         apply()
     }
 
@@ -190,7 +189,7 @@ final class HyperKeyManager: HealthCheckable {
 
     // MARK: - Secure Input
 
-    private func secureInputChanged() {
+    func secureInputChanged() {
         // The tap saw neither end of anything typed inside, so a half-held chord is stale.
         tap.cancelHold()
         syncSecureInputHotKeys()

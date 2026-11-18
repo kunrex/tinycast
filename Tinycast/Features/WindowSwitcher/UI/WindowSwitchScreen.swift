@@ -5,6 +5,7 @@ struct WindowSwitchScreen: PaletteScreen {
     let core: AppCore
 
     var rows: [WindowSwitchEntry] { session.filtered }
+    var landingSelection: Int { session.nativeLandingSelection }
 
     var primaryActionTitle: String { String(localized: "Switch to Window") }
 

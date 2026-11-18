@@ -15,6 +15,12 @@
 writes one `HotKeyBinding`, so all cases share persistence, conflict detection, the recorder and
 the keycap rendering — only the _engine_ differs.
 
+Navigation's optional [Mimic macOS](navigation.md) temporarily unregisters only the saved Switch
+Windows and Switch Windows Backwards bindings, across Carbon, modifier-only routes and Secure Input
+equivalents. A dispatch guard also rejects already-queued callbacks. Bindings stay persisted and
+conflict-reserved, and restore unchanged when the toggle is off. Menu Search and per-command launcher
+visibility are not execution gates.
+
 Carbon's dispatcher enters through an explicit `@MainActor` callback. Press and release handlers
 return `OSStatus` synchronously, preserving event order and hold-to-talk release handling.
 
@@ -333,7 +339,9 @@ mapping conflicts, with **Refresh** and **Restart Hyper Key**.
 While an app holds Secure Input, macOS hides every keystroke from every event tap, so no tap can build
 the chord. `SecureInputMonitor` follows SkyLight's private Secure Input notifications
 (`SLSRegisterNotifyProc`, types 752 and 753, bound with `dlsym`) and re-reads
-`IsSecureEventInputEnabled` on each, so a transition is seen as it happens; a macOS without the
+`IsSecureEventInputEnabled` on each, so a transition is seen as it happens. AppCore owns and starts
+one monitor and fans changes out to Hyper Key and the native window switcher; neither creates a
+second monitor. A macOS without the
 symbols reports none, while Diagnostics still read the state directly. A transition drops any
 half-held chord, since the tap saw neither end of what was typed inside. Diagnostics name the
 holder from the `kCGSSessionSecureInputPID` macOS records on the console session in `IOResources` —

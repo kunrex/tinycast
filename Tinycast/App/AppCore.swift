@@ -20,11 +20,12 @@ final class AppCore {
         syntheticEventTag: Paster.tinycastEventTag)
     let textInjector: TextInjector
     let hotKeys = HotKeyManager()
+    let secureInput = SecureInputMonitor()
     let dictationAudioDucker = DictationAudioDucker()
     @ObservationIgnored private(set) lazy var dictationModels =
         DictationModelStore(idleRelease: settings.dictationIdleRelease)
     @ObservationIgnored private(set) lazy var hyperKey = HyperKeyManager(
-        settings: settings, hotKeys: hotKeys)
+        settings: settings, hotKeys: hotKeys, secureInput: secureInput)
     @ObservationIgnored private lazy var dictationKey = DictationKeyManager(hotKeys: hotKeys)
     let inputSourceSwitcher = InputSourceSwitcher()
     let settings: AppSettings
@@ -379,7 +380,17 @@ final class AppCore {
                 quickActionIDs: Set(customQuickActions.actions.map(\.id)))
             // After `hotKeys.start`: Secure Input equivalents are built from the loaded bindings.
             hyperKey.onProblem = { [weak self] in self?.showMessage($0, tone: .danger) }
+            secureInput.onChange = { [weak self] _ in
+                self?.hyperKey.secureInputChanged()
+                self?.windowSwitchCoordinator.applyNativeSwitching()
+            }
+            secureInput.start()
             hyperKey.start()
+            windowSwitchCoordinator.healthTicker = healthTicker
+            hotKeys.onRecordingChanged = { [weak self] in
+                self?.windowSwitchCoordinator.applyNativeSwitching()
+            }
+            windowSwitchCoordinator.start()
             dictationKey.onProblem = { [weak self] in self?.showMessage($0, tone: .danger) }
             dictationKey.start()
 
@@ -551,6 +562,7 @@ final class AppCore {
         settingsFile?.flush()
         clipboardTextIndexer?.stop()
         // HID remaps first: they outlive the process.
+        windowSwitchCoordinator.prepareForTermination()
         hyperKey.prepareForTermination()
         dictationKey.prepareForTermination()
         WindowRecoveryRunner.returnParkedWindows(ledger: roomParking)
@@ -652,6 +664,9 @@ final class AppCore {
                 $0.windowSwitchCoordinator.applyEnabled()
                 $0.menuSearchCoordinator.applyEnabled()
             })
+        track(
+            { _ = $0.navigationMimicsMacOS },
+            reproject: { $0.windowSwitchCoordinator.applyNativeSwitching() })
         track({ _ = $0.notesEnabled }, reproject: { $0.notesCoordinator.applyEnabled() })
         track(
             { _ = $0.notesShowsInMenuBar }, reproject: { $0.notesCoordinator.applyMenuBarItem() })

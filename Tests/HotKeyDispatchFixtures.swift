@@ -1,7 +1,7 @@
 import Foundation
 
 enum CommandID: String, CaseIterable, Sendable {
-    case sample
+    case sample, switchWindows, switchWindowsBackwards, searchMenuItems
     var name: String { rawValue }
     var hotKeyAction: HotKeyAction? { .command(self) }
 }
@@ -26,7 +26,8 @@ final class ModifierTapMonitor {
     var onHoldReleased: (() -> Void)?
     var onHoldCancelled: (() -> Void)?
     func start() {}
-    func update(bound: Set<HotKeyBinding>, holdKey: ModifierKey?) {}
+    private(set) var bound: Set<HotKeyBinding> = []
+    func update(bound: Set<HotKeyBinding>, holdKey: ModifierKey?) { self.bound = bound }
 }
 @MainActor
 final class ShortcutCaptureSession {

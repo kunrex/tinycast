@@ -36,10 +36,30 @@ final class HotKeyManager {
     /// Whether the action's launcher category is switched on. Set in `AppCore.start()`.
     var allowsAction: ((HotKeyAction) -> Bool)?
 
+    var onRecordingChanged: (() -> Void)?
+    var navigationMimicsMacOS = false {
+        didSet {
+            guard navigationMimicsMacOS != oldValue else { return }
+            clearSecureInputEquivalents()
+            for action in [HotKeyAction.command(.switchWindows), .command(.switchWindowsBackwards)] {
+                center.unregister(id: action.defaultsKey)
+                register(action)
+            }
+            syncModifierTaps()
+            syncSecureInputEquivalents()
+        }
+    }
+
+    private func isSuppressed(_ action: HotKeyAction) -> Bool {
+        navigationMimicsMacOS
+            && (action == .command(.switchWindows) || action == .command(.switchWindowsBackwards))
+    }
+
     /// The recorder currently capturing, which also pauses both engines.
     var recordingAction: HotKeyAction? {
         didSet {
             guard recordingAction != oldValue else { return }
+            onRecordingChanged?()
             let recording = recordingAction != nil
             if recording, dictationEnabled, dictationHoldToTalk { onDictationCancelled?() }
             if recording { secureInputPressedActions.removeAll(keepingCapacity: true) }
@@ -238,7 +258,7 @@ final class HotKeyManager {
         clearSecureInputEquivalents()
         guard let includesShift = secureInputEquivalentsIncludeShift else { return }
         let chord = KeyShortcut.hyperChord(includesShift: includesShift)
-        let actions = candidateActions
+        let actions = candidateActions.filter { !isSuppressed($0) }
         let originalActions = actions.reduce(into: [KeyShortcut: HotKeyAction]()) { result, action in
             if let shortcut = binding(for: action)?.shortcut { result[shortcut] = action }
         }
@@ -356,7 +376,7 @@ final class HotKeyManager {
 
     /// Hands a combo to Carbon; a modifier-only binding has no per-action registration.
     private func register(_ action: HotKeyAction) {
-        guard let shortcut = binding(for: action)?.shortcut else { return }
+        guard !isSuppressed(action), let shortcut = binding(for: action)?.shortcut else { return }
         center.register(
             id: action.defaultsKey, shortcut: shortcut,
             onKeyDown: { [weak self] _ in self?.perform(action) },
@@ -369,7 +389,8 @@ final class HotKeyManager {
         let dictationBinding = binding(for: .dictation)
         let holdKey = dictationHoldToTalk ? dictationBinding?.holdKey : nil
         for action in candidateActions {
-            guard let binding = binding(for: action), binding.usesModifierTapMonitor else { continue }
+            guard !isSuppressed(action), let binding = binding(for: action),
+                binding.usesModifierTapMonitor else { continue }
             if action == .dictation, !dictationEnabled { continue }
             if action == .dictation, dictationHoldToTalk {
                 guard holdKey != nil, conflictOwner(of: binding, excluding: action) == nil else {
@@ -385,7 +406,7 @@ final class HotKeyManager {
 
     func perform(_ action: HotKeyAction) {
         // The category switch, the way each feature switch already guards its own funnel.
-        guard allowsAction?(action) ?? true else { return }
+        guard !isSuppressed(action), allowsAction?(action) ?? true else { return }
         switch action {
         case .togglePalette: onTogglePalette?()
         case .dictation: onDictationPressed?()

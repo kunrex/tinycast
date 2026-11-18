@@ -296,6 +296,13 @@ run FormInputTests         Tinycast/Platform/Appearance.swift \
 run ScrollRevealTests      Tinycast/DesignSystem/Scrolling/SelectionReveal.swift
 run RedactionTests         Tinycast/DesignSystem/RedactedPlaceholder.swift
 run KeyboardFocusTests     Tinycast/DesignSystem/Interaction/KeyboardFocus.swift
+run WindowSwitchCoordinatorTests Tinycast/Features/WindowSwitcher/Model/CommandTabEngine.swift \
+                           Tinycast/Features/WindowSwitcher/Service/WindowSwitchSession.swift \
+                           Tinycast/Features/WindowSwitcher/UI/WindowSwitchCoordinator.swift \
+                           Tinycast/Platform/NotificationToken.swift \
+                           Tests/WindowSwitchCoordinatorFixtures.swift
+run CommandTabTests        Tinycast/Features/WindowSwitcher/Model/CommandTabEngine.swift \
+                           Tinycast/Features/WindowSwitcher/Service/CommandTabTap.swift
 run CommandEscapeTapTests  Tinycast/Palette/CommandEscapeTap.swift
 run PaletteEscapeTests     Tinycast/Palette/PaletteMode.swift \
                            Tinycast/Palette/PaletteEscapeAction.swift \

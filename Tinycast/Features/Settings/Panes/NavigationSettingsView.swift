@@ -4,6 +4,7 @@ import SwiftUI
 /// one switch, so the pane lives here rather than inside either of them.
 struct NavigationSettingsView: View {
     @Environment(AppSettings.self) private var settings
+    @Environment(AppCore.self) private var core
 
     var body: some View {
         @Bindable var settings = settings
@@ -18,9 +19,16 @@ struct NavigationSettingsView: View {
             .settingsAnchor(.navigationNavigation)
 
             Section {
-                Toggle(isOn: $settings.navigationMimicsMacOS) {
+                Toggle(isOn: Binding(
+                    get: { settings.navigationMimicsMacOS },
+                    set: { core.windowSwitchCoordinator.setMimicsMacOS($0) }
+                )) {
                     SettingsRowTitle(.navigationCommands, "Mimic macOS")
-                    Text("UI only: locks shortcut editing. Existing hotkeys remain active.")
+                    Text("""
+                        Replace Command-Tab and Command-Shift-Tab. Release Command to switch. \
+                        Saved window shortcuts pause until this is off. \
+                        Requires Accessibility; unavailable during Secure Input.
+                        """)
                 }
                 .toggleStyle(.checkbox)
             }

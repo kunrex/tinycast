@@ -9,12 +9,24 @@ switcher and the pane the two share.
 Ships **off**. Settings › Navigation is the switch, and while it is off none of them is in the
 launcher and a still-recorded shortcut for any does nothing.
 
-Settings also offers **Mimic macOS**, off by default, above the window command shortcuts. This is
-currently **UI only**: checking it locks only the Switch Windows and Switch Windows Backwards shortcut
-recorders. Existing bindings remain assigned and active; aliases, launcher visibility, actions and
-Menu Search are unchanged. It does not implement macOS switching or replace any system shortcut.
-The preference persists locally and travels in settings backups and `navigation.mimicsMacOS` in the
-settings file.
+Settings also offers **Mimic macOS**, off by default, above the window command shortcuts. With
+Navigation enabled it replaces ⌘Tab / ⌘⇧Tab with the searchable window switcher. The first press
+opens, loads and steps immediately; repeats cycle, and releasing Command commits even with Shift
+still held. Typing printable characters into the key switcher searches while Command is held.
+Launcher invocation still opens search without arming a release commit.
+
+The two saved window shortcuts remain persisted and conflict-reserved, but are temporarily
+**unregistered** (Carbon, modifier-only and Secure Input equivalents) and guarded at dispatch.
+Their recorders remain disabled. Turning Mimic macOS off restores the same bindings. Menu Search,
+aliases and launcher visibility are unchanged: the per-command checkboxes only control visibility,
+never execution. Navigation's master switch is the capability gate.
+
+Accessibility is required. Explicitly checking Mimic macOS uses the existing permission gate;
+startup and settings-file/backup application never prompt. Missing permission or a failed tap install
+reports in the existing HUD and leaves native macOS switching available. Saved shortcuts remain
+suppressed while the toggle is on, including during failure or Secure Input; uncheck it to restore
+them. Secure Input is **not supported**. The preference persists locally and travels in settings
+backups and `navigation.mimicsMacOS` in the settings file.
 
 ## Invariants
 
@@ -107,6 +119,33 @@ modifiers are the ones that count, so letting go of ⇧ alone mid-walk switches 
 searches; Escape hides the palette, and the next modifier change finds it gone and switches
 nothing.
 
+## Native capture lifetime
+
+`WindowSwitchCoordinator` owns `CommandTabTap`; AppCore starts and stops the coordinator and shares
+its single `SecureInputMonitor` with Hyper Key. Sleep, lock, inactive sessions and shortcut recording
+cancel the gesture and stop new capture. A swallowed physical Tab press keeps a drain-only tap until
+its matching release (including repeats across modifier changes); resuming reuses that same ownership.
+The drain expires after five seconds if macOS never delivers the release. Termination and deinit force
+teardown rather than retaining a worker. Wake/unlock/session return and recording completion reapply the
+settings. Missing Accessibility and installation failure retry through the existing health ticker;
+TCC changes recheck permissions. Global tap-removal notifications recover only an unhealthy owned tap
+while capture is wanted; unrelated removals leave healthy capture and policy-paused drains untouched.
+System timeout/user-input disable cancels the old
+gesture and reenables the tap without forgetting physical press ownership. Secure Input, revoked
+grants or an OS-removed tap can hide releases: pairing cannot be guaranteed on those OS-controlled
+edges, after the bounded drain deadline, or at process exit. No synthetic release is posted.
+No new global service owner or persisted command-enabled flags exist.
+
+The modifying HID tap has its own run-loop thread. `CommandTabEngine` is Foundation-only and accepts
+only Command+Tab with optional Shift, not Control, Option or fn. Initial downs fix ownership for the
+whole press: passed downs keep passing their repeats and up; swallowed downs suppress their repeats
+and up even when modifiers change. Autorepeat without an initial down cannot acquire ownership. Tagged Hyper Key and paste/text-injection synthetics
+pass through. No AX window reads, main-actor waits or UI effects run in the callback. One AsyncStream
+consumer delivers ordered step/repeat/commit intents on main. Cancellation increments a generation,
+so queued actions from a stopped, disabled or superseded tap cannot open or activate stale selections;
+the coordinator also checks the current presentation identity before committing. Local printable-key
+translation is scoped to the key switcher during a native gesture, never global typing.
+
 ## Raising
 
 `activate` un-minimizes if it has to, raises the window inside its app, sets `AXFrontmost`, then calls
@@ -181,9 +220,36 @@ any recovery sources, guarding their independence. It does not exercise live AX 
 `WindowZOrder` is not compiled into the harness; AX and `CGWindowList` need manual verification,
 particularly:
 
-- Check Mimic macOS: only the two window shortcut recorders dim and reject editing; their existing
-  hotkeys still work. Aliases, visibility and Menu Search stay editable. Uncheck to edit the same
-  bindings again, and relaunch to verify the checkbox persists.
+`CommandTabTests` covers pure recognition, repeat direction, Shift-held release, release fallback,
+paired ups, unrelated modifier passthrough, synthetic filtering, generation cancellation and private
+unposted tap callbacks. It exercises ordered delivery while main is blocked, timeout/user-input
+recovery, revoked grants, Secure Input, failed installation, retry and teardown. The coordinator
+harness uses concrete fixtures (no live AX window actions) to verify native first-press stepping,
+query landing before filtering (including a reverse stale index), one release commit, stale
+presentation cancellation, custom first-press search, recording and
+feature gates. Global removal injection verifies two commits without healthy-tap churn, genuine loss
+recovery without prompting, replacement feedback suppression and policy-paused drains. The real-tap
+harness also repeats independent gestures and palette-reset cancellation on one private installation;
+the coordinator harness still uses a tap fixture rather than a real tap. `HotKeyDispatchTests` checks suppression/restoration without changing stored bindings.
+
+Real-machine verification is still required:
+
+- Check Mimic macOS with Navigation on: ⌘Tab selects the second window immediately, ⌘⇧Tab selects
+  the last, repeats interleave, and releasing Command with Shift held switches once. Try a very
+  quick chord while an AX app is slow, and type a search while Command remains held.
+- Uncheck either window command's visibility box: native switching still works. Menu Search's
+  visibility checkbox also never disables its hotkey. No per-command capability toggles exist.
+- The saved window hotkeys do nothing while Mimic macOS is on; aliases, visibility and Menu Search
+  stay editable. Uncheck Mimic macOS: exactly the same saved hotkeys and recorders return. Relaunch
+  and backup/settings-file round trips preserve the preference and bindings.
+- With no Accessibility grant, native switching passes through and startup never prompts. Explicit
+  enable may prompt; grant/revoke while running and verify recovery. Failed install reports once per
+  problem. In Secure Input native macOS switching remains available, not Tinycast switching.
+- Sleep/wake, lock/unlock, switch user sessions, and record an unrelated shortcut: Tinycast must not
+  capture Cmd-Tab while paused, and must resume afterwards. Escape/click away or changing the setting
+  mid-gesture must never activate an old selection. Control/Option/fn+Command+Tab pass through.
+- Enable takeover in only one running Tinycast build; competing third-party taps and the actual
+  WindowServer/native switcher cannot be validated by the private-port harness.
 
 1. A minimized window is listed last and ↵ un-minimizes it rather than doing nothing — for Finder
    and Transmission too, whose minimized windows read `AXDialog`.

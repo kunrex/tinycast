@@ -37474,6 +37474,64 @@
         }
       }
     },
+    "Couldn’t replace Command-Tab. macOS switching is still available." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Command-Tab konnte nicht ersetzt werden. Der macOS-App-Wechsel bleibt verfügbar."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn’t replace Command-Tab. macOS switching is still available."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo sustituir Comando-Tab. El cambio de apps de macOS sigue disponible."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de remplacer Commande-Tab. Le changement d’app de macOS reste disponible."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Command-Tabを置き換えられませんでした。macOSの切り替えは引き続き使用できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Command-Tab을 대체하지 못했습니다. macOS 앱 전환은 계속 사용할 수 있습니다."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível substituir Command-Tab. A alternância do macOS continua disponível."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось заменить Command-Tab. Переключение macOS по-прежнему доступно."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法替换 Command-Tab。仍可使用 macOS 的切换功能。"
+          }
+        }
+      }
+    },
     "Couldn’t save the clipboard entry" : {
       "localizations" : {
         "de" : {
@@ -66307,6 +66365,64 @@
         }
       }
     },
+    "Mimic macOS needs Accessibility access" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS nachahmen benötigt Zugriff auf Bedienungshilfen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mimic macOS needs Accessibility access"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imitar macOS necesita acceso a Accesibilidad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imiter macOS nécessite l’accès à Accessibilité"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOSを模倣するにはアクセシビリティへのアクセスが必要です"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS 모방에는 손쉬운 사용 접근 권한이 필요합니다"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imitar macOS requer acesso à Acessibilidade"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для имитации macOS нужен доступ к Универсальному доступу"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模仿 macOS 需要辅助功能权限"
+          }
+        }
+      }
+    },
     "Minimal" : {
       "localizations" : {
         "de" : {
@@ -90154,6 +90270,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "替换"
+          }
+        }
+      }
+    },
+    "Replace Command-Tab and Command-Shift-Tab. Release Command to switch. Saved window shortcuts pause until this is off. Requires Accessibility; unavailable during Secure Input." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Command-Tab und Command-Umschalt-Tab ersetzen. Zum Wechseln Command loslassen. Gespeicherte Fensterkurzbefehle pausieren, bis dies ausgeschaltet wird. Benötigt Bedienungshilfen; bei sicherer Eingabe nicht verfügbar."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replace Command-Tab and Command-Shift-Tab. Release Command to switch. Saved window shortcuts pause until this is off. Requires Accessibility; unavailable during Secure Input."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sustituye Comando-Tab y Comando-Mayúsculas-Tab. Suelta Comando para cambiar. Los atajos de ventanas guardados se pausan hasta desactivar esta opción. Requiere Accesibilidad; no disponible con Entrada segura."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplace Commande-Tab et Commande-Maj-Tab. Relâchez Commande pour basculer. Les raccourcis de fenêtres enregistrés sont suspendus jusqu’à la désactivation. Nécessite Accessibilité ; indisponible pendant la saisie sécurisée."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Command-TabとCommand-Shift-Tabを置き換えます。Commandを離すと切り替わります。オフにするまで保存済みのウインドウショートカットは一時停止します。アクセシビリティが必要です。セキュア入力中は使用できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Command-Tab과 Command-Shift-Tab을 대체합니다. Command를 놓으면 전환됩니다. 이 옵션을 끌 때까지 저장된 윈도우 단축키가 일시 중지됩니다. 손쉬운 사용 권한이 필요하며 보안 입력 중에는 사용할 수 없습니다."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substitui Command-Tab e Command-Shift-Tab. Solte Command para alternar. Os atalhos de janelas salvos ficam pausados até desativar esta opção. Requer Acessibilidade; indisponível durante a Entrada Segura."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Заменяет Command-Tab и Command-Shift-Tab. Отпустите Command для переключения. Сохранённые сочетания окон приостановлены до отключения этой функции. Нужен Универсальный доступ; недоступно при защищённом вводе."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "替换 Command-Tab 和 Command-Shift-Tab。松开 Command 即可切换。关闭此选项前，已保存的窗口快捷键将暂停。需要辅助功能权限；安全输入期间不可用。"
           }
         }
       }
@@ -120033,64 +120207,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "输入以搜索文件和文件夹"
-          }
-        }
-      }
-    },
-    "UI only: locks shortcut editing. Existing hotkeys remain active." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nur Oberfläche: Sperrt die Bearbeitung von Kurzbefehlen. Bestehende Kurzbefehle bleiben aktiv."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "UI only: locks shortcut editing. Existing hotkeys remain active."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Solo interfaz: bloquea la edición de atajos. Los atajos existentes siguen activos."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Interface uniquement : verrouille la modification des raccourcis. Les raccourcis existants restent actifs."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "UIのみ：ショートカットの編集をロックします。既存のホットキーは引き続き有効です。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "UI 전용: 단축키 편집을 잠급니다. 기존 단축키는 계속 작동합니다."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apenas interface: bloqueia a edição de atalhos. Os atalhos existentes continuam ativos."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Только интерфейс: блокирует изменение сочетаний клавиш. Существующие сочетания остаются активными."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "仅限界面：锁定快捷键编辑。现有快捷键仍然有效。"
           }
         }
       }
