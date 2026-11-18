@@ -76,11 +76,8 @@ struct AIStreamDecoder: Sendable {
     private var parser = SSEParser()
     private var thinkTags = AIThinkTagDecoder()
     private var responses: AIResponsesDecoder
-    private var usage = AIUsage()
     private var citations = AICitationLinker()
     private var citedURLs: [Int: [String]] = [:]
-    private var searchIndex: Int?
-    private var searchInput = ""
     private(set) var isTerminal = false
 
     init(shape: AIHTTPConfiguration.APIShape, secrets: [String] = []) {
@@ -105,7 +102,6 @@ struct AIStreamDecoder: Sendable {
             if payload == "[DONE]", shape != .openAIResponses {
                 isTerminal = true
                 if shape == .openAICompatible { events += thinkTags.finish() }
-                events.append(.finished)
                 continue
             }
             switch shape {
@@ -145,17 +141,7 @@ struct AIStreamDecoder: Sendable {
         if let choice = chunk.choices?.first {
             if let content = choice.delta?.content, !content.isEmpty {
                 events += thinkTags.feed(content)
-            } else if let reasoning = choice.delta?.reasoningText {
-                events += [.thinking, .reasoning(reasoning)]
             }
-        }
-        if let reported = chunk.usage {
-            usage.inputTokens = reported.promptTokens ?? usage.inputTokens
-            usage.outputTokens = reported.completionTokens ?? usage.outputTokens
-            usage.reasoningTokens =
-                reported.completionTokensDetails?.reasoningTokens ?? usage.reasoningTokens
-            usage.costUSD = reported.cost ?? usage.costUSD
-            events.append(.usage(usage))
         }
         return events
     }
@@ -170,55 +156,24 @@ struct AIStreamDecoder: Sendable {
 
         let index = event.index ?? 0
         switch event.type {
-        case "content_block_start":
-            switch event.contentBlock?.type {
-            case "server_tool_use" where event.contentBlock?.name == "web_search":
-                searchIndex = index
-                searchInput = ""
-                return [.searching(nil)]
-            case "web_search_tool_result":
-                searchIndex = nil
-                return [.searched(searchQuery)]
-            default:
-                return []
-            }
         case "content_block_delta":
             if event.delta?.type == "text_delta", let text = event.delta?.text, !text.isEmpty {
                 citations.record(text)
                 return [.text(text)]
             }
-            if event.delta?.type == "input_json_delta" {
-                let fragment = event.delta?.partialJSON ?? ""
-                if index == searchIndex {
-                    searchInput += fragment
-                }
-                return []
-            }
             if event.delta?.type == "citations_delta", let url = event.delta?.citation?.url {
                 citedURLs[index, default: []].append(url)
                 return []
             }
-            guard event.delta?.type == "thinking_delta" else { return [] }
-            guard let thinking = event.delta?.thinking, !thinking.isEmpty else { return [.thinking] }
-            return [.thinking, .reasoning(thinking)]
+            return []
         case "content_block_stop":
             let links = (citedURLs.removeValue(forKey: index) ?? []).compactMap {
                 citations.link(to: $0)
             }
             return links.isEmpty ? [] : [.text(links.joined())]
-        case "message_start":
-            let reported = event.message?.usage
-            usage.inputTokens = reported?.inputTokens ?? usage.inputTokens
-            let cached = [reported?.cacheReadInputTokens, reported?.cacheCreationInputTokens]
-                .compactMap { $0 }
-            if !cached.isEmpty { usage.cachedInputTokens = cached.reduce(0, +) }
-            return [.usage(usage)]
-        case "message_delta":
-            usage.outputTokens = event.usage?.outputTokens ?? usage.outputTokens
-            return [.usage(usage)]
         case "message_stop":
             isTerminal = true
-            return [.finished]
+            return []
         case "error":
             isTerminal = true
             throw AIProviderError.responseFailed(
@@ -228,11 +183,6 @@ struct AIStreamDecoder: Sendable {
         default:
             return []
         }
-    }
-
-    private var searchQuery: String? {
-        let input = try? JSONSerialization.jsonObject(with: Data(searchInput.utf8))
-        return (input as? [String: Any])?["query"] as? String
     }
 
     private static func anthropicErrorMessage(_ type: String?) -> String {
@@ -247,64 +197,15 @@ struct AIStreamDecoder: Sendable {
 private struct OpenAIChunk: Decodable {
     struct Choice: Decodable {
         struct Delta: Decodable {
-            struct ReasoningDetail: Decodable { let text: String? }
-
             let content: String?
-            let reasoning: String?
-            let reasoningContent: String?
-            let reasoningDetails: [ReasoningDetail]?
-
-            /// OpenRouter says `reasoning`, DeepSeek and its copies `reasoning_content`.
-            var reasoningText: String? {
-                let text =
-                    [reasoning, reasoningContent].compactMap { $0 }.first { !$0.isEmpty }
-                    ?? reasoningDetails?.compactMap(\.text).joined()
-                return text?.isEmpty == false ? text : nil
-            }
-
-            enum CodingKeys: String, CodingKey {
-                case content, reasoning
-                case reasoningContent = "reasoning_content"
-                case reasoningDetails = "reasoning_details"
-            }
         }
 
         let delta: Delta?
-        let finishReason: String?
-
-        enum CodingKeys: String, CodingKey {
-            case delta
-            case finishReason = "finish_reason"
-        }
-    }
-
-    struct Usage: Decodable {
-        struct CompletionDetails: Decodable {
-            let reasoningTokens: Int?
-
-            enum CodingKeys: String, CodingKey {
-                case reasoningTokens = "reasoning_tokens"
-            }
-        }
-
-        let promptTokens: Int?
-        let completionTokens: Int?
-        let completionTokensDetails: CompletionDetails?
-        /// OpenRouter's own figure; a vendor API sends none.
-        let cost: Double?
-
-        enum CodingKeys: String, CodingKey {
-            case promptTokens = "prompt_tokens"
-            case completionTokens = "completion_tokens"
-            case completionTokensDetails = "completion_tokens_details"
-            case cost
-        }
     }
 
     struct ErrorBody: Decodable { let message: String? }
 
     let choices: [Choice]?
-    let usage: Usage?
     let error: ErrorBody?
 }
 
@@ -314,39 +215,9 @@ private struct AnthropicEvent: Decodable {
 
         let type: String?
         let text: String?
-        let thinking: String?
-        let partialJSON: String?
-        let stopReason: String?
         let citation: Citation?
-
-        enum CodingKeys: String, CodingKey {
-            case type, text, thinking, citation
-            case partialJSON = "partial_json"
-            case stopReason = "stop_reason"
-        }
     }
 
-    struct ContentBlock: Decodable {
-        let type: String?
-        let id: String?
-        let name: String?
-    }
-
-    struct Usage: Decodable {
-        let inputTokens: Int?
-        let outputTokens: Int?
-        let cacheReadInputTokens: Int?
-        let cacheCreationInputTokens: Int?
-
-        enum CodingKeys: String, CodingKey {
-            case inputTokens = "input_tokens"
-            case outputTokens = "output_tokens"
-            case cacheReadInputTokens = "cache_read_input_tokens"
-            case cacheCreationInputTokens = "cache_creation_input_tokens"
-        }
-    }
-
-    struct Message: Decodable { let usage: Usage? }
     struct ErrorBody: Decodable {
         let type: String?
         let message: String?
@@ -355,13 +226,5 @@ private struct AnthropicEvent: Decodable {
     let type: String
     let index: Int?
     let delta: Delta?
-    let contentBlock: ContentBlock?
-    let usage: Usage?
-    let message: Message?
     let error: ErrorBody?
-
-    enum CodingKeys: String, CodingKey {
-        case type, index, delta, usage, message, error
-        case contentBlock = "content_block"
-    }
 }

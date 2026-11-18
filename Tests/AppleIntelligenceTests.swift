@@ -19,7 +19,7 @@ struct AppleIntelligenceTests {
     static func main() async {
         statusCopyCoversEveryReason()
         deltasFollowCumulativeSnapshots()
-        turnsSplitThePromptFromItsHistory()
+        actionsStartWithOnlyInstructions()
         generationErrorsBecomeReadableFailures()
         if ProcessInfo.processInfo.environment["TINYCAST_TEST_APPLE_INTELLIGENCE"] == "1" {
             await onDeviceModelAnswers()
@@ -68,48 +68,22 @@ struct AppleIntelligenceTests {
         expect(repeated.delta(from: "Hello").isEmpty, "an unchanged snapshot emits nothing")
     }
 
-    static func turnsSplitThePromptFromItsHistory() {
-        let request = AIRequest(
-            instructions: "Be brief.",
-            messages: [
-                AIMessage(role: .user, text: "first"),
-                AIMessage(role: .assistant, text: "answer"),
-                AIMessage(role: .user, text: "  second  ")
-            ])
-        let turn = AppleIntelligenceProvider.turn(for: request)
-
-        expect(turn.prompt == "second", "the newest user turn is the prompt, got \(turn.prompt ?? "nil")")
+    static func actionsStartWithOnlyInstructions() {
+        let turn = AppleIntelligenceProvider.turn(
+            for: AIRequest(instructions: "Be brief.", prompt: "  selection  "))
+        expect(turn.prompt == "selection", "the text prompt is trimmed")
         let entries = Array(turn.transcript)
-        expect(entries.count == 3, "instructions plus two history turns, got \(entries.count)")
+        expect(entries.count == 1, "only instructions enter the initial transcript")
         if case .instructions(let instructions) = entries.first {
             expect(text(instructions.segments) == "Be brief.", "instructions lead the transcript")
         } else {
             expect(false, "the transcript opens with instructions")
         }
-        if case .prompt(let prompt) = entries.dropFirst().first {
-            expect(text(prompt.segments) == "first", "the older user turn is a transcript prompt")
-        } else {
-            expect(false, "the older user turn is a transcript prompt")
-        }
-        if case .response(let response) = entries.last {
-            expect(text(response.segments) == "answer", "the reply is a transcript response")
-        } else {
-            expect(false, "the reply is a transcript response")
-        }
-        expect(
-            !entries.contains { entryText($0).contains("second") },
-            "the prompt is not also in the history it resumes from")
-
-        // Instructions are dropped upstream when the reader turns the system prompt off.
-        let bare = AppleIntelligenceProvider.turn(
-            for: AIRequest(messages: [AIMessage(role: .user, text: "hi")]))
-        expect(Array(bare.transcript).isEmpty, "a turn with no history carries an empty transcript")
-        expect(bare.prompt == "hi", "a lone user turn is still the prompt")
-
-        // An image-only message has no text to send; the model takes no pictures either way.
-        let empty = AppleIntelligenceProvider.turn(
-            for: AIRequest(messages: [AIMessage(role: .assistant, text: "orphan")]))
-        expect(empty.prompt == nil, "a request with no user turn has no prompt")
+        let bare = AppleIntelligenceProvider.turn(for: AIRequest(prompt: "hi"))
+        expect(Array(bare.transcript).isEmpty, "without instructions the transcript is empty")
+        expect(bare.prompt == "hi", "the text is the prompt")
+        let empty = AppleIntelligenceProvider.turn(for: AIRequest(prompt: " \n "))
+        expect(empty.prompt == nil, "an empty prompt cannot be sent")
     }
 
     static func generationErrorsBecomeReadableFailures() {
@@ -144,23 +118,22 @@ struct AppleIntelligenceTests {
         }
         let request = AIRequest(
             instructions: "Reply with one short sentence.",
-            messages: [AIMessage(role: .user, text: "Name one colour.")])
+            prompt: "Name one colour.")
         var text = ""
         var finished = false
         do {
             for try await event in AppleIntelligenceProvider().stream(request) {
                 switch event {
                 case .text(let chunk): text += chunk
-                case .finished: finished = true
-                default: break
                 }
             }
+            finished = true
         } catch {
             expect(false, "the on-device stream failed: \(error.localizedDescription)")
             return
         }
         expect(!text.isEmpty, "the on-device model answered")
-        expect(finished, "the on-device stream terminated with .finished")
+        expect(finished, "the on-device stream completed successfully")
     }
 
     private static func text(_ segments: [Transcript.Segment]) -> String {
@@ -168,13 +141,4 @@ struct AppleIntelligenceTests {
             .joined()
     }
 
-    private static func entryText(_ entry: Transcript.Entry) -> String {
-        switch entry {
-        case .instructions(let value): return text(value.segments)
-        case .prompt(let value): return text(value.segments)
-        case .response(let value): return text(value.segments)
-        case .toolCalls, .toolOutput: return ""
-        @unknown default: return ""
-        }
-    }
 }

@@ -44,17 +44,15 @@ final class QuickActionRunner {
         let request = AIRequest(
             instructions: QuickActionPrompt.instructions(
                 for: action, override: instructionOverride),
-            messages: [
-                AIMessage(
-                    role: .user,
-                    text: QuickActionPrompt.message(for: action, selection: selection))
-            ],
+            prompt: QuickActionPrompt.message(for: action, selection: selection),
             maxOutputTokens: maxOutputTokens(for: action, selection: selection, on: provider))
         var text = ""
         for try await event in provider.stream(request) {
-            guard case .text(let delta) = event else { continue }
-            text += delta
-            onDelta(delta)
+            switch event {
+            case .text(let delta):
+                text += delta
+                onDelta(delta)
+            }
         }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {

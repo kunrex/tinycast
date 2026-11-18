@@ -9,8 +9,11 @@ action.
 A **custom Quick Action** is a name, a glyph and a prompt, run through the same provider. It takes a
 shortcut and a launcher row like any other.
 
-Quick Actions is the provider layer's second consumer. It shares the provider connections and
-selectable Markdown renderer retained from the removed conversation surfaces.
+Quick Actions is the provider layer's only generation consumer. It uses the provider connections and
+selectable Markdown renderer retained from the removed conversation surfaces. Each run sends
+instructions and one text user prompt, with no history, attachments or web-search request fields.
+Only answer text reaches the result; native reasoning/usage/tool frames are ignored, and a leading
+streamed `<think>` block is suppressed. Reasoning-effort configuration and citation text links remain.
 
 ## Invariants
 

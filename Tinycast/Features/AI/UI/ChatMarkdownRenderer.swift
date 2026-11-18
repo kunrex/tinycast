@@ -4,7 +4,6 @@ import SwiftUI
 /// Everything the text is drawn from; the view re-renders only when one of these changes.
 struct ChatMarkdownSource: Equatable {
     let blocks: [MarkdownBlock]
-    let failedFrom: Int?
     let metrics: InterfaceMetrics
 }
 
@@ -55,16 +54,11 @@ struct ChatMarkdownRenderer {
         var textBlocks: [NSTextBlock] = []
         var indent: CGFloat = 0
         var secondary = false
-        var failed = false
     }
 
     func render() -> ChatRenderedText {
         let output = Output()
-        let split = min(source.failedFrom ?? source.blocks.count, source.blocks.count)
-        render(Array(source.blocks[..<split]), in: Context(), into: output)
-        render(
-            Array(source.blocks[split...]), in: Context(failed: true),
-            into: output, first: split)
+        render(source.blocks, in: Context(), into: output)
         // The last paragraph's own break would draw an empty line under the reply.
         if output.string.string.hasSuffix("\n") {
             output.string.deleteCharacters(in: NSRange(location: output.string.length - 1, length: 1))
@@ -75,7 +69,6 @@ struct ChatMarkdownRenderer {
     private var bodyFont: NSFont { typography.textNSFont(.body) }
 
     private func textColor(_ context: Context) -> NSColor {
-        if context.failed { return NSColor(Theme.Colors.destructive) }
         return context.secondary ? NSColor(Theme.Colors.textSecondary) : .labelColor
     }
 
@@ -327,7 +320,7 @@ struct ChatMarkdownRenderer {
         style.headIndent = 0
         let body = NSMutableAttributedString(
             string: text, attributes: [.font: font, .foregroundColor: textColor(context)])
-        if !context.failed { colorSyntax(of: body, language: language) }
+        colorSyntax(of: body, language: language)
         let start = output.string.length
         body.append(NSAttributedString(string: "\n", attributes: [.font: font]))
         body.addAttribute(.paragraphStyle, value: style, range: NSRange(location: 0, length: body.length))

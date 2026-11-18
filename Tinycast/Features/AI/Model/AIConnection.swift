@@ -37,15 +37,6 @@ enum AIProviderKind: String, CaseIterable, Codable, Identifiable, Sendable {
         return .openAICompatible
     }
 
-    /// A vendor's search tool exists only on its own endpoint; OpenRouter's plugin rides any model.
-    func offersWebSearch(at baseURL: URL?) -> Bool {
-        switch self {
-        case .openRouter: return true
-        case .openAI: return apiShape(for: baseURL) == .openAIResponses
-        case .anthropic: return baseURL?.host()?.lowercased() == "api.anthropic.com"
-        case .gemini, .openAICompatible: return false
-        }
-    }
 }
 
 struct AIConnection: Codable, Equatable, Identifiable, Sendable {
@@ -119,7 +110,7 @@ struct AIConnection: Codable, Equatable, Identifiable, Sendable {
         reasoningOptions?[model] ?? (takesThinkingField ? .thinkingSwitch : nil)
     }
 
-    /// A chat keeps the effort it was given, so one this model no longer offers is never sent.
+    /// A saved selection never sends an effort this model no longer offers.
     func offeredEffort(_ effort: String?, for model: String) -> String? {
         guard let effort, reasoningOptions(for: model)?.efforts.contains(effort) == true else {
             return nil
@@ -153,25 +144,6 @@ struct AIConnection: Codable, Equatable, Identifiable, Sendable {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? provider.title : trimmed
     }
-
-    func capabilities(for model: String) -> AIModelCapabilities {
-        AIModelCapabilities(
-            images: provider != .openRouter || visionModels.contains(model),
-            // Only the two shapes whose bodies Tinycast writes; a gateway bills the upload first.
-            documents: provider == .openAI || provider == .anthropic,
-            webSearch: provider.offersWebSearch(at: URL(string: baseURL)))
-    }
-}
-
-/// What the picker can offer for a model: a vendor API takes images unless its catalog said no.
-struct AIModelCapabilities: Equatable, Sendable {
-    let images: Bool
-    /// A PDF as a native block; four routes have no field for one, so it is refused, never dropped.
-    let documents: Bool
-    let webSearch: Bool
-    static let none = AIModelCapabilities(images: false, documents: false, webSearch: false)
-    /// The on-device model is text-only and reaches nothing, so it offers none of the three.
-    static let appleIntelligence = AIModelCapabilities.none
 }
 
 enum AIModelSource: Codable, Equatable, Hashable, Sendable {

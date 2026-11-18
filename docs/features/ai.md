@@ -69,8 +69,21 @@ Actions' catalog and effort choices; `offeredEffort` rejects stale levels.
 
 Quick Action results use `ChatMarkdownText` / `ChatMarkdownRenderer`: one selectable attributed string
 with lists, tables, safe web/mail links, syntax-highlighted code, copy headers and native LaTeX math.
-`AICitationLinker` normalizes HTTP citation annotations to Markdown. Extensions also use
-`MarkdownView` and its shared copy button.
+`AICitationLinker` normalizes HTTP citation annotations to Markdown, retaining HTTP(S)-only URL
+safety and deduplication. Extensions use their own `ExtensionMarkdownView` in `ExtensionDetailView.swift`;
+the orphan SwiftUI `MarkdownView`, inline/code/table views and `ChatCopyButton` are removed.
+
+Requests carry instructions, one text prompt and an output budget, not history or attachments. No
+outbound web-search tools/plugins or model capability switches remain. Streams emit answer text only;
+native reasoning, tool/search progress and usage frames are ignored. Leading streamed `<think>` blocks
+are suppressed across fragmentation and EOF, never surfaced as answer text. Citations still become
+text links. Reasoning-effort request configuration stays live. Terminal framing, truncation detection,
+provider errors and cancellation remain; stream completion is not a separate ignored event.
+
+The on-device session starts with instructions only, preserving permissive transformation guardrails
+and output limits. Its context-window error reuses the translated selection-too-long message. The
+selectable renderer retains code copying, safe links, math and syntax but no failed-tail styling.
+No persisted settings, history, presets or credentials are removed by this dead-path cleanup.
 
 Harnesses: `AIProviderTests`, `AIResponsesTests`, `AppleIntelligenceTests`, `ChatMarkdownTests`,
 `SyntaxHighlightTests`, `QuickActionTests` and `TextDiffTests`. Real Apple Intelligence generation is

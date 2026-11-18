@@ -21,7 +21,7 @@ struct AIResponsesTests {
 
     static func main() async throws {
         endpointsStayWithinTheirProvider()
-        requestBodiesKeepInstructionsAndAttachments()
+        requestBodiesKeepInstructionsAndText()
         try streamsKeepTextReasoningAndUsage()
         try searchesAndCitationsStream()
         try failuresTerminateAndRedactSecrets()
@@ -60,16 +60,9 @@ struct AIResponsesTests {
         expect(query?.request.url?.path == "/v1/models", "a full Responses URL still discovers models")
     }
 
-    static func requestBodiesKeepInstructionsAndAttachments() {
-        let image = AIImage(data: Data([1, 2]), mimeType: "image/png")
-        let pdf = AIDocument(data: Data("%PDF".utf8), mimeType: "application/pdf", name: "notes.pdf")
+    static func requestBodiesKeepInstructionsAndText() {
         let body = AIRequestBody.make(
-            AIRequest(
-                instructions: "Answer briefly",
-                messages: [
-                    AIMessage(role: .user, text: "read", images: [image], documents: [pdf]),
-                    AIMessage(role: .assistant, text: "Earlier answer")
-                ]), configuration: configuration)
+            AIRequest(instructions: "Answer briefly", prompt: "read"), configuration: configuration)
         expect(body["store"] as? Bool == false, "Responses state is never stored server-side")
         expect(body["stream"] as? Bool == true, "Responses streams through the existing transport")
         expect(body["instructions"] as? String == "Answer briefly", "instructions remain top-level")
@@ -78,23 +71,12 @@ struct AIResponsesTests {
             body["reasoning_effort"] == nil && body["reasoning"] == nil,
             "the migration preserves the model's default reasoning")
         let input = body["input"] as? [[String: Any]] ?? []
-        let parts = input.first?["content"] as? [[String: Any]] ?? []
-        expect(
-            parts.compactMap { $0["type"] as? String } == ["input_text", "input_image", "input_file"],
-            "text, images and PDFs use native input parts")
-        expect(parts.dropFirst().first?["image_url"] as? String == image.dataURL, "images keep their data")
-        expect(parts.last?["filename"] as? String == pdf.name, "PDFs keep their filename")
-        expect(parts.last?["file_data"] as? String == pdf.dataURL, "PDFs keep their data")
-        expect(input.last?["content"] as? String == "Earlier answer", "saved assistant text remains input")
+        expect(input.count == 1, "one input, without conversation history")
+        expect(input.first?["role"] as? String == "user", "the prompt is a user turn")
+        expect(input.first?["content"] as? String == "read", "the prompt stays plain text")
         expect(body["tools"] == nil, "Quick Action requests never advertise function tools")
-        let plain = AIRequestBody.make(AIRequest(messages: []), configuration: configuration)
-        expect(plain["instructions"] == nil && plain["tools"] == nil, "disabled capabilities add no fields")
-        let searching = AIRequestBody.make(
-            AIRequest(messages: [], webSearch: true), configuration: configuration)
-        expect(
-            (searching["tools"] as? [[String: Any]])?.compactMap { $0["type"] as? String }
-                == ["web_search"],
-            "hosted web search retains its native request format")
+        let plain = AIRequestBody.make(AIRequest(prompt: "hi"), configuration: configuration)
+        expect(plain["instructions"] == nil && plain["tools"] == nil, "optional fields stay absent")
     }
 
     static func searchesAndCitationsStream() throws {
@@ -120,8 +102,7 @@ struct AIResponsesTests {
         let events = try feed(frames, slice: 9, decoder: &decoder)
         expect(
             events == [
-                .searching(nil), .searched("rates"), .text("Rates rose ([news](\(linked)))."),
-                .text(" ([example.com](\(cited)))"), .usage(AIUsage()), .finished
+                .text("Rates rose ([news](\(linked)))."), .text(" ([example.com](\(cited)))")
             ],
             "a search reports its query and only a source the text lacks is linked")
     }
@@ -145,20 +126,16 @@ struct AIResponsesTests {
             var decoder = AIStreamDecoder(shape: .openAIResponses)
             let before = try feed(frames, slice: slice, decoder: &decoder)
             expect(!decoder.isTerminal, "deltas do not complete a response")
-            expect(before == [.thinking, .text("Checking…")], "unrequested function deltas are ignored")
+            expect(before == [.text("Checking…")], "native reasoning and function deltas are ignored")
             let events = before + (try feed(complete, slice: slice, decoder: &decoder))
-            expect(decoder.isTerminal && events.last == .finished, "response.completed ends the stream")
+            expect(decoder.isTerminal, "response.completed ends the stream")
             expect(events.contains(.text("Checking…")), "answer text streams once")
             expect(
                 events.filter {
                     if case .text = $0 { return true }; return false
                 }.count == 1,
                 "the completed output does not repeat streamed text")
-            expect(events.contains(.thinking), "opaque reasoning still reports thinking activity")
-            expect(events.count == 4, "completion exposes only thinking, text, usage and finish")
-            let usage = AIUsage(inputTokens: 12, outputTokens: 8, reasoningTokens: 5)
-            expect(events.contains(.usage(usage)), "input includes its cache and reasoning remains output")
-            expect(usage.contextTokens == 20, "cached input is never counted twice")
+            expect(events == [.text("Checking…")], "usage at completion emits nothing")
             let repeated = try decoder.feed(complete)
             expect(repeated.isEmpty, "a repeated terminal event cannot repeat a call")
         }

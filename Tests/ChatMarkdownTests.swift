@@ -4,11 +4,11 @@ import SwiftUI
 @main
 @MainActor
 struct ChatMarkdownTests {
-    static func render(_ text: String, midStream: Bool = false, failedFrom: Int? = nil) -> ChatRenderedText {
+    static func render(_ text: String, midStream: Bool = false) -> ChatRenderedText {
         ChatMarkdownRenderer(
             ChatMarkdownSource(
                 blocks: MarkdownBlock.parse(text, midStream: midStream),
-                failedFrom: failedFrom, metrics: .standard)
+                metrics: .standard)
         ).render()
     }
 
@@ -53,12 +53,6 @@ struct ChatMarkdownTests {
             if let url = value as? URL { targets.append(url.absoluteString) }
         }
         precondition(targets == ["https://example.com", "mailto:a@example.com"])
-
-        let partial = render("Partial answer.\n\nCancelled", failedFrom: 1).string
-        precondition(partial.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor == .labelColor)
-        precondition(
-            partial.attribute(.foregroundColor, at: partial.length - 1, effectiveRange: nil) as? NSColor
-                == NSColor(Theme.Colors.destructive))
 
         let math = render(#"Roots \(x^2\) and $y$."# + "\n\n" + #"$$\frac{a}{b}$$"#).string
         var sources: [String] = []

@@ -5,12 +5,11 @@ import SwiftUI
 struct ChatMarkdownText: View {
     @Environment(\.metrics) private var metrics
     let blocks: [MarkdownBlock]
-    var failedFrom: Int?
 
     var body: some View {
         ChatTextRepresentable(
             source: ChatMarkdownSource(
-                blocks: blocks, failedFrom: failedFrom, metrics: metrics))
+                blocks: blocks, metrics: metrics))
     }
 }
 

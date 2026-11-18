@@ -15,65 +15,22 @@ struct AIProviderTests {
         }
     }
 
-    /// A wrong document shape must fail here rather than mid-conversation.
-    static func requestBodiesCarryDocuments() {
-        let pdf = AIDocument(
-            data: Data("%PDF-1.4".utf8), mimeType: "application/pdf", name: "report.pdf")
-        let image = AIImage(data: Data([0x89, 0x50]), mimeType: "image/png")
-        let turn = AIRequest(
-            messages: [
-                AIMessage(role: .user, text: "summarise", images: [image], documents: [pdf])
-            ])
-
-        let anthropic = AIRequestBody.make(
-            turn,
-            configuration: AIHTTPConfiguration(
-                provider: .anthropic, baseURL: URL(string: "https://api.anthropic.com")!,
-                model: "claude"))
-        let blocks =
-            (anthropic["messages"] as? [[String: Any]])?.first?["content"] as? [[String: Any]] ?? []
-        expect(
-            blocks.map { $0["type"] as? String } == ["image", "document", "text"],
-            "Anthropic takes image then document, with the text block last")
-        let source =
-            blocks.first { $0["type"] as? String == "document" }?["source"]
-            as? [String: Any]
-        expect(
-            source?["type"] as? String == "base64"
-                && source?["media_type"] as? String == "application/pdf",
-            "as a base64 document source naming its media type")
-        expect(
-            (source?["data"] as? String)?.contains("\n") == false,
-            "whose base64 carries no newlines")
-
-        let openAI = AIRequestBody.make(
-            turn,
-            configuration: AIHTTPConfiguration(
-                provider: .openAICompatible, baseURL: URL(string: "https://api.openai.com/v1")!,
-                model: "gpt"))
-        let parts =
-            (openAI["messages"] as? [[String: Any]])?.first?["content"] as? [[String: Any]] ?? []
-        expect(
-            parts.map { $0["type"] as? String } == ["text", "image_url", "file"],
-            "OpenAI keeps its text part first and appends the file part")
-        let file = parts.first { $0["type"] as? String == "file" }?["file"] as? [String: Any]
-        expect(
-            file?["filename"] as? String == "report.pdf",
-            "the file part names the document")
-        expect(
-            (file?["file_data"] as? String)?.hasPrefix("data:application/pdf;base64,") == true,
-            "and carries it as a data URL")
-
-        // A turn that is only a document must not collapse to the plain-string fast path.
-        let documentOnly = AIRequestBody.make(
-            AIRequest(messages: [AIMessage(role: .user, text: "", documents: [pdf])]),
-            configuration: AIHTTPConfiguration(
-                provider: .openAICompatible, baseURL: URL(string: "https://api.openai.com/v1")!,
-                model: "gpt"))
-        expect(
-            ((documentOnly["messages"] as? [[String: Any]])?.first?["content"]
-                as? [[String: Any]])?.count == 1,
-            "a document-only turn still sends, as content parts")
+    static func requestBodiesCarryOneTextPrompt() {
+        for provider in AIProviderKind.allCases {
+            let configuration = AIHTTPConfiguration(
+                provider: provider, baseURL: URL(string: provider.defaultBaseURL)!, model: "m")
+            let body = AIRequestBody.make(
+                AIRequest(instructions: "Be brief", prompt: "summarise"), configuration: configuration)
+            let key = configuration.shape == .openAIResponses ? "input" : "messages"
+            let messages = body[key] as? [[String: String]] ?? []
+            expect(messages.last == ["role": "user", "content": "summarise"], "one text user prompt")
+            expect(messages.count == (configuration.shape == .openAICompatible ? 2 : 1), "no history")
+            expect(body["tools"] == nil && body["plugins"] == nil, "no outbound search or tools")
+            if configuration.shape == .anthropic {
+                expect(body["system"] as? String == "Be brief", "Anthropic retains instructions")
+                expect(body["max_tokens"] as? Int == AIRequest.defaultMaxOutputTokens, "output budget")
+            }
+        }
     }
 
     static func main() async throws {
@@ -93,12 +50,11 @@ struct AIProviderTests {
         brokenStreamsFailLoudly()
         refusalsShowTheProvidersOwnWords()
         brandsResolveFromModelIDs()
-        requestBodiesCarryDocuments()
+        requestBodiesCarryOneTextPrompt()
         settingsPersistAndRepairSelections()
         shownModelsFilterThePicker()
         switchedOffRoutesLeaveTheDefault()
         onDeviceSelectionsRoundTripAndLead()
-        webSearchStaysOnTheVendorsOwnEndpoint()
         anthropicSearchesAndCitationsDecode()
         aGatewayOffersNoneAsItsReasoningEffort()
         declaredLevelsNeverOutliveTheirDestination()
@@ -106,39 +62,6 @@ struct AIProviderTests {
 
         print("\(passes) passed, \(failures) failed")
         if failures > 0 { exit(1) }
-    }
-
-    static func webSearchStaysOnTheVendorsOwnEndpoint() {
-        let routes: [(AIProviderKind, String?, Bool)] = [
-            (.openAI, nil, true),
-            (.anthropic, nil, true),
-            (.openRouter, nil, true),
-            (.openAI, "https://gateway.example/v1", false),
-            (.anthropic, "https://gateway.example/anthropic", false),
-            (.gemini, nil, false),
-            (.openAICompatible, nil, false)
-        ]
-        for (provider, baseURL, searches) in routes {
-            let connection = AIConnection(provider: provider, baseURL: baseURL, models: ["m"])
-            expect(
-                connection.capabilities(for: "m").webSearch == searches,
-                "\(provider) at \(connection.baseURL) offers web search: \(searches)")
-        }
-
-        let anthropic = AIHTTPConfiguration(
-            provider: .anthropic, baseURL: URL(string: AIProviderKind.anthropic.defaultBaseURL)!,
-            model: "claude")
-        let body = AIRequestBody.make(
-            AIRequest(messages: [AIMessage(role: .user, text: "news")], webSearch: true),
-            configuration: anthropic)
-        let tools = body["tools"] as? [[String: Any]] ?? []
-        expect(
-            tools.map { $0["name"] as? String } == ["web_search"]
-                && tools.last?["type"] as? String == "web_search_20250305",
-            "Anthropic's hosted search retains its server-tool format")
-        let quiet = AIRequestBody.make(
-            AIRequest(messages: [AIMessage(role: .user, text: "news")]), configuration: anthropic)
-        expect(quiet["tools"] == nil, "search off adds no tool")
     }
 
     static func anthropicSearchesAndCitationsDecode() {
@@ -162,14 +85,20 @@ struct AIProviderTests {
         let link = " ([swift.org](https://swift.org/a_%28b%29))"
         expect(
             events == [
-                .searching(nil), .searched("swift 6"), .text("Swift 6 shipped."), .text(link),
-                .finished
+                .text("Swift 6 shipped."), .text(link)
             ],
-            "a server search reports its query, and a block's sources follow it once")
+            "server search frames are ignored, and a block's sources follow it once")
+        expect(decoder.isTerminal, "ignored tool frames still reach Anthropic message_stop")
         var linker = AICitationLinker()
         expect(
             link == linker.link(to: "https://swift.org/a_(b)"),
             "HTTP citation normalization escapes parentheses in the target")
+        expect(linker.link(to: "https://swift.org/a_(b)") == nil, "citations are deduplicated")
+        for url in ["file:///tmp/private", "javascript:alert(1)", "tinycast://search", "mailto:a@b.com"] {
+            expect(linker.link(to: url) == nil, "citation links reject non-web schemes")
+        }
+        linker.record("Already linked https://example.com/report")
+        expect(linker.link(to: "https://example.com/report") == nil, "text links are not repeated")
     }
 
     static func aGatewayOffersNoneAsItsReasoningEffort() {
@@ -196,7 +125,7 @@ struct AIProviderTests {
             catalogued.reasoningOptions(for: "m")?.efforts == ["high", "low"],
             "a published catalog always wins over the synthesized switch")
 
-        let turn = AIRequest(messages: [AIMessage(role: .user, text: "hi")])
+        let turn = AIRequest(prompt: "hi")
         let url = URL(string: "https://gateway.example/v1")!
         let on = AIRequestBody.make(
             turn,
@@ -313,7 +242,7 @@ struct AIProviderTests {
             "Gemini stops at high and may declare None")
         expect(gemini.offeredEffort("none", for: "m") == "none", "a declared None is sent")
 
-        let turn = AIRequest(messages: [AIMessage(role: .user, text: "hi")])
+        let turn = AIRequest(prompt: "hi")
         func body(_ provider: AIProviderKind, effort: String?) -> [String: Any] {
             AIRequestBody.make(
                 turn,
@@ -540,19 +469,6 @@ struct AIProviderTests {
             ],
             "a reasoning field that is not an object is ignored, and the catalog still loads")
 
-        let router = AIConnection(
-            provider: .openRouter, models: ["model-a", "model-b"], visionModels: ["model-b"])
-        expect(
-            !router.capabilities(for: "model-a").images
-                && router.capabilities(for: "model-b").images
-                && router.capabilities(for: "model-a").webSearch,
-            "OpenRouter gates images by the catalog and searches for every model")
-        let direct = AIConnection(provider: .gemini, models: ["model-a"])
-        expect(
-            direct.capabilities(for: "model-a").images
-                && !direct.capabilities(for: "model-a").webSearch,
-            "a vendor API takes images and has no search switch")
-
         let gemini = Data(
             """
             {"models":[
@@ -762,13 +678,8 @@ struct AIProviderTests {
             """.utf8)
         var events = (try? openAI.feed(openAIData)) ?? []
         events += (try? openAI.finish()) ?? []
-        expect(events.contains(.thinking), "reasoning is surfaced as state, not answer text")
-        expect(events.contains(.reasoning("working")), "and its text reaches the reasoning fold")
-        expect(events.contains(.text("Hello")), "OpenAI-compatible text is decoded")
-        expect(
-            events.contains(.usage(AIUsage(inputTokens: 3, outputTokens: 2))),
-            "OpenAI-compatible usage is decoded")
-        expect(events.last == .finished, "the OpenAI done marker terminates the stream")
+        expect(events == [.text("Hello")], "native reasoning and usage-only frames emit no text")
+        expect(openAI.isTerminal, "the OpenAI done marker terminates the stream")
 
         var anthropic = AIStreamDecoder(shape: .anthropic)
         let anthropicData = Data(
@@ -786,23 +697,17 @@ struct AIProviderTests {
             """.utf8)
         var anthropicEvents = (try? anthropic.feed(anthropicData)) ?? []
         anthropicEvents += (try? anthropic.finish()) ?? []
-        expect(anthropicEvents.contains(.text("Hi")), "Anthropic text is decoded")
-        expect(
-            anthropicEvents.contains(.reasoning("Hmm")) && !anthropicEvents.contains(.text("Hmm")),
-            "Anthropic thinking is reasoning, never answer text")
-        expect(
-            anthropicEvents.contains(.usage(AIUsage(inputTokens: 4, outputTokens: 1))),
-            "Anthropic usage accumulates across events")
-        expect(anthropicEvents.last == .finished, "Anthropic message_stop terminates the stream")
+        expect(anthropicEvents == [.text("Hi")], "Anthropic thinking and usage frames emit nothing")
+        expect(anthropic.isTerminal, "Anthropic message_stop terminates the stream")
     }
 
     /// Real OpenRouter captures, with the reasoning ones proving thought never leaks into text.
     static func capturedStreamsDecodeHoweverTheyArrive() {
-        let captures: [(file: String, text: String?, reasons: Bool)] = [
-            ("openrouter-plain", "1, 2, 3.", false),
-            ("openrouter-gemma", nil, false),
-            ("openrouter-nemotron-reasoning", nil, true),
-            ("openrouter-cohere-reasoning", nil, true)
+        let captures: [(file: String, text: String?)] = [
+            ("openrouter-plain", "1, 2, 3."),
+            ("openrouter-gemma", nil),
+            ("openrouter-nemotron-reasoning", nil),
+            ("openrouter-cohere-reasoning", nil)
         ]
         for capture in captures {
             guard let data = FileManager.default.contents(atPath: "Tests/ai-fixtures/\(capture.file).txt")
@@ -822,15 +727,7 @@ struct AIProviderTests {
             } else {
                 expect(!text.isEmpty, "\(capture.file) yields answer text")
             }
-            expect(
-                whole.contains(.thinking) == capture.reasons,
-                "\(capture.file) surfaces thinking only when the model reasoned")
-            expect(whole.last == .finished, "\(capture.file) ends on the done marker")
-            expect(
-                whole.contains {
-                    if case .usage(let usage) = $0 { return usage.totalTokens != nil } else { return false }
-                },
-                "\(capture.file) reports final usage")
+            expect(!text.contains("<think>"), "\(capture.file) never leaks leading think tags")
         }
     }
 
@@ -842,12 +739,7 @@ struct AIProviderTests {
         }
         let whole = decodeAll(data, slice: data.count)
         expect(whole == decodeAll(data, slice: 7), "think tags: fixture survives 7-byte slices")
-        expect(reasoningText(whole) == "Plan carefully.", "think tags: fixture reasoning is exact")
-        expect(answerText(whole) == "The answer.", "think tags: fixture answer is exact")
-        expect(whole.contains(.thinking), "think tags: fixture surfaces thinking")
-        expect(
-            whole.suffix(2) == [.usage(AIUsage(inputTokens: 5, outputTokens: 9)), .finished],
-            "think tags: fixture keeps usage before completion")
+        expect(answerText(whole) == "The answer.", "think tags: fixture suppresses reasoning")
 
         let content = Array("<think>reason</think>\n\nanswer")
         for first in 0...content.count {
@@ -858,35 +750,35 @@ struct AIProviderTests {
                 ]
                 let events = decodeContent(fragments)
                 expect(
-                    reasoningText(events) == "reason" && answerText(events) == "answer",
-                    "think tags: content splits \(first),\(second) preserve reasoning and answer")
+                    answerText(events) == "answer",
+                    "think tags: content splits \(first),\(second) suppress reasoning and keep answer")
             }
         }
         let characters = decodeContent(content.map(String.init))
         expect(
-            reasoningText(characters) == "reason" && answerText(characters) == "answer",
-            "think tags: one character per delta preserves reasoning and answer")
+            answerText(characters) == "answer",
+            "think tags: one character per delta suppresses reasoning and keeps answer")
         let spaced = decodeContent([" \n", "<think> ", "\n", "reason \n</thi", "nk>\n", "\t", "answer", " \n"]
         )
         expect(
-            reasoningText(spaced) == " \nreason \n" && answerText(spaced) == "answer \n",
-            "think tags: only leading tag space and the answer separator are removed")
+            answerText(spaced) == "answer \n",
+            "think tags: reasoning and its separator are removed; answer trailing space stays")
         expect(
             decodeContent(["<think>r</think>answer"])
-                == [.thinking, .reasoning("r"), .text("answer"), .finished],
-            "think tags: a single delta emits reasoning before answer text")
+                == [.text("answer")],
+            "think tags: a single delta emits only answer text")
         for literal in [
             "<div>x</div>", "<thinking>…", "\n\nHello", "Hello <think>x</think> world",
             "Hello<think>x</think> world", "</think>answer"
         ] {
             let events = decodeContent(literal.map(String.init))
             expect(
-                answerText(events) == literal && !events.contains(.thinking),
+                answerText(events) == literal,
                 "think tags: literal content stays verbatim: \(literal.debugDescription)")
         }
         for content in ["<think></think>", "<think> \n\t</think>"] {
             expect(
-                decodeContent(content.map(String.init)) == [.finished],
+                decodeContent(content.map(String.init)).isEmpty,
                 "think tags: empty or whitespace-only reasoning emits nothing")
         }
         let secondBlock = decodeContent(["<think>r</think>", "answer <think>literal</think> world"])
@@ -896,11 +788,27 @@ struct AIProviderTests {
         for done in [true, false] {
             let unclosed = decodeContent(["<think>reason</thi"], done: done)
             expect(
-                reasoningText(unclosed) == "reason</thi" && answerText(unclosed).isEmpty,
-                "think tags: unclosed reasoning flushes at \(done ? "DONE" : "EOF")")
+                unclosed.isEmpty,
+                "think tags: unclosed reasoning is suppressed at \(done ? "DONE" : "EOF")")
             expect(
                 answerText(decodeContent(["<thi"], done: done)) == "<thi",
                 "think tags: undecided content flushes at \(done ? "DONE" : "EOF")")
+        }
+        for end in 0...content.count {
+            let prefix = String(content[..<end])
+            let expected: String
+            if end < "<think>".count {
+                expected = prefix
+            } else if let close = prefix.range(of: "</think>") {
+                expected = String(prefix[close.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+            } else {
+                expected = ""
+            }
+            for done in [true, false] {
+                expect(
+                    answerText(decodeContent(prefix.map(String.init), done: done)) == expected,
+                    "think tags: every prefix at DONE or EOF suppresses only recognized reasoning")
+            }
         }
         var decoder = AIStreamDecoder(shape: .openAICompatible)
         _ = try? decoder.feed(contentFrame("<thi"))
@@ -910,8 +818,8 @@ struct AIProviderTests {
         _ = try? terminated.feed(contentFrame("<think>r</thi"))
         expect(
             (try? terminated.feed(Data("data: [DONE]\n\n".utf8)))
-                == [.thinking, .reasoning("</thi"), .finished],
-            "think tags: DONE flushes reasoning before completion")
+                == [],
+            "think tags: DONE discards the unfinished reasoning suffix")
         expect((try? terminated.finish()) == [], "think tags: EOF after DONE never flushes twice")
         let tools = Data(
             """
@@ -926,11 +834,8 @@ struct AIProviderTests {
             """.utf8)
         let toolEvents = decodeAll(contentFrame("<think>r</think>") + tools, slice: 7)
         expect(
-            toolEvents == [
-                .thinking, .reasoning("r"),
-                .usage(AIUsage(inputTokens: 2, outputTokens: 3)), .finished
-            ],
-            "think tags: unrequested function calls are ignored without changing reasoning or usage")
+            toolEvents.isEmpty,
+            "think tags: unrequested function calls and usage-only frames emit nothing")
         let native = Data(
             """
             data: {"choices":[{"delta":{"reasoning_content":"native"}}]}
@@ -941,8 +846,8 @@ struct AIProviderTests {
 
             """.utf8)
         expect(
-            decodeAll(native, slice: 7) == [.thinking, .reasoning("native"), .text("answer"), .finished],
-            "think tags: reasoning_content retains its original event sequence")
+            decodeAll(native, slice: 7) == [.text("answer")],
+            "think tags: native reasoning_content is ignored")
     }
 
     private static func contentFrame(_ content: String) -> Data {
@@ -958,13 +863,6 @@ struct AIProviderTests {
         var data = fragments.reduce(into: Data()) { $0 += contentFrame($1) }
         if done { data += Data("data: [DONE]\n\n".utf8) }
         return decodeAll(data, slice: max(1, data.count))
-    }
-
-    private static func reasoningText(_ events: [AIStreamEvent]) -> String {
-        events.compactMap { event -> String? in
-            if case .reasoning(let text) = event { return text }
-            return nil
-        }.joined()
     }
 
     private static func answerText(_ events: [AIStreamEvent]) -> String {
@@ -984,6 +882,11 @@ struct AIProviderTests {
             offset = end
         }
         events += (try? decoder.finish()) ?? []
+        let hasDone = String(decoding: data, as: UTF8.self).contains("data: [DONE]")
+        expect(decoder.isTerminal == hasDone, "only a done marker completes a compatible stream")
+        if hasDone {
+            expect((try? decoder.feed(contentFrame("late"))) == [], "text after terminal is ignored")
+        }
         return events
     }
 

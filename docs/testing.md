@@ -196,9 +196,9 @@ If a change touches anything in the right column, the harness on the left is man
 | `UpdateCheckTests` | `UpdateCheckStore` — stopping, in-flight cancellation, cached offer suppression, restart and independent manual checking |
 | `SupportTests` | `Support/Model/` — when the support reminder comes due, and a clock moved backwards |
 | `AIProviderTests` | `AI/Model/` and `AISettingsStore` — provider requests and streams, route settings, protocol framing and HTTP reasoning efforts |
-| `AppleIntelligenceTests` | On-device status, snapshot deltas, transcript assembly and error mapping; real generation is opt-in |
+| `AppleIntelligenceTests` | On-device status, snapshot deltas, instruction-only session setup and error mapping; real generation is opt-in |
 | `SyntaxHighlightTests` | `AI/Model/SyntaxGrammar.swift`, `SyntaxHighlighter.swift`, `SyntaxStructuredLexers.swift` — every grammar's tokens, language aliases, the size limit and streaming prefixes |
-| `ChatMarkdownTests` | Shared selectable Markdown, safe links, code-copy blocks, math and failed-result styling without transcript/find/citation models |
+| `ChatMarkdownTests` | Selectable Quick Action Markdown, safe links, code-copy blocks and math without transcript/find/failed-tail models |
 
 Conversation, MCP and installed-CLI provider harnesses were retired with those runtimes. Completion checks use
 bounded state waits; exclusion windows and intentional timeout cases keep their observation delays.

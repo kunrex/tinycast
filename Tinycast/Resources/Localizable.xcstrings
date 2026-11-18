@@ -33070,58 +33070,6 @@
         }
       }
     },
-    "Copy Message" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nachricht kopieren"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copiar mensaje"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copier le message"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "メッセージをコピー"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "메시지 복사"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copiar mensagem"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Скопировать сообщение"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "拷贝信息"
-          }
-        }
-      }
-    },
     "Copy Name" : {
       "localizations" : {
         "de" : {
@@ -107858,58 +107806,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此命令已被删除。请在关闭前拷贝你的更改。"
-          }
-        }
-      }
-    },
-    "This conversation is longer than the on-device model can hold. Start a new chat." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Diese Unterhaltung ist länger, als das lokale Modell verarbeiten kann. Beginne einen neuen Chat."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Esta conversación supera la capacidad del modelo local. Inicia un chat nuevo."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cette conversation dépasse la capacité du modèle local. Commencez une nouvelle conversation."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この会話は、オンデバイスモデルが扱える長さを超えています。新しいチャットを開始してください。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 대화는 기기 내 모델이 담을 수 있는 길이를 초과했습니다. 새 채팅을 시작하십시오."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Esta conversa é maior do que o modelo no dispositivo comporta. Inicie um novo chat."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Этот разговор превышает вместимость модели на устройстве. Начните новый чат."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "此对话超出了设备端模型所能容纳的长度。请开始新聊天。"
           }
         }
       }

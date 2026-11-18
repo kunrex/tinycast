@@ -82,9 +82,10 @@ current app. All of `Features/MCP/`, its four app-owned lifecycle owners and its
 two fixture servers are gone. `KeychainSecretStore.mcpSecrets`'s unused accessor is removed without
 reading or deleting its saved scope.
 
-`AI/UI/{ChatMarkdownText,ChatMarkdownRenderer,ChatCopyButton}.swift`, `MarkdownBlock` and syntax/math
-support remain shared UI, not conversation state. `ChatCopyButton` is also used by extensions'
-`MarkdownCodeView`; it is intentionally retained. Shared field dictation tests now use a test-local
+`AI/UI/{ChatMarkdownText,ChatMarkdownRenderer}.swift`, `MarkdownBlock` and syntax/math
+support remain Quick Action UI, not conversation state. The earlier claim that Extensions used
+`ChatCopyButton` / `MarkdownCodeView` was incorrect: Extensions owns its renderer. Those orphan AI
+views are removed in the dead-path checkpoint below. Shared field dictation tests now use a test-local
 `NSTextView` rather than the deleted composer. Only the chat-switch/window teardown cases were
 retired; field delivery, scoped cancellation, queued live delivery/cancellation and cue tests remain.
 Unused window/composer/find theme tokens were removed; shared rendering/terminal spacing remains.
@@ -181,3 +182,46 @@ by this validation pass. They are not yet represented in `project.yml`; running 
 them. Make the intended signing configuration reproducible through the project inputs or a documented
 local override before relying on regeneration. The permission-indicator fix and these signing changes
 were uncommitted at validation time; no commit was created by this pass.
+
+## AI dead-path cleanup checkpoint
+
+The subsequent cleanup removes only unreachable conversation-era provider/rendering paths:
+
+- Deleted orphan `AI/UI/{MarkdownView,MarkdownInline,MarkdownCodeView,MarkdownTableView,ChatCopyButton}.swift`.
+  No live callers remained. Extensions' independent `ExtensionMarkdownView` is unchanged.
+- `AIRequest` now carries instructions, one text prompt and the output budget. Removed `AIMessage`,
+  `AIImage`, `AIDocument`, attachment budgeting/multipart encoding and outbound web-search
+  fields/capabilities/tools/plugins. Provider metadata and persisted settings remain untouched.
+- Removed token/cost accounting and ignored usage/thinking/reasoning/search/finish events, native
+  reasoning decoder fields, search-progress reconstruction and unread finish/stop/content-block fields.
+  Streams emit answer text only. Leading `<think>` suppression, citations as safe deduplicated text
+  links, terminal framing, truncation failures, provider errors/redaction and cancellation remain.
+- Removed test-only failed-tail rendering and on-device history reconstruction. Instructions,
+  permissive transformation guardrails, output limits and live reasoning-effort requests remain.
+  The context-limit error reuses the existing translated selection-too-long key.
+- Kept `ChatMarkdownText` / `ChatMarkdownRenderer`, Markdown parsing, code copy, math and syntax.
+  Tests cover every three-part think-tag fragmentation and every prefix at DONE/EOF, ignored native
+  reasoning/tool/usage frames, terminal states, HTTP formats, efforts, citations and active rendering.
+
+Project handling: generated before/after projects in `/tmp/tinycast-ai-regen` and applied only their
+source-removal delta to the working project (20 deletions). All `XCBuildConfiguration` objects were
+compared before/after and remain exactly equal, preserving user signing. No generated project was
+hand-edited; `project.yml` and Quick Actions' permission refresh are unchanged.
+
+Verification uses `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` for Xcode commands:
+
+- `./Scripts/run-tests.sh`: **110/110 passed** (`/tmp/ai-all-tests.log`).
+- `xcodebuild -project Tinycast.xcodeproj -scheme Tinycast -configuration Debug build`: signed build
+  succeeded (`/tmp/ai-build.log`), with only the existing AppIntents metadata warning.
+- Localization: `xcrun xcstringstool sync` consumed extraction data from that signed build, then the
+  existing `sync-strings.sh` stale-pruning code ran. No unsigned build or artifact replacement was
+  used. Two obsolete keys retired, no new keys; every surviving translation is unchanged.
+- `./Scripts/lint.sh`: exit 2, SwiftLint unavailable (`/tmp/ai-lint.log`).
+- `node Scripts/check-settings-search.js` and `./Scripts/check-migrations.sh`: passed independently.
+- `node Scripts/check-localizations.js`: the same 18 baseline errors in unchanged
+  `InfoPlist.xcstrings`; no Localizable errors (`/tmp/ai-localizations.log`).
+- Model import purity scan and `git diff --check`: passed.
+
+No commits, persisted-data cleanup, real provider generation or manual UI sweep were performed.
+The earlier closeout and signing warning above remain applicable; the signing overrides are still
+not represented in `project.yml`.
