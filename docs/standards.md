@@ -272,7 +272,7 @@ the catalog (Xcode's own build does the same in the IDE). The six privacy prompt
   content, everything a Raycast extension supplies or receives — and persisted formats, identifiers,
   log text, prompts sent to a model, and what the calculator parses.
 - **Tinycast's own command names are translated and stay findable in English**: `CommandID`,
-  `SystemAction` and `WindowCommand` keep their English source as `englishName`, which the launcher
+  `SystemAction` keep their English source as `englishName`, which the launcher
   indexes as an alternate title.
 
 On a fresh installation, Tinycast selects the Mac's primary language if supported, otherwise English,

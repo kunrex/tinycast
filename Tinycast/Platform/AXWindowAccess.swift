@@ -87,7 +87,7 @@ enum AXWindowAccess {
 
     // MARK: - Window identity
 
-    /// The window server's number, which outlives any `AXUIElement`. See window-rooms.md.
+    /// The window server's number, which outlives any `AXUIElement`. See window-recovery.md.
     static func windowID(of window: AXUIElement) -> UInt32? {
         guard let copyWindowID else { return nil }
         var id: CGWindowID = 0
@@ -97,13 +97,13 @@ enum AXWindowAccess {
     private typealias CopyWindowID =
         @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
 
-    /// Private, so resolved at run time: a macOS without it degrades to titles, never a crash.
+    /// Private, so resolved at run time: without it, recovery retains unmatched ledger entries.
     private static let copyWindowID: CopyWindowID? = {
         guard let symbol = dlsym(dlopen(nil, RTLD_NOW), "_AXUIElementGetWindow") else { return nil }
         return unsafeBitCast(symbol, to: CopyWindowID.self)
     }()
 
-    /// Cleared for the writes, never while VoiceOver runs. See docs/features/window-management.md.
+    /// Cleared for the writes, never while VoiceOver runs. See docs/features/window-recovery.md.
     static func suppressEnhancedUserInterface(on application: AXUIElement) -> () -> Void {
         let attribute = "AXEnhancedUserInterface" as CFString
         guard !NSWorkspace.shared.isVoiceOverEnabled else { return {} }

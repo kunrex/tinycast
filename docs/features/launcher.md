@@ -8,8 +8,7 @@ Copies sharing a bundle ID keep app-wide aliases, visibility, ranking, favorites
 Favorites and Suggestions show the representative, while the other copies remain in ordinary results.
 Version subtitles distinguish copies; equal or missing versions also show the containing folder.
 Return opens the selected path with running-application substitution disabled, so a different running
-version cannot replace it. Restart also reopens the selected path. Bundle-ID-based operations such as
-Window Layouts retain macOS's default running-application substitution. Uninstall is unavailable while
+version cannot replace it. Restart also reopens the selected path. Uninstall is unavailable while
 indexed copies share the bundle ID, because their support files and preferences may be shared.
 
 `./Scripts/run-tests.sh AppInstallationTests` covers the shipped index and app-wide preferences.
@@ -273,13 +272,13 @@ by the title's own score, then by name. The subtitle does not name the entry, so
 
 A query that *equals* a category's name lists that whole category under its section header, in the
 order the section shows when the field is empty. The section title and singular label,
-`Snippets`/`Snippet` or `Window Management`/`Window Command`, come straight from `KindDescriptor`.
+such as `Snippets`/`Snippet`, come straight from `KindDescriptor`.
 An entry whose display name equals the query joins the listing: `System Settings` still shows the
 installed application above its panes.
 
 At three characters or more, a prefix at the start of either name or one of its words also includes
-the category. `win` and `window` include Window Management and Window Layouts; `window man` and
-`management` include Window Management alone. Exact names select their own category first.
+the category. `sys` includes System Settings and System Actions; `system set` includes System
+Settings alone. Exact names select their own category first.
 `LauncherOrder.CategoryQuery` uses the shared fold and collapses whitespace, so case, accents,
 full-width text and pasted whitespace behave alike. Mid-word substrings and fuzzy subsequences
 never expand a category; short queries retain ordinary search ranking.
@@ -294,7 +293,7 @@ are for an empty query.
 
 Category queries show headers without pinning favorites or handing out their ⌘-digit slots. Opening
 a row records its visit; the query is learned only when it did not match that row's category, so
-category browsing cannot teach every window command the same search term.
+category browsing cannot teach every entry the same search term.
 
 ### Contextual commands
 
@@ -402,8 +401,7 @@ beside it; edits store as typed and trim when the field loses focus, and a blank
 list filters by **membership only**, keeping the index's name order — re-ranking it per keystroke
 would move the row being edited out from under its own field editor. A pane with a hand-written row
 hands `AliasField` the key itself: Settings ▸ Quicklinks passes `Quicklink.entryID`, Settings ▸
-Commands passes `CustomCommand.entryID`, Settings ▸ Extensions passes `extension:<name>/<command>`,
-Settings ▸ Window Management passes each command, custom size, layout and room's `AppEntry`, and each
+Commands passes `CustomCommand.entryID`, Settings ▸ Extensions passes `extension:<name>/<command>`, and each
 dims the field when the entry is hidden from launcher search, whose entry the ranker never sees.
 
 Aliases ride along in a settings backup (`launcherAliases`), and deleting what an alias points at —
@@ -509,7 +507,7 @@ permission-aware failures. With the palette closed it targets the frontmost app,
 Quit All act on the same window a palette launch would have.
 
 System actions occupy their own launcher section and their own Settings pane. The empty-query publication
-order is applications, System Settings, quicklinks, snippets, system actions, window commands, custom
+order is applications, System Settings, quicklinks, snippets, system actions, custom
 commands, then built-in commands; the sectioned view filters in that same order so the visible rows remain
 identical to the flat selection index.
 Search, favorites, visibility and learned ranking work through the normal `AppEntry` path, and every
@@ -576,33 +574,6 @@ unmounted as done, counts a volume whose eject errored but whose mount is gone a
 reports remaining failures together.
 Preference-backed toggles refuse to write when the current value can't be read, and notification
 dismissal matches Accessibility subroles rather than English labels.
-
-## Window commands
-
-`WindowCommandCatalog` supplies the 32 window actions as a static slice, published as a whole by
-`AppIndex.setWindowCommandsVisible(_:)` and shown under a "Window Management" section. Like system
-actions they carry dedicated global hotkeys (`AppEntry.hotKeyAction` returns `.windowCommand(id:)`),
-so launcher rows render keycaps for them. Their per-command shortcut and visibility controls live in
-Settings › Window Management rather than a launcher-category pane of their own — the same call already
-made for snippets. The feature ships off. User-defined custom sizes join the same section as their
-own slice, `AppIndex.setCustomWindowSizes(_:)`, published right after the catalog. See
-[window-management.md](window-management.md#custom-sizes).
-
-## Window layouts
-
-`WindowLayoutStore` supplies its slice the way custom commands do, sorted by name, published
-immediately **before** the window commands so the two read as one family. Their per-layout shortcut
-and launcher checkbox live in Settings › Window Management beside the commands', and
-`windowLayoutsShowInLauncher` takes the section and its two commands out together. See
-[window-layouts.md](window-layouts.md).
-
-## Rooms
-
-`RoomStore` supplies the `.windowRoom` slice the same way, sorted by name and published between the
-window layouts and the window commands; `LauncherList.rows` mirrors that position. ↵ on a room
-enters it through `RoomCoordinator.enterRoom(id:)`, which hides the palette itself. The section and
-the two room commands leave together with `windowRoomsShowInLauncher`. See
-[window-rooms.md](window-rooms.md).
 
 ## Quicklinks
 
@@ -672,8 +643,8 @@ and three places read it: `FeatureCommandsSection` draws the pane's rows from it
 category gate for it in both `isVisible` and `allowsHotKey`. Stamping the entry rather than sniffing its
 id is what keeps "which pane owns this" out of the entry-ID namespace.
 
-Eleven panes own commands today — AI, Quick Actions, File Search, Notes, Snippets, Navigation,
-Window Management, Clipboard, Emoji, Calendar and Quicklinks. What is left in Settings › Commands is
+Ten panes own commands today — AI, Quick Actions, File Search, Notes, Snippets, Navigation,
+Clipboard, Emoji, Calendar and Quicklinks. What is left in Settings › Commands is
 the set no feature switch governs: Calculator History, Open Camera, the three backup commands, Check
 for Updates, Tinycast Settings, About, Support and Quit.
 
@@ -778,7 +749,7 @@ favorite, alias and learned ranking survive the round trip, and its shortcut kee
 
 The row is offered only where Settings can undo it, and `KindDescriptor.canHideFromSearch` is that
 rule — per kind, and a new `Kind` case has to answer it to compile. Applications, System Settings,
-Commands, Quick Actions, System Actions, Window Commands, Window Layouts, Rooms and extension commands each
+Commands, Quick Actions, System Actions and extension commands each
 draw a per-row checkbox in their pane, so they carry it. Snippets do not: their pane lists a record
 with its own switches, not a launcher checkbox — a hide nothing in Settings can visibly undo is a
 trap, not a shortcut. Quicklinks and custom commands differ: each editor has its own **Show in root

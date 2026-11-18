@@ -7,7 +7,6 @@ export type FeaturePreview =
   | "calculator"
   | "aiChat"
   | "quickActions"
-  | "windows"
   | "snippets";
 
 export type Feature = {
@@ -61,13 +60,6 @@ export const coreFeatures: Feature[] = [
     preview: "quickActions",
   },
   {
-    icon: "windows",
-    title: "Window management",
-    body: "35 keyboard commands for halves, thirds, nudges and displays, plus saved layouts.",
-    href: "/docs/features/window-management",
-    preview: "windows",
-  },
-  {
     icon: "extensions",
     title: "Raycast extensions",
     body: "Install from the Raycast Store with no Node or build step. They render in SwiftUI.",
@@ -83,7 +75,7 @@ export const coreFeatures: Feature[] = [
   },
 ];
 
-// The long tail: named, linked, and kept out of the way of the eight above.
+// The long tail: named, linked, and kept out of the way of the features above.
 export const moreFeatures: MinorFeature[] = [
   { icon: "notes", title: "Floating notes", href: "/docs/features/notes" },
   {

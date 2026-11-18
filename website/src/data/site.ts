@@ -6,7 +6,7 @@
 export const pageTitle =
   "Tinycast: a native macOS launcher for everyday productivity";
 export const summary =
-  "A lightweight, open source macOS launcher with app search, clipboard history, snippets, window management, your own AI keys and Raycast extensions.";
+  "A lightweight, open source macOS launcher with app search, clipboard history, snippets, your own AI keys and Raycast extensions.";
 
 export const site = {
   name: "Tinycast",

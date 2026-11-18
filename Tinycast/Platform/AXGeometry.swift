@@ -1,6 +1,6 @@
 import AppKit
 
-/// The one Cocoa↔AX converter. See docs/features/window-management.md#coordinate-space.
+/// The one Cocoa↔AX converter. See docs/features/window-recovery.md#coordinate-space.
 struct AXGeometry {
     let anchorHeight: CGFloat
 

@@ -125,7 +125,8 @@ launchers. We accept that to keep the app simple.
 
 ## Window management
 
-Tinycast is an all-in-one launcher, not a full window manager. Its window tools are finished.
+Tinycast does not provide window-placement tools. Switching windows and searching menus remain
+part of [Navigation](features/navigation.md).
 
 - **Custom snap cycles (like Loop), edge-anchored sizes, or step-by-step undo.** ([#1223](https://github.com/abue-ammar/tinycast/issues/1223), [#1630](https://github.com/abue-ammar/tinycast/issues/1630))
 - **Move a window without resizing it.** It caused odd side effects. ([#1511](https://github.com/abue-ammar/tinycast/issues/1511))
@@ -134,7 +135,7 @@ Tinycast is an all-in-one launcher, not a full window manager. Its window tools 
 - **Layouts per workspace (like FlashSpace).** ([#639](https://github.com/abue-ammar/tinycast/issues/639))
 - **Switch Windows changes.** The order stays stable for muscle memory. No switch-on-release, and no
   alias search. ([#1506](https://github.com/abue-ammar/tinycast/issues/1506), [#1590](https://github.com/abue-ammar/tinycast/issues/1590), [#1589](https://github.com/abue-ammar/tinycast/issues/1589))
-- **Follow Stage Manager.** **Instead:** try Window Rooms. ([#1249](https://github.com/abue-ammar/tinycast/issues/1249))
+- **Follow Stage Manager.** ([#1249](https://github.com/abue-ammar/tinycast/issues/1249))
 - **Safari's width after Mission Control.** Safari may reset its width afterwards. ([#1556](https://github.com/abue-ammar/tinycast/issues/1556))
 
 ## Notes

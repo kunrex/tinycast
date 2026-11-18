@@ -14,7 +14,7 @@ launcher and a still-recorded shortcut for any does nothing.
 - **The sweep is synchronous, and that is deliberate.** `WindowSwitchSweep.snapshot` visits apps and
   their windows — one level, two AX reads each — where the menu walk descends a tree. A
   `Task.detached` here would buy a "Reading windows…" state nobody would ever see, and cost a
-  revision counter to keep superseded sweeps from publishing. `WindowInventory` made the same call.
+  revision counter to keep superseded sweeps from publishing.
 - **A live `AXUIElement` never leaves the main actor, and never outlives the show.** The pure entry
   carries a `handle`; `WindowSwitchSession` holds the `handle → Element` table `@ObservationIgnored`
   and drops it in `reset()`, which `hidePalette` and every mode change call. So every open sweeps
@@ -30,11 +30,10 @@ launcher and a still-recorded shortcut for any does nothing.
   is open must not reach `AXUIElementPerformAction`. The open gate sits in both `show()` and
   `load()`, because a restore reaches `load()` alone.
 - **Activation hides with `restoreFocus: false`.** Restoring focus reactivates the displaced app,
-  which races the raise and can land on the wrong window — the same reason a Space command does it.
+  which races the raise and can land on the wrong window.
 - **`Platform/AXWindowAccess` is the one shared AX window layer.** `minimize`, `unminimize`,
-  `focus` and app candidate enumeration live there, independent of Window Management's models.
-  Window Management adds its placement write sequence in `Service/AXWindowAccess+Placement.swift`;
-  the switcher's sweep and live element table remain owned by WindowSwitcher.
+  `focus` and app candidate enumeration live there, shared with durable recovery.
+  The switcher's sweep and live element table remain owned by WindowSwitcher.
 
 ## How it is put together
 
@@ -61,8 +60,8 @@ call needs no Screen Recording grant.
 
 The rank is therefore **per app, not per window**: mapping a `CGWindowID` onto an `AXUIElement` needs
 the private `_AXUIElementGetWindow`, and the app's own `kAXWindowsAttribute` order already gives the
-windows inside one app front-to-back. [Rooms](window-rooms.md#invariants) do resolve that symbol, in
-`AXWindowAccess.windowID(of:)`, because a parked window's way back must outlive its element; the
+windows inside one app front-to-back. [Recovery](window-recovery.md#restore-policy) resolves that
+symbol in `AXWindowAccess.windowID(of:)` because a saved home must outlive its element; the
 switcher keeps its per-app rank, which needs nothing private. An app with nothing on screen — everything minimized, or every
 window on another Space — gets no rank at all and sorts after the ranked ones by name.
 
@@ -74,10 +73,8 @@ rather than after the user has switched apps once.
 
 `WindowSwitchSweep` walks `AXWindowAccess.candidates()` — regular-policy, non-terminated, not us —
 and takes every window `WindowSwitchPolicy` accepts: a standard-subrole one, or a minimized one that
-still has a minimize button. That is looser than
-`WindowInventory.eligibleFrame` in two ways that both matter here: a **minimized** window is exactly
-what a switcher is for, and a window on another Space reports no frame until it is raised, so
-requiring one would hide it.
+still has a minimize button. A **minimized** window is exactly what a switcher is for, and a window
+on another Space reports no frame until it is raised, so requiring one would hide it.
 
 **A minimized window changes subrole.** Finder and Transmission report their minimized windows as
 `AXDialog`, not `AXStandardWindow`, and back to `AXStandardWindow` when restored, so a subrole test
@@ -85,7 +82,7 @@ alone drops exactly the rows a switcher exists for. A sheet cannot minimize, so 
 is what still tells a minimized window from a real dialog. The policy is Foundation-only, so the
 harness covers the rule rather than the attribute reads.
 
-Each element gets a 0.2 s messaging timeout, the same as the layout inventory and the menu walk, so
+Each element gets a 0.2 s messaging timeout, the same as the recovery sweep and the menu walk, so
 one hung app cannot stall the summon.
 
 The app icon rides on the entry as a `FileIconStamp` and its bundle URL, and the row draws it through
@@ -161,8 +158,7 @@ window's app quit between the sweep and the ↵.
   `DisabledApplicationsList` is the shared half — the rows and the picker — that Settings ›
   Clipboard still wraps in a `DisabledApplicationsSection` of its own.
 - Both settings ride in backups. Neither grants a permission class of its own — Accessibility is
-  already required for paste — which is the call `windowManagementEnabled` made, and the opposite of
-  `snippetsEnabled`.
+  already required for paste — unlike `snippetsEnabled`.
 - **There is deliberately no "Show in launcher" switch.** The per-command checkboxes in
   `FeatureCommandsSection` already are one, and a second would be a switch over rows the pane lists.
 
@@ -174,7 +170,7 @@ sweep, the minimized run at the end, which windows the sweep offers, ranking, an
 under both an empty and a matching query.
 
 The harness also compiles `WindowSwitchSweep` and the shared `Platform/AXWindowAccess` without
-any Window Management sources, guarding their independence. It does not exercise live AX calls.
+any recovery sources, guarding their independence. It does not exercise live AX calls.
 `WindowZOrder` is not compiled into the harness; AX and `CGWindowList` need manual verification,
 particularly:
 
