@@ -102,18 +102,7 @@ enum RoomRunner {
     /// Every parked window home, how many came back. Synchronous, so quitting runs it through.
     @discardableResult
     static func returnParkedWindows(ledger: RoomParkingLedger) -> Int {
-        guard Permissions.isAccessibilityTrusted(), !ledger.isEmpty else { return 0 }
-        let snapshot = RoomWindowSweep.snapshot()
-        let screens = snapshot.screens.map(\.screen.frame)
-        let returned = snapshot.windows.compactMap { window -> UInt32? in
-            guard let element = snapshot.elements[window.handle] else { return nil }
-            return unpark(window, element: element, screens: screens, ledger: ledger)
-        }
-        ledger.forget(returned)
-        // A quit app's windows went with it; one that is running but slow keeps its way back.
-        ledger.keepOnly(
-            bundleIDs: Set(NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier)))
-        return returned.count
+        WindowRecoveryRunner.returnParkedWindows(ledger: ledger)
     }
 
     // MARK: - Planning
@@ -299,27 +288,11 @@ enum RoomRunner {
         let returned = snapshot.windows.compactMap { window -> UInt32? in
             guard !staying.contains(window.handle), let element = snapshot.elements[window.handle]
             else { return nil }
-            return unpark(window, element: element, screens: screens, ledger: ledger)
+            return WindowRecoveryRunner.restore(
+                windowID: window.windowID, bundleID: window.bundleID, window: element.window,
+                application: element.application, screens: screens, ledger: ledger)
         }
         ledger.forget(returned)
-    }
-
-    /// The window's ID once it is back home; nil leaves its way back on disk for the next try.
-    private static func unpark(
-        _ window: RoomLiveWindow, element: WindowInventory.Element, screens: [CGRect],
-        ledger: RoomParkingLedger
-    ) -> UInt32? {
-        guard let windowID = window.windowID, let entry = ledger.entry(for: windowID),
-            entry.bundleID == window.bundleID
-        else { return nil }
-        let home = RoomParking.returnFrame(for: entry.frame, screens: screens)
-        let restore = AXWindowAccess.suppressEnhancedUserInterface(on: element.application)
-        defer { restore() }
-        write(home, to: element.window)
-        guard let now = AXWindowAccess.frame(of: element.window),
-            abs(now.minX - home.minX) <= resizeSlack, abs(now.minY - home.minY) <= resizeSlack
-        else { return nil }
-        return windowID
     }
 
     /// The active app cannot hide, which is why the room's main window is focused first.

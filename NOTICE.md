@@ -314,10 +314,12 @@ follow that project. Every adapted file says so on its first line, with a link t
 
 - `Tinycast/Features/WindowManagement/Model/`: `Room.swift`, `RoomWindow.swift`,
   `RoomLayoutKind.swift`, `RoomLayoutEngine.swift`, `RoomGrid.swift`, `RoomArrangement.swift`,
-  `RoomWindowMatcher.swift`, `RoomParking.swift`, `RoomParkingLedger.swift`, `RoomPlan.swift` and
+  `RoomWindowMatcher.swift`, `RoomParking.swift`, `RoomPlan.swift` and
   `RoomMinimumSizeStore.swift`
-- `Tinycast/Features/WindowManagement/Service/`: `RoomRunner.swift`, `RoomWindowSweep.swift`, and
-  the window-number lookup in `AXWindowAccess.swift`
+- `Tinycast/Features/WindowManagement/Service/`: `RoomRunner.swift`, `RoomWindowSweep.swift`
+- `Tinycast/Features/WindowRecovery/Model/`: `RoomParkingLedger.swift`, `WindowRecoveryPolicy.swift`
+- `Tinycast/Features/WindowRecovery/Service/`: `WindowRecoverySweep.swift`, `WindowRecoveryRunner.swift`
+- `Tinycast/Platform/AXWindowAccess.swift`: the window-number lookup
 - `Tinycast/Features/WindowManagement/UI/`: `RoomCoordinator.swift`, `RoomsScreen.swift`,
   `RoomPickerScreen.swift`, `RoomPreviewController.swift` and `RoomPreviewView.swift`
 - `Tests/WindowRoomTests.swift`, whose cases follow Rooms' own tests

@@ -86,6 +86,11 @@ Two things sit deliberately outside a feature folder: `Features/PaletteRowIndex.
 palette rather than any one feature owns the flat selection index, and `DesignSystem/` + `Platform/`,
 the shared primitives and system shims every feature draws on. Neither may depend on a feature.
 
+`Features/WindowRecovery/` owns the permanent parked-window ledger, return policy and restore-only
+service independently of WindowManagement. While Rooms exists, its coordinator remains the sole
+lifecycle/scheduling owner and uses the same AppCore-owned ledger. The shared window sweep includes
+hidden and minimized windows; `Platform/` owns AX access, coordinate conversion and display identity.
+
 ## Single-owner core
 
 `AppCore.shared` (`App/AppCore.swift`) is a `@MainActor` singleton owning every long-lived thing in the
@@ -245,7 +250,7 @@ Tinycast/
     PaletteRowIndex.swift   the flat selection index — palette-owned, so it sits at the top
     Launcher/ Clipboard/ Calculator/ Calendar/ Emoji/ FileSearch/ MenuSearch/ Notes/
     Quicklinks/ Snippets/ Uninstall/ SystemActions/ CustomCommands/ HotKeys/ Backup/
-    WindowManagement/ Onboarding/ Updates/ Support/ AI/ Settings/
+    WindowManagement/ WindowRecovery/ Onboarding/ Updates/ Support/ AI/ Settings/
     Extensions/
         Model/      pure — the harness inputs
         Service/    effects — stores, monitors, runners, AppKit glue

@@ -513,6 +513,13 @@ run DeepLinkTests          Tinycast/Features/DeepLinks/Model/DeepLink.swift \
                            Tinycast/Features/WindowManagement/Model/Room.swift \
                            Tinycast/Features/WindowManagement/Model/CustomWindowSize.swift \
                            Tinycast/Platform/LocalizedResource.swift
+run WindowRecoveryTests    Tinycast/Features/WindowRecovery/Model/RoomParkingLedger.swift \
+                           Tinycast/Features/WindowRecovery/Model/WindowRecoveryPolicy.swift \
+                           Tinycast/Features/WindowRecovery/Service/WindowRecoverySweep.swift \
+                           Tinycast/Features/WindowRecovery/Service/WindowRecoveryRunner.swift \
+                           Tinycast/Platform/AXWindowAccess.swift \
+                           Tinycast/Platform/AXGeometry.swift \
+                           Tinycast/Platform/AXScreens.swift
 run WindowRoomTests        Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
                            Tinycast/Features/WindowManagement/Model/WindowCycle.swift \
                            Tinycast/Features/WindowManagement/Model/WindowPlacementEngine.swift \
@@ -532,7 +539,8 @@ run WindowRoomTests        Tinycast/Features/WindowManagement/Model/WindowComman
                            Tinycast/Features/WindowManagement/Model/RoomArrangement.swift \
                            Tinycast/Features/WindowManagement/Model/RoomStore.swift \
                            Tinycast/Features/WindowManagement/Model/RoomMinimumSizeStore.swift \
-                           Tinycast/Features/WindowManagement/Model/RoomParkingLedger.swift \
+                           Tinycast/Features/WindowRecovery/Model/RoomParkingLedger.swift \
+                           Tinycast/Features/WindowRecovery/Model/WindowRecoveryPolicy.swift \
                            Tinycast/Platform/LocalizedResource.swift
 run WindowFileTests        Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
                            Tinycast/Features/WindowManagement/Model/WindowCycle.swift \

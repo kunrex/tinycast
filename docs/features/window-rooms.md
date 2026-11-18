@@ -52,13 +52,13 @@ under its MIT licence; [NOTICE.md](../../NOTICE.md) lists the adapted files.
 | `Model/RoomGrid.swift` | **Pure.** A room's own arrangement on a 12 × 12 grid with even gaps |
 | `Model/RoomArrangement.swift` | **Pure.** Reads a hand-made arrangement; rebuilds a room from open windows |
 | `Model/RoomWindowMatcher.swift` | **Pure.** Which open window fills which room window |
-| `Model/RoomParking.swift` | **Pure.** The parking corner and the way back on a connected display |
+| `Model/RoomParking.swift` | **Pure.** The parking corner |
 | `Model/RoomPlan.swift` | **Pure.** What entering does, and the layouts Tab offers |
 | `Model/RoomStore.swift` | The library, as JSON in `UserDefaults` (`windowRooms`) |
 | `Model/RoomMinimumSizeStore.swift` | Minimum sizes learned by trying (`roomMinimumWindowSizes`) |
-| `Model/RoomParkingLedger.swift` | Parked windows' ways back, `room-parking.json` in Application Support |
+| `../WindowRecovery/Model/RoomParkingLedger.swift` | Parked windows' ways back, `room-parking.json` in Application Support, unchanged schema |
 | `Service/RoomWindowSweep.swift` | One AX sweep, minimized and hidden apps' windows included |
-| `Service/RoomRunner.swift` | Enters a room; returns parked windows |
+| `Service/RoomRunner.swift` | Enters a room; delegates parked-window restoration to WindowRecovery |
 | `Service/RoomSession.swift` | The Rooms screens' state while open |
 | `UI/RoomCoordinator.swift` | The one funnel, the preview, the picker, the library, cleanup |
 | `UI/RoomsScreen.swift`, `RoomsList.swift` | Switch Room |
@@ -163,7 +163,26 @@ to come back before returning parked windows.
   The [settings file](settings-file.md) carries rooms without their window numbers or entry times, and
   an edit made there keeps both through `Room.keepingRuntime(of:)`.
 
+## Durable recovery
+
+`Features/WindowRecovery/` is permanent recovery capability, not a one-release migration.
+Its ledger and return-frame/confirmation policy have no WindowManagement dependency. Its service
+shares the raw window sweep with Rooms, and restores through a concrete restore-only AX writer;
+placement commands keep their existing writer. Shared AX geometry and display identity live in
+`Platform/`. Recovery preserves display UUID filtering, AX coordinates and left-to-right ordering.
+
+`AppCore` still owns the same ledger at the active-bundle `AppPaths` location. `RoomCoordinator`
+still owns startup, termination and feature-off scheduling through `inTurn`; recovery starts no
+independent task or background owner. Both the full return pass and returning windows of apps about
+to hide call `WindowRecoveryRunner.restore`. Successful origin confirmation (within 16 pt, without
+size equality) permits forgetting; running but unresponsive apps retain their entries.
+
 ## Testing
+
+`Tests/WindowRecoveryTests.swift` compiles all shipped recovery sources and their platform helpers
+without any WindowManagement sources. It tests the legacy ledger format, first-home preservation,
+write refusal, pruning, unreadable-file preservation, display fallback, ID + bundle matching and
+origin-only confirmation using temporary files, without touching live windows or user data.
 
 `Tests/WindowRoomTests.swift` covers the engine (every layout on laptop and monitor fixtures,
 minimum sizes, Auto's choice, Stack's peeks, a sampled sweep that a fitting layout never overlaps

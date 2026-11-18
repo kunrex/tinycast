@@ -162,7 +162,8 @@ If a change touches anything in the right column, the harness on the left is man
 | `VolumeTests` | `SystemActions/Model/VolumeLevel.swift` |
 | `WindowCommandTests` | `WindowManagement/WindowCommand.swift`, `WindowPlacementEngine.swift`, `WindowActionMemory.swift` |
 | `WindowLayoutTests` | `WindowManagement/Model/WindowLayout*.swift` and `CustomWindowSize*.swift` — the layout record, its geometry and its inverse, the plan and the store; custom sizes' units, frames and store |
-| `WindowRoomTests` | `WindowManagement/Model/Room*.swift` — every room layout and its minimum sizes, the grid, arrangement reading, window matching, parking, the plan, Tab's choices and the three stores |
+| `WindowRoomTests` | `WindowManagement/Model/Room*.swift` plus the WindowRecovery models — every room layout and its minimum sizes, the grid, arrangement reading, window matching, parking, the plan, Tab's choices and the three stores |
+| `WindowRecoveryTests` | All shipped `WindowRecovery/` sources without WindowManagement — ledger compatibility and persistence, return frames, identity matching and origin confirmation; platform services compile but never act on live windows |
 | `CustomCommandTests` | Command storage and execution, editor drafts, argument identities and dynamic keyboard focus |
 | `CustomCommandListTests` | Browser result snapshots, observation, row actions and empty-library messages |
 | `UninstallTests` | all five pure files in `Uninstall/Model/` |

@@ -629,11 +629,11 @@ struct WindowRoomTests {
 
         let gone = CGRect(x: 500, y: -1200, width: 2000, height: 900)
         expect(
-            laptop.contains(RoomParking.returnFrame(for: gone, screens: [laptop])),
+            laptop.contains(WindowRecoveryPolicy.returnFrame(for: gone, screens: [laptop])),
             "a way back to a gone display comes home")
         let onLaptop = CGRect(x: 100, y: 100, width: 800, height: 600)
         expectRect(
-            RoomParking.returnFrame(for: onLaptop, screens: [laptop]), onLaptop,
+            WindowRecoveryPolicy.returnFrame(for: onLaptop, screens: [laptop]), onLaptop,
             "a way back on screen is kept")
     }
 

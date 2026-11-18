@@ -75,7 +75,7 @@ struct RoomPlan: Equatable, Sendable {
         case .saved:
             let rects = indices.map { index in
                 WindowPlacementEngine.clamped(
-                    RoomParking.returnFrame(
+                    WindowRecoveryPolicy.returnFrame(
                         for: room.windows[index].frame(in: visible), screens: [visible]),
                     into: visible)
             }
