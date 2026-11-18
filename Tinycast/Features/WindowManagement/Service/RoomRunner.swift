@@ -91,7 +91,7 @@ enum RoomRunner {
 
     /// The apps rooms hid, then every parked window: a just-unhidden app ignores moves until back.
     static func restoreEverything(hiddenApps: Set<pid_t>, ledger: RoomParkingLedger) async {
-        let hidden = WindowInventory.candidates().filter {
+        let hidden = AXWindowAccess.candidates().filter {
             $0.isHidden && hiddenApps.contains($0.processIdentifier)
         }
         hidden.forEach(show)
@@ -146,7 +146,7 @@ enum RoomRunner {
 
     private static func unhide(_ bundleIDs: [String]) -> [NSRunningApplication] {
         let wanted = Set(bundleIDs)
-        let hidden = WindowInventory.candidates().filter {
+        let hidden = AXWindowAccess.candidates().filter {
             $0.isHidden && wanted.contains($0.bundleIdentifier ?? "")
         }
         hidden.forEach(show)
@@ -325,7 +325,7 @@ enum RoomRunner {
     /// The active app cannot hide, which is why the room's main window is focused first.
     private static func hideApps(keeping keeps: Set<String>) -> Set<pid_t> {
         var hidden = Set<pid_t>()
-        for app in WindowInventory.candidates()
+        for app in AXWindowAccess.candidates()
         where !app.isHidden && !keeps.contains(app.bundleIdentifier ?? "") {
             if !app.hide() {
                 AXWindowAccess.setHidden(

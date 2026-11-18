@@ -46,7 +46,8 @@ resolution-independent by construction.
 | `Model/WindowLayoutPlan.swift` | Foundation + CoreGraphics | **Pure.** What a run will do, decided before any write |
 | `Model/WindowLayoutStore.swift` | Foundation | The library, as JSON in `UserDefaults` |
 | `Model/WindowLayoutDraft.swift` | Foundation + CoreGraphics | One in-flight edit, owned by the panel |
-| `Service/AXWindowAccess.swift` | AppKit + ApplicationServices | Every `AXUIElement` call, shared with the mover |
+| `Platform/AXWindowAccess.swift` | AppKit + ApplicationServices | Shared AX operations |
+| `Service/AXWindowAccess+Placement.swift` | AppKit + ApplicationServices | Placement writes, shared with the mover |
 | `Service/AXScreens.swift` | AppKit + ColorSync | `AXGeometry`, and displays with their UUIDs |
 | `Service/WindowInventory.swift` | AppKit + ApplicationServices | What is on screen, read once per gesture |
 | `Service/WindowLayoutRunner.swift` | AppKit | Applies a plan; opens what isn't running |

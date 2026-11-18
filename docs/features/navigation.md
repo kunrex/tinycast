@@ -31,9 +31,10 @@ launcher and a still-recorded shortcut for any does nothing.
   `load()`, because a restore reaches `load()` alone.
 - **Activation hides with `restoreFocus: false`.** Restoring focus reactivates the displaced app,
   which races the raise and can land on the wrong window — the same reason a Space command does it.
-- **`AXWindowAccess` stays the one AX window layer.** `minimize`, `unminimize` and `focus` live
-  there rather than in a second AX shim, and Window Layouts brings its frontmost window forward
-  through `focus`.
+- **`Platform/AXWindowAccess` is the one shared AX window layer.** `minimize`, `unminimize`,
+  `focus` and app candidate enumeration live there, independent of Window Management's models.
+  Window Management adds its placement write sequence in `Service/AXWindowAccess+Placement.swift`;
+  the switcher's sweep and live element table remain owned by WindowSwitcher.
 
 ## How it is put together
 
@@ -71,7 +72,7 @@ rather than after the user has switched apps once.
 
 ## The sweep
 
-`WindowSwitchSweep` walks `WindowInventory.candidates()` — regular-policy, non-terminated, not us —
+`WindowSwitchSweep` walks `AXWindowAccess.candidates()` — regular-policy, non-terminated, not us —
 and takes every window `WindowSwitchPolicy` accepts: a standard-subrole one, or a minimized one that
 still has a minimize button. That is looser than
 `WindowInventory.eligibleFrame` in two ways that both matter here: a **minimized** window is exactly
@@ -172,8 +173,10 @@ fallback, the name/owner split in the search fields, the MRU order and its total
 sweep, the minimized run at the end, which windows the sweep offers, ranking, and the 200-row cap
 under both an empty and a matching query.
 
-`WindowZOrder` and `WindowSwitchSweep` are not compiled into the harness and have no automated
-coverage — the AX and `CGWindowList` paths need manual verification, particularly:
+The harness also compiles `WindowSwitchSweep` and the shared `Platform/AXWindowAccess` without
+any Window Management sources, guarding their independence. It does not exercise live AX calls.
+`WindowZOrder` is not compiled into the harness; AX and `CGWindowList` need manual verification,
+particularly:
 
 1. A minimized window is listed last and ↵ un-minimizes it rather than doing nothing — for Finder
    and Transmission too, whose minimized windows read `AXDialog`.

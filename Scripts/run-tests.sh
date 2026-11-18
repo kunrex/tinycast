@@ -125,7 +125,10 @@ run MenuSearchTests        $L/SearchRelevance.swift \
                            Tinycast/Features/MenuSearch/Model/*.swift \
                            Tinycast/Features/MenuSearch/Service/*.swift
 run WindowSwitchTests      $L/SearchRelevance.swift \
-                           Tinycast/Features/WindowSwitcher/Model/*.swift
+                           Tinycast/Features/WindowSwitcher/Model/*.swift \
+                           Tinycast/Features/WindowSwitcher/Service/WindowSwitchSweep.swift \
+                           Tinycast/Platform/AXWindowAccess.swift \
+                           Tinycast/Platform/Images/FileIconStamp.swift
 run index FileSearchPerformanceTests $FS/Model/*.swift $FILE_INDEX
 run RankingTests           $L/SearchRelevance.swift $L/ScriptRomanization.swift \
                            $L/LauncherMatch.swift $L/LauncherRankingStore.swift

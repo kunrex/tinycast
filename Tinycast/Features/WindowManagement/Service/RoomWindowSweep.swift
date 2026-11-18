@@ -34,7 +34,7 @@ enum RoomWindowSweep {
         let ranks = frontRanks()
         var windows: [RoomLiveWindow] = []
         var elements: [Int: WindowInventory.Element] = [:]
-        for app in WindowInventory.candidates() {
+        for app in AXWindowAccess.candidates() {
             guard let bundleID = app.bundleIdentifier else { continue }
             let application = AXWindowAccess.application(
                 for: app.processIdentifier, timeout: sweepTimeout)

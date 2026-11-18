@@ -3,18 +3,25 @@ import AppKit
 // `@preconcurrency` downgrades AX diagnostics: `kAX…` are mutable C globals, but constant.
 @preconcurrency import ApplicationServices
 
-/// Every `AXUIElement` call in the feature, so no two callers disagree on what a window is.
+/// Shared AX window access, independent of feature placement models.
 @MainActor
 enum AXWindowAccess {
     /// A hung target must not stall main for the AX default. Per element, never inherited.
     static let messagingTimeout: Float = 1
-    /// Slack when checking whether the app honoured the size we asked for.
-    static let clampTolerance: CGFloat = 2
 
     static let fullScreenAttribute = "AXFullScreen" as CFString
     static let fullScreenButtonAttribute = "AXFullScreenButton" as CFString
 
     // MARK: - Finding windows
+
+    /// Every app with a user-facing window, bar us. By pid, since About flips us to `.regular`.
+    static func candidates() -> [NSRunningApplication] {
+        let ownPID = NSRunningApplication.current.processIdentifier
+        return NSWorkspace.shared.runningApplications.filter {
+            $0.activationPolicy == .regular && !$0.isTerminated
+                && $0.processIdentifier != ownPID
+        }
+    }
 
     static func application(for pid: pid_t, timeout: Float = messagingTimeout) -> AXUIElement {
         let application = AXUIElementCreateApplication(pid)
@@ -117,52 +124,6 @@ enum AXWindowAccess {
         guard let symbol = dlsym(dlopen(nil, RTLD_NOW), "_AXUIElementGetWindow") else { return nil }
         return unsafeBitCast(symbol, to: CopyWindowID.self)
     }()
-
-    // MARK: - Writing a frame
-
-    /// The one write sequence, so a stubborn app lands the same way from any caller.
-    static func write(
-        _ target: CGRect, anchor: WindowPlacementEngine.Anchor, to window: AXUIElement,
-        current: CGRect, canResize: Bool, canvas: CGRect?
-    ) -> CGRect? {
-        guard canResize else {
-            var slot = anchor.place(current.size, in: target)
-            if let canvas { slot = WindowPlacementEngine.clamped(slot, into: canvas) }
-            guard setPosition(WindowPlacementEngine.rounded(slot).origin, on: window) else {
-                return nil
-            }
-            return frame(of: window) ?? current
-        }
-
-        // size → position → size. See docs/features/window-management.md#applying-a-placement.
-        _ = setSize(target.size, on: window)
-        guard setPosition(target.origin, on: window) else {
-            _ = setSize(current.size, on: window)  // Roll the shrink back; nothing visibly moved.
-            return nil
-        }
-        _ = setSize(target.size, on: window)
-
-        guard var actual = frame(of: window) else { return target }
-
-        // The second resize can shift the origin: some apps anchor on a different corner.
-        if abs(actual.minX - target.minX) > clampTolerance
-            || abs(actual.minY - target.minY) > clampTolerance
-        {
-            _ = setPosition(target.origin, on: window)
-            actual = frame(of: window) ?? actual
-        }
-
-        // An app-imposed minimum: re-place once per the anchor. No loop, which would jitter.
-        if actual.width > target.width + clampTolerance
-            || actual.height > target.height + clampTolerance
-        {
-            var slot = anchor.place(actual.size, in: target)
-            if let canvas { slot = WindowPlacementEngine.clamped(slot, into: canvas) }
-            _ = setPosition(WindowPlacementEngine.rounded(slot).origin, on: window)
-            actual = frame(of: window) ?? actual
-        }
-        return actual
-    }
 
     /// Cleared for the writes, never while VoiceOver runs. See docs/features/window-management.md.
     static func suppressEnhancedUserInterface(on application: AXUIElement) -> () -> Void {

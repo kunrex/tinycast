@@ -28,7 +28,7 @@ enum WindowInventory {
         var windows: [WindowLayoutWindow] = []
         var elements: [Int: Element] = [:]
 
-        for app in candidates() {
+        for app in AXWindowAccess.candidates() {
             guard let bundleID = app.bundleIdentifier else { continue }
             let application = AXWindowAccess.application(
                 for: app.processIdentifier, timeout: sweepTimeout)
@@ -58,15 +58,6 @@ enum WindowInventory {
             AXUIElementSetMessagingTimeout(window, sweepTimeout)
             guard eligibleFrame(window, positionableOnly: true) != nil else { return false }
             return !claimed.contains { CFEqual($0, window) }
-        }
-    }
-
-    /// Every app with a user-facing window, bar us. By pid, since About flips us to `.regular`.
-    static func candidates() -> [NSRunningApplication] {
-        let ownPID = NSRunningApplication.current.processIdentifier
-        return NSWorkspace.shared.runningApplications.filter {
-            $0.activationPolicy == .regular && !$0.isTerminated
-                && $0.processIdentifier != ownPID
         }
     }
 
