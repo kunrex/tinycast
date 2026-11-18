@@ -17,10 +17,21 @@ struct NavigationSettingsView: View {
             }
             .settingsAnchor(.navigationNavigation)
 
+            Section {
+                Toggle(isOn: $settings.navigationMimicsMacOS) {
+                    SettingsRowTitle(.navigationCommands, "Mimic macOS")
+                    Text("UI only: locks shortcut editing. Existing hotkeys remain active.")
+                }
+                .toggleStyle(.checkbox)
+            }
+            .settingsEnabled(settings.navigationEnabled)
+
             // No "show in launcher" switch: the per-command checkboxes below already are one.
             FeatureCommandsSection(
                 owner: .navigation, anchor: .navigationCommands,
-                excluding: [.searchMenuItems]
+                excluding: [.searchMenuItems],
+                disabledShortcuts: settings.navigationMimicsMacOS
+                    ? [.switchWindows, .switchWindowsBackwards] : []
             )
             .settingsEnabled(settings.navigationEnabled)
 

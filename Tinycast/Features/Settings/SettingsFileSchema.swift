@@ -119,6 +119,7 @@ enum SettingsFileSchema {
         case .snippetDefaultAction: return bind(settings, \.snippetDefaultAction)
         case .snippetsCommands: return launcher.commandsBinding(for: key, owner: .snippets)
         case .navigationEnabled: return bind(settings, \.navigationEnabled)
+        case .navigationMimicsMacOS: return bind(settings, \.navigationMimicsMacOS)
         case .menuSearchShowsAppleMenu: return bind(settings, \.menuSearchShowsAppleMenu)
         case .menuSearchDisabledApps: return bind(settings, \.menuSearchDisabledApps)
         case .navigationCommands: return launcher.commandsBinding(for: key, owner: .navigation)

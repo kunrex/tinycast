@@ -456,6 +456,10 @@ final class AppSettings {
         didSet { defaults.set(navigationEnabled, forKey: Key.navigationEnabled.rawValue) }
     }
 
+    var navigationMimicsMacOS: Bool {
+        didSet { defaults.set(navigationMimicsMacOS, forKey: Key.navigationMimicsMacOS.rawValue) }
+    }
+
     var menuSearchDisabledApps: [String] {
         didSet { defaults.set(menuSearchDisabledApps, forKey: Key.menuSearchDisabledApps.rawValue) }
     }
@@ -840,6 +844,7 @@ final class AppSettings {
             .flatMap { $0 as? Int }
             .flatMap(HideCurrentEvent.init(rawValue:)) ?? .dontHide
         navigationEnabled = defaults.bool(forKey: Key.navigationEnabled.rawValue)
+        navigationMimicsMacOS = defaults.bool(forKey: Key.navigationMimicsMacOS.rawValue)
         menuSearchDisabledApps =
             defaults.stringArray(forKey: Key.menuSearchDisabledApps.rawValue) ?? []
         menuSearchShowsAppleMenu = defaults.bool(forKey: Key.menuSearchShowsAppleMenu.rawValue)

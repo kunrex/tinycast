@@ -61,6 +61,7 @@ struct SettingsBackup: Codable {
         var snippetDefaultAction: String?
         // Safe to carry: it grants no permission class paste doesn't already prompt for.
         var navigationEnabled: Bool?
+        var navigationMimicsMacOS: Bool?
         var menuSearchDisabledApps: [String]?
         var menuSearchShowsAppleMenu: Bool?
         // Carried, unlike `snippetsEnabled`: opening a link grants no permission class of its own.

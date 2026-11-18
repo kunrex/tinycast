@@ -43,6 +43,7 @@ enum SettingsBackupCoverage {
         "snippetsShowInLauncher": .snippetsShowInLauncher,
         "snippetDefaultAction": .snippetDefaultAction,
         "navigationEnabled": .navigationEnabled,
+        "navigationMimicsMacOS": .navigationMimicsMacOS,
         "menuSearchDisabledApps": .menuSearchDisabledApps,
         "menuSearchShowsAppleMenu": .menuSearchShowsAppleMenu,
         "quicklinksEnabled": .quicklinksEnabled,

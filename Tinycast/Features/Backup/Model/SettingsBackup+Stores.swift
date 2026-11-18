@@ -49,6 +49,7 @@ extension SettingsBackup {
             snippetsShowInLauncher: s.snippetsShowInLauncher,
             snippetDefaultAction: s.snippetDefaultAction.rawValue,
             navigationEnabled: s.navigationEnabled,
+            navigationMimicsMacOS: s.navigationMimicsMacOS,
             menuSearchDisabledApps: s.menuSearchDisabledApps,
             menuSearchShowsAppleMenu: s.menuSearchShowsAppleMenu,
             quicklinksEnabled: s.quicklinksEnabled,
@@ -312,6 +313,10 @@ extension SettingsBackup {
         }
         if let flag = s.navigationEnabled {
             settings.navigationEnabled = flag
+            count += 1
+        }
+        if let flag = s.navigationMimicsMacOS {
+            settings.navigationMimicsMacOS = flag
             count += 1
         }
         if let apps = s.menuSearchDisabledApps {

@@ -66249,6 +66249,64 @@
         }
       }
     },
+    "Mimic macOS" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS nachahmen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mimic macOS"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imitar macOS"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imiter macOS"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOSを模倣"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS 모방"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imitar o macOS"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Имитировать macOS"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模仿 macOS"
+          }
+        }
+      }
+    },
     "Minimal" : {
       "localizations" : {
         "de" : {
@@ -119975,6 +120033,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "输入以搜索文件和文件夹"
+          }
+        }
+      }
+    },
+    "UI only: locks shortcut editing. Existing hotkeys remain active." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur Oberfläche: Sperrt die Bearbeitung von Kurzbefehlen. Bestehende Kurzbefehle bleiben aktiv."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "UI only: locks shortcut editing. Existing hotkeys remain active."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo interfaz: bloquea la edición de atajos. Los atajos existentes siguen activos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interface uniquement : verrouille la modification des raccourcis. Les raccourcis existants restent actifs."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "UIのみ：ショートカットの編集をロックします。既存のホットキーは引き続き有効です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "UI 전용: 단축키 편집을 잠급니다. 기존 단축키는 계속 작동합니다."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apenas interface: bloqueia a edição de atalhos. Os atalhos existentes continuam ativos."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Только интерфейс: блокирует изменение сочетаний клавиш. Существующие сочетания остаются активными."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅限界面：锁定快捷键编辑。现有快捷键仍然有效。"
           }
         }
       }

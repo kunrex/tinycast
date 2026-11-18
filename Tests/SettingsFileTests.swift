@@ -50,6 +50,17 @@ struct SettingsFileTests {
                 "clipboard", "emoji", "calendar", "extensions"
             ])
 
+        check(
+            "Mimic macOS is a UI preference in the navigation section",
+            SettingsFileKey.navigationMimicsMacOS.rawValue == "navigation.mimicsMacOS")
+        for enabled in [true, false] {
+            let rendered = SettingsFileFormat.render([.navigationMimicsMacOS: .bool(enabled)])
+            let parsed = try? SettingsFileFormat.parse(rendered)
+            check(
+                "Mimic macOS round trips through settings.json",
+                parsed?.values[.navigationMimicsMacOS] == .bool(enabled))
+        }
+
         // A file that could switch one of these on would grant what only the app may ask for.
         let grantPaths = [
             "snippets.enabled", "extensions.enabled", "calendar.enabled",

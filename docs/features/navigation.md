@@ -9,6 +9,13 @@ switcher and the pane the two share.
 Ships **off**. Settings › Navigation is the switch, and while it is off none of them is in the
 launcher and a still-recorded shortcut for any does nothing.
 
+Settings also offers **Mimic macOS**, off by default, above the window command shortcuts. This is
+currently **UI only**: checking it locks only the Switch Windows and Switch Windows Backwards shortcut
+recorders. Existing bindings remain assigned and active; aliases, launcher visibility, actions and
+Menu Search are unchanged. It does not implement macOS switching or replace any system shortcut.
+The preference persists locally and travels in settings backups and `navigation.mimicsMacOS` in the
+settings file.
+
 ## Invariants
 
 - **The sweep is synchronous, and that is deliberate.** `WindowSwitchSweep.snapshot` visits apps and
@@ -173,6 +180,10 @@ The harness also compiles `WindowSwitchSweep` and the shared `Platform/AXWindowA
 any recovery sources, guarding their independence. It does not exercise live AX calls.
 `WindowZOrder` is not compiled into the harness; AX and `CGWindowList` need manual verification,
 particularly:
+
+- Check Mimic macOS: only the two window shortcut recorders dim and reject editing; their existing
+  hotkeys still work. Aliases, visibility and Menu Search stay editable. Uncheck to edit the same
+  bindings again, and relaunch to verify the checkbox persists.
 
 1. A minimized window is listed last and ↵ un-minimizes it rather than doing nothing — for Finder
    and Transmission too, whose minimized windows read `AXDialog`.

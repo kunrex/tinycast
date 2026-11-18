@@ -438,6 +438,9 @@ enum SettingsSearchCatalog {
             .navigationNavigation, "Enable navigation",
             keywords: ["window switcher", "menu bar", "accessibility"]),
         .init(
+            .navigationCommands, "Mimic macOS",
+            keywords: ["window switcher", "shortcut", "editing"]),
+        .init(
             group: .navigationCommands, "Navigation commands",
             keywords: ["shortcut", "hotkey", "alias", "launcher"]),
         .init(

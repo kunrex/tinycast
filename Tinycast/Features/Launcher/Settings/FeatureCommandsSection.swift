@@ -6,12 +6,15 @@ struct FeatureCommandsSection: View {
     /// Commands the pane draws elsewhere; excluded here rather than listed there, so a command
     /// added to `ownedCommands` later still shows up without a second edit.
     var excluding: Set<CommandID> = []
+    var disabledShortcuts: Set<CommandID> = []
 
     var body: some View {
         Section {
             ForEach(CommandCatalog.entries(ownedBy: owner)) { entry in
                 if !excluding.contains(where: { $0.rawValue == entry.id }) {
-                    FeatureCommandRow(entry: entry)
+                    FeatureCommandRow(
+                        entry: entry,
+                        isShortcutEnabled: !disabledShortcuts.contains(where: { $0.rawValue == entry.id }))
                 }
             }
         } header: {
@@ -22,6 +25,7 @@ struct FeatureCommandsSection: View {
 
 struct FeatureCommandRow: View {
     let entry: AppEntry
+    var isShortcutEnabled = true
     @Environment(VisibilityStore.self) private var visibility
 
     var body: some View {
@@ -35,6 +39,7 @@ struct FeatureCommandRow: View {
             AliasField(entry: entry)
             if let action = entry.hotKeyAction {
                 ShortcutRecorder(action: action)
+                    .settingsEnabled(isShortcutEnabled)
             }
             Toggle("", isOn: visibilityBinding)
                 .labelsHidden()

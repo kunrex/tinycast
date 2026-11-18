@@ -83,6 +83,7 @@ enum SettingsFileKey: String, CaseIterable, Sendable {
     case snippetDefaultAction = "snippets.defaultAction"
     case snippetsCommands = "snippets.commands"
     case navigationEnabled = "navigation.enabled"
+    case navigationMimicsMacOS = "navigation.mimicsMacOS"
     case menuSearchShowsAppleMenu = "navigation.menuSearchShowsAppleMenu"
     case menuSearchDisabledApps = "navigation.menuSearchDisabledApps"
     case navigationCommands = "navigation.commands"

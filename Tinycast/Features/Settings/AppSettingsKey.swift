@@ -50,6 +50,7 @@ enum AppSettingsKey: String, CaseIterable {
     case snippetsFolder = "snippetsFolder"
     case snippetDefaultAction = "snippetDefaultAction"
     case navigationEnabled = "navigationEnabled"
+    case navigationMimicsMacOS = "navigationMimicsMacOS"
     case menuSearchDisabledApps = "menuSearchDisabledApps"
     case menuSearchShowsAppleMenu = "menuSearchShowsAppleMenu"
     case quicklinksEnabled = "quicklinksEnabled"
