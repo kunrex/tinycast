@@ -1603,54 +1603,54 @@
         }
       }
     },
-    "%@ is disabled in AI Settings." : {
+    "%@ is disabled in Quick Actions settings." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ ist in den KI-Einstellungen deaktiviert."
+            "value" : "%@ ist in den Schnellaktionen-Einstellungen deaktiviert."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ está desactivado en los ajustes de IA."
+            "value" : "%@ está desactivado en los ajustes de Acciones rápidas."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ est désactivé dans les réglages IA."
+            "value" : "%@ est désactivé dans les réglages Actions rapides."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@はAI設定で無効になっています。"
+            "value" : "%@はクイックアクション設定で無効になっています。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@은(는) AI 설정에서 비활성화되어 있습니다."
+            "value" : "%@은(는) 빠른 동작 설정에서 비활성화되어 있습니다."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ está desativado nos Ajustes de IA."
+            "value" : "%@ está desativado nos ajustes de Ações Rápidas."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ отключено в настройках ИИ."
+            "value" : "%@ отключено в настройках быстрых действий."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ 已在 AI 设置中停用。"
+            "value" : "%@ 已在 快速操作设置中停用。"
           }
         }
       }
@@ -14905,59 +14905,6 @@
         }
       }
     },
-    "AI" : {
-      "comment" : "Speaker heading in exported Markdown; also the feature name",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "KI"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "IA"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "IA"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AI"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AI"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "IA"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ИИ"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AI"
-          }
-        }
-      }
-    },
     "AI Providers" : {
       "localizations" : {
         "de" : {
@@ -20620,54 +20567,54 @@
         }
       }
     },
-    "Apple Intelligence is disabled in AI Settings." : {
+    "Apple Intelligence is disabled in Quick Actions settings." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple Intelligence ist in den KI-Einstellungen deaktiviert."
+            "value" : "Apple Intelligence ist in den Schnellaktionen-Einstellungen deaktiviert."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple Intelligence está desactivado en los ajustes de IA."
+            "value" : "Apple Intelligence está desactivado en los ajustes de Acciones rápidas."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple Intelligence est désactivé dans les réglages IA."
+            "value" : "Apple Intelligence est désactivé dans les réglages Actions rapides."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple IntelligenceはAI設定で無効になっています。"
+            "value" : "Apple Intelligenceはクイックアクション設定で無効になっています。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple Intelligence가 AI 설정에서 비활성화되어 있습니다."
+            "value" : "Apple Intelligence가 빠른 동작 설정에서 비활성화되어 있습니다."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A Apple Intelligence está desativada nos Ajustes de IA."
+            "value" : "A Apple Intelligence está desativada nos ajustes de Ações Rápidas."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple Intelligence отключён в настройках ИИ."
+            "value" : "Apple Intelligence отключён в настройках быстрых действий."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple Intelligence 已在 AI 设置中停用。"
+            "value" : "Apple Intelligence 已在 快速操作设置中停用。"
           }
         }
       }

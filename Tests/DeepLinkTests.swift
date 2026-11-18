@@ -252,6 +252,10 @@ struct DeepLinkTests {
             expect(SettingsTab(slug: tab.slug) == tab, "settings/\(tab.slug) opens its own tab")
         }
         expect(SettingsTab(slug: "nope") == nil, "an unknown tab opens nothing")
+        expect(SettingsTab(slug: "ai") == nil, "the retired AI settings link opens nothing")
+        expect(
+            parse("tinycast://settings/quick-actions") == .settings(slug: "quick-actions"),
+            "provider settings remains reachable through the Quick Actions link")
     }
 
     static func encodingChecks() {

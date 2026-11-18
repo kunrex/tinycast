@@ -152,7 +152,8 @@ driven imperatively from AppKit. Extension menu extras are dynamic `NSStatusItem
   Markdown over the literal source, switches among local Markdown files and stays visible on focus
   loss. The displayed string is the canonical file source; there is no source/display mapping.
   See [features/notes.md](features/notes.md).
-- **AI providers** — a provider-only Settings pane opens the provider manager. Quick Actions owns
+- **AI providers** — Settings → Quick Actions opens the provider manager below its default model,
+  independently of the feature's enabled switch. Quick Actions owns
   generation, not a conversation surface. No chat stores, windows, observers or MCP runtime are
   constructed. Existing saved history/presets and credentials are untouched. See
   [features/ai.md](features/ai.md) and [the removal inventory](ai-removal-inventory.md).

@@ -60,7 +60,10 @@ streamed `<think>` block is suppressed. Reasoning-effort configuration and citat
   decodes. The shared route then resolves like an unset one, to enabled, available Apple Intelligence or an explicit choice,
   never an automatic HTTP connection; a retired per-action override is dropped so its action follows the shared route.
   Overrides decode entry by entry, so one retired entry never discards a valid HTTP override.
-- **The model picker is the AI picker.** Both panes render `AIModelOption.groupedCatalog`, with the
+- **Provider management lives directly below the default model.** Providers → Manage… stays usable
+  while Quick Actions is off; action, model and Translation controls remain gated by the switch.
+  Moving the manager does not change provider metadata, credentials or saved model selections.
+- **The model picker uses the provider catalog.** It renders `AIModelOption.groupedCatalog`, with the
   same provider sections, model labels and provider-supported reasoning levels. An HTTP-model
   selection stores its effort in `quickActionModel`. The sheets use the
   same `AIModelSelectionRows`, with **Same as Quick Actions** as the `nil` choice.
@@ -280,6 +283,11 @@ failure handler, so automatic expansion stays silent as before.
 
 ### Manual sweep
 
+- With Quick Actions off, open Providers → Manage… directly below Model. Edit an HTTP connection,
+  its key and headers, shown models and route switch; confirm the manager also works with the feature on.
+- Search Settings for Providers or an API provider name: Quick Actions reveals Providers; Back/Forward
+  navigate normally. No AI pane appears in the sidebar or pane search.
+
 - Select text in Safari, Chrome, Brave, Slack, Mail, Notes, VS Code and Terminal, press Fix Grammar,
   and confirm the selection is **replaced** rather than appended to.
 - Select text in a Tinycast floating note and run Fix Grammar by shortcut and launcher row. Confirm
@@ -304,7 +312,7 @@ failure handler, so automatic expansion stays silent as before.
 - Replace Rewrite's instructions, confirm only Rewrite follows them after relaunch, then use the
   modal's default and confirm the shipped behaviour returns.
 - Give Summarize its own model and effort: the row names them, only Summarize uses them, and they
-  survive a relaunch. Turn that provider off in AI Settings and Summarize follows the shared model.
+  survive a relaunch. Turn that provider off in Quick Actions → Providers and Summarize follows the shared model.
 - Save a custom action with its own model, delete it, and confirm no route is left in
   `quickActionModelOverrides`.
 - Translate into a language that has not been downloaded: the panel names the language, and its

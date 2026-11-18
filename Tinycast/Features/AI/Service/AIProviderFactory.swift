@@ -14,7 +14,7 @@ enum AIProviderFactory {
         case .appleIntelligence:
             guard settings.isRouteEnabled(.appleIntelligence) else {
                 throw AIProviderError.unavailable(
-                    String(localized: "Apple Intelligence is disabled in AI Settings."))
+                    String(localized: "Apple Intelligence is disabled in Quick Actions settings."))
             }
             if let message = AppleIntelligenceProvider.status().message {
                 throw AIProviderError.unavailable(message)
@@ -26,7 +26,7 @@ enum AIProviderFactory {
             }
             guard settings.isRouteEnabled(.api(connectionID)) else {
                 throw AIProviderError.unavailable(
-                    String(localized: "\(connection.title) is disabled in AI Settings."))
+                    String(localized: "\(connection.title) is disabled in Quick Actions settings."))
             }
             let baseURL: URL
             do {

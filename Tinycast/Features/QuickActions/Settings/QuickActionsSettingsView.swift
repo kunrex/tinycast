@@ -1,7 +1,6 @@
 import Combine
 import SwiftUI
 
-/// A peer of the AI pane, not a section in it: it only borrows the provider layer.
 struct QuickActionsSettingsView: View {
     @Environment(AppCore.self) private var core
     @Environment(AppSettings.self) private var appSettings
@@ -12,6 +11,7 @@ struct QuickActionsSettingsView: View {
 
     /// Polled like the Permissions pane: the grant lands in System Settings, which sends nothing.
     @State private var isTrusted = Permissions.isAccessibilityTrusted()
+    @State private var providersPresented = false
     @State private var editingAction: BuiltInQuickAction?
     @State private var customEditing: CustomQuickActionEditRequest?
     private let refreshTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -45,18 +45,22 @@ struct QuickActionsSettingsView: View {
                 SettingsSectionHeader(.quickActionsQuickActions)
             }
 
-            Group {
-                actionsSection
-                modelSection
-                languageSection
-            }
-            .settingsEnabled(appSettings.quickActionsEnabled)
+            actionsSection
+                .settingsEnabled(appSettings.quickActionsEnabled)
+            modelSection
+                .settingsEnabled(appSettings.quickActionsEnabled)
+            providersSection
+            languageSection
+                .settingsEnabled(appSettings.quickActionsEnabled)
         }
         .formStyle(.grouped)
         .settingsScrollTarget(.quickActions)
         .onReceive(refreshTimer) { _ in isTrusted = Permissions.isAccessibilityTrusted() }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             isTrusted = Permissions.isAccessibilityTrusted()
+        }
+        .settingsEditorPanel(isPresented: $providersPresented) {
+            AIProvidersPanel(onDone: { providersPresented = false })
         }
         .settingsEditorPanel(item: $editingAction) { action in
             InstructionsEditorPanel(
@@ -178,6 +182,28 @@ struct QuickActionsSettingsView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private var providersSection: some View {
+        Section {
+            SettingsRow(
+                title: "Providers", subtitle: providerSummary, anchor: .quickActionsProviders
+            ) {
+                Button("Manage…") { providersPresented = true }
+            }
+        } header: {
+            SettingsSectionHeader(.quickActionsProviders)
+        }
+    }
+
+    private var providerSummary: String {
+        var providers: [String] = []
+        if !aiSettings.connections.isEmpty {
+            let count = aiSettings.connections.count
+            providers.append(String(localized: "\(count) API connections"))
+        }
+        return providers.isEmpty
+            ? String(localized: "No external providers ready") : providers.joined(separator: ", ")
     }
 
     private var languageSection: some View {

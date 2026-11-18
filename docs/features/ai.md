@@ -1,7 +1,8 @@
 # AI providers
 
-Tinycast's provider layer serves [Quick Actions](quick-actions.md) only. Settings → AI is a
-provider-only pane: **Providers → Manage…** opens the connection manager. There is no Quick AI
+Tinycast's provider layer serves [Quick Actions](quick-actions.md) only. In **Settings → Quick Actions**,
+**Providers → Manage…** sits directly below the default-model section and opens the connection manager,
+even when Quick Actions is off. There is no separate AI settings pane. There is no Quick AI
 launcher screen, AI Chat window, conversation history, chat presets, generated titles, chat deep
 links, MCP runtime or installed-command (CLI) provider. Existing `ai-chats.sqlite3` files and
 sidecars, `chat-presets.json`, retired preferences and retired Keychain scopes stay untouched in the

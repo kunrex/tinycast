@@ -108,7 +108,7 @@ enum SettingsSearchCatalog {
     static let entries: [SettingsSearchEntry] =
         general + applications + systemSettings + systemActions + commands + quicklinks
         + appleShortcuts + fallbacks + clipboard + snippets + fileSearch + windowManagement
-        + navigation + notes + calendar + emoji + ai + quickActions + dictation + extensions + permissions
+        + navigation + notes + calendar + emoji + quickActions + dictation + extensions + permissions
         + backup + about
 
     private static let general: [SettingsSearchEntry] = [
@@ -280,18 +280,6 @@ enum SettingsSearchCatalog {
             keywords: ["no results", "empty", "search web", "order"])
     ]
 
-    private static let ai: [SettingsSearchEntry] = [
-        .init(
-            pane: .ai, keywords: ["providers", "llm", "model", "openai", "anthropic"]),
-        .init(
-            .aiProviders, "Providers",
-            keywords: [
-                "sign in", "connect", "codex", "claude", "grok", "xai", "opencode", "cursor", "agent",
-                "api key", "connection", "base url", "openai", "anthropic", "ollama", "models",
-                "hide models"
-            ])
-    ]
-
     private static let quickActions: [SettingsSearchEntry] = [
         .init(
             pane: .quickActions,
@@ -308,6 +296,12 @@ enum SettingsSearchCatalog {
         .init(
             .quickActionsModel, "Model",
             keywords: ["llm", "ai", "default"]),
+        .init(
+            .quickActionsProviders, "Providers",
+            keywords: [
+                "connect", "api key", "connection", "base url", "openai", "anthropic", "ollama",
+                "gemini", "openrouter", "apple intelligence", "models", "hide models"
+            ]),
         .init(
             .quickActionsTranslate, "Translate to",
             keywords: ["language", "locale"])

@@ -28,6 +28,7 @@ struct SettingsHistoryTests {
         catalogCoversEveryPane()
         catalogIdentitiesAreUnique()
         catalogFindsKnownRows()
+        providersNavigateWithinQuickActions()
         catalogRanksTitlesFirst()
         catalogAnchorsMatchTheirPane()
         revealingRecordsANewRequestEachTime()
@@ -155,12 +156,30 @@ struct SettingsHistoryTests {
             ("paste history", .clipboard),
             ("window manage", .windowManagement),
             ("skin tone", .emoji),
-            ("providers", .ai)
+            ("providers", .quickActions),
+            ("openrouter", .quickActions)
         ]
         for (query, tab) in cases {
             let found = SettingsSearchCatalog.results(for: query).first
             expect(found?.tab == tab, "“\(query)” lands on \(tab.title)")
         }
+    }
+
+    static func providersNavigateWithinQuickActions() {
+        let navigation = SettingsNavigationState(tab: .general)
+        expect(
+            SettingsSearchCatalog.results(for: "api key").contains { $0.anchor == .quickActionsProviders },
+            "API key search includes provider management")
+        let result = SettingsSearchCatalog.results(for: "providers").first
+        expect(result?.target == .row(.quickActionsProviders, "Providers"), "providers reveals its row")
+        navigation.select(.quickActions, revealing: result?.target)
+        expect(navigation.tab == .quickActions, "provider search opens Quick Actions")
+        expect(navigation.scrollRequest?.target == result?.target, "provider search requests a reveal")
+        navigation.goBack()
+        expect(navigation.tab == .general, "Back leaves provider settings")
+        navigation.goForward()
+        expect(navigation.tab == .quickActions, "Forward returns to Quick Actions")
+        expect(SettingsTab(slug: "ai") == nil, "the removed AI pane cannot enter history")
     }
 
     /// The anchor carries the pane, so a row filed under the wrong one cannot be written.

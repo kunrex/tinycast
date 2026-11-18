@@ -85,7 +85,9 @@ Settings shortcut field; only the Settings window sets it.
 A row's path is its `AppEntry.id` with the first `:` turned into `/`: `command:clipboard-history`
 becomes `tinycast://command/clipboard-history`. Built-in commands use their `CommandID` slug.
 Retired `chat/<uuid>`, `command/ai-chat` and `command/ai-chat-window` links are invalid; they never
-fall back to another action. Rows you create are keyed by UUID, which survives a rename. A note is known only by its file name, so
+fall back to another action. The removed `settings/ai` tab likewise reports an unknown link, using the
+existing unknown-tab handling rather than a redirect or persisted migration. Provider management is
+now reached through `settings/quick-actions`. Rows you create are keyed by UUID, which survives a rename. A note is known only by its file name, so
 renaming a note breaks its link; the store then reports the missing file.
 
 Applications and System Settings panes have no link: `open -a` and `x-apple.systempreferences:`

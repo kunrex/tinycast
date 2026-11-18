@@ -46,11 +46,10 @@ extension SettingsAnchor {
 
     static let fallbacksFallbacks = Self(tab: .fallbacks, title: "Fallbacks")
 
-    static let aiProviders = Self(tab: .ai, title: "Providers")
-
     static let quickActionsQuickActions = Self(tab: .quickActions, title: "Quick Actions")
     static let quickActionsActions = Self(tab: .quickActions, title: "Actions")
     static let quickActionsModel = Self(tab: .quickActions, title: "Model")
+    static let quickActionsProviders = Self(tab: .quickActions, title: "Providers")
     static let quickActionsTranslate = Self(tab: .quickActions, title: "Translate")
 
     static let dictationDictation = Self(tab: .dictation, title: "Dictation")
