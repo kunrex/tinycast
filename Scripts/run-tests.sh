@@ -578,6 +578,18 @@ run slow -O RaycastTests   Tinycast/Features/Backup/Model/RaycastImportError.swi
                            Tinycast/Features/Clipboard/Model/ColorValue.swift \
                            Tinycast/Features/Clipboard/Model/ColorFormat.swift \
                            Tinycast/Features/Clipboard/Model/ColorSpaces.swift
+run SettingsBackupDecodingTests Tinycast/Features/Backup/Model/SettingsBackup.swift \
+                           Tinycast/Features/CustomCommands/Model/CustomCommand.swift \
+                           Tinycast/Features/Quicklinks/Model/Quicklink.swift \
+                           Tinycast/Features/Quicklinks/Model/QuicklinkDestination.swift \
+                           Tinycast/Features/HotKeys/Model/HotKeyBinding.swift \
+                           Tinycast/Features/HotKeys/Model/DoubleTapModifier.swift \
+                           Tinycast/Features/HotKeys/Model/ModifierKey.swift \
+                           Tinycast/Features/HotKeys/Model/HyperKey.swift \
+                           Tinycast/Features/HotKeys/Model/HIDKeyMapping.swift \
+                           Tinycast/Features/HotKeys/Service/KeyShortcut.swift \
+                           Tinycast/Platform/ASCIIKeyboardLayout.swift \
+                           Tinycast/Platform/AppPaths.swift
 run SettingsBackupTests    Tinycast/Features/Settings/AppSettingsKey.swift \
                            Tinycast/Features/Backup/Model/SettingsBackupCoverage.swift
 run HyperKeyEngineTests    Tinycast/Features/HotKeys/Model/HyperKeyEngine.swift \
@@ -711,6 +723,8 @@ run SettingsHistoryTests   Tinycast/Features/Settings/SettingsTab.swift \
 run UpdatesTests           Tinycast/Features/Updates/Model/*.swift \
                            Tinycast/Features/Updates/Service/BundleSignature.swift \
                            Tinycast/Features/Updates/Service/UpdateSignature.swift
+run WindowManagementRemovalMigrationTests Tinycast/Migrations/WindowManagementRemovalMigration.swift \
+                           Tinycast/Platform/AppPaths.swift
 run BundleIdentifierMigrationTests Tinycast/Migrations/BundleIdentifierMigration.swift \
                            Tinycast/Platform/AppPaths.swift \
                            Tinycast/Platform/LaunchAtLogin.swift

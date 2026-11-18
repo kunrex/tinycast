@@ -45,7 +45,8 @@ A backup carries five independently selectable categories, ticked on export and 
 | `Model/BackupBundle.swift` | The payload directory's layout and part-by-part encode/decode |
 | `Model/BackupArchive.swift` | Directory ⇄ `.tinycast`; the only file importing `AppleArchive` |
 | `Model/BackupClipboardItem.swift` | The portable clip, with no path in it |
-| `Model/SettingsBackup.swift` | The settings, fixed/per-item hotkey payloads, and their `Codable` shape |
+| `Model/SettingsBackup.swift` | The settings, fixed/per-item hotkey payloads, their `Codable` shape and serialization |
+| `Model/SettingsBackup+Stores.swift` | Gathering and applying the payload through AppCore's stores |
 | `Model/SettingsBackupCoverage.swift` | The coverage declaration the harness checks |
 | `Model/RaycastImport.swift` | The importable categories, the `Result` and its per-category trim |
 | `Model/RaycastImportError.swift` | The three failures an import reports |
@@ -137,6 +138,12 @@ Per category:
 
 An `id` never travels with a clip: `items.id` is `UNIQUE`, so a re-import minting fresh identities is
 what keeps a second pass from silently failing its inserts. Same reasoning as `QuicklinkArchive.merge`.
+
+Older same-format backups may carry retired WindowManagement fields. Codable ignores those unknown
+fields without losing unrelated settings and shortcuts; `SettingsBackupDecodingTests` covers the
+shipped payload and serialization. Built-in command hotkeys are applied only when today's `CommandID`
+recognizes the identifier. Shared launcher references remain opaque on import: stale IDs are inert,
+so importing an old backup never depends on running a one-release cleanup migration.
 
 The old flat `Tinycast-Settings-*.json` export is gone rather than deprecated, and nothing reads it.
 

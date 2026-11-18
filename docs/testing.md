@@ -186,12 +186,14 @@ If a change touches anything in the right column, the harness on the left is man
 | `IconCacheTests` | `Platform/Images/IconCache.swift` — row sizing at 1×/2×, warm reuse, stamp and style invalidation, bitmap release, fitted geometry across all 256 alpha values, and that a row icon draws identically to the 96px one |
 | `EntryIconTests` | `EntryIcon` — that each case draws, caches and prints apart from the others, and that a moved `FileIconStamp` retires the bitmap decoded before it |
 | `TextDiffTests` | `QuickActions/Model/TextDiffEngine.swift` — exact chunks, coalescing, Unicode, ties, token-cap boundaries and fast paths |
+| `SettingsBackupDecodingTests` | Shipped backup Codable payload and serialization — older WindowManagement fields are ignored, unrelated settings/shortcuts and shared launcher data decode and round-trip unchanged; no AppCore or user data is initialized |
 | `SettingsBackupTests` | `Settings/AppSettingsKey.swift`, `Backup/Model/SettingsBackupCoverage.swift` |
 | `SettingsFileTests` | `Settings/Model/` and `Settings/Service/` — key paths, value tokens, the printer and parser, and the repository's import, replace, save, reload and symlink handling on a scratch folder |
 | `WindowFileTests` | `WindowManagement/Model/WindowManagementFileFormat.swift` — command shortcuts, custom sizes, layouts and rooms as settings.json spells them, hand edits and bad records |
 | `LauncherSettingsFileTests` | Launcher settings application — invalid records, partial edits, deferred bundles, shortcut moves and records outside search scopes; isolated preferences and in-memory scan/Carbon effects |
 | `BackupArchiveTests` | all of `Backup/Model/`, plus `Backup/Service/BackupStaging.swift` |
 | `UpdatesTests` | `Updates/Model/` — version precedence, channel filtering, install route, readiness |
+| `WindowManagementRemovalMigrationTests` | Shipped one-release cleanup with injected scratch paths/preferences — exact retired IDs and UUID namespaces, preserved unrelated values, idempotence, malformed JSON, symlink targets and untouched recovery ledgers |
 | `BundleIdentifierMigrationTests` | `Migrations/BundleIdentifierMigration.swift` — the id mapping, moving without overwriting, every spelling of a saved path into the old folders, preferences, the login-item flag, the backup and its expiry, the repair of an earlier move |
 | `UpdateCheckTests` | `UpdateCheckStore` — stopping, in-flight cancellation, cached offer suppression, restart and independent manual checking |
 | `SupportTests` | `Support/Model/` — when the support reminder comes due, and a clock moved backwards |
