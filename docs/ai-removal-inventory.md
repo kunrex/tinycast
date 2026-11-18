@@ -1,4 +1,8 @@
-# Conversation removal checkpoint
+# AI removal inventory and validation
+
+Conversation removal was committed as `00f1a3d1`; CLI provider removal as `acdf0de9`.
+The earlier checkpoint sections below are historical snapshots. See [Final validation](#final-validation)
+for the current state and outstanding checks.
 
 ## Traced ownership and entry points
 
@@ -145,3 +149,35 @@ so valid HTTP overrides and their efforts survive restart without any migration.
 `QuickActionTests.retiredSelectionsRequireIndependentResolution` pins this.
 
 T5 is documented only as a future possibility in `features/ai.md`.
+
+## Final validation
+
+Validated on 2026-11-18 after `acdf0de9`, including the uncommitted Quick Actions Accessibility
+indicator refresh (pane appearance and application activation). The user confirmed Accessibility
+works after switching from ad-hoc signing to stable development signing. This confirms the reported
+permission problem is resolved, not that the entire manual feature sweep has been performed.
+
+- Full harness suite: **110/110 passed** (`/tmp/tinycast-final-tests.log`).
+- Debug app build with signing enabled: **succeeded** (`/tmp/tinycast-final-build.log`). The resulting
+  app has an Apple Development signature, not an ad-hoc signature. Only the existing AppIntents
+  metadata-extraction warning was reported; no Swift compilation warnings or errors.
+- `./Scripts/lint.sh`: blocked because SwiftLint is not installed (`/tmp/tinycast-final-lint.log`).
+- Settings-search and migration checks: passed independently.
+- Localization check: the same 18 existing errors in unchanged `InfoPlist.xcstrings`; no errors in
+  `Localizable.xcstrings` (`/tmp/tinycast-final-localizations.log`).
+- Model import purity scan: no AppKit, SwiftUI or Cocoa imports.
+- Removed conversation/CLI runtime-symbol scan: no references found in shipped Swift sources.
+- `git diff --check`: passed.
+- Independent review found no actionable defects; focused Quick Action, HTTP/Responses and migration
+  harnesses also passed during review.
+
+No new feature work remains in this removal scope. Manual provider/Quick Action/Translation checks
+listed in `features/ai.md` remain unverified unless separately confirmed by the user. Lint and the
+InfoPlist localization baseline prevent claiming the repository's entire definition of done is green.
+No model generation against real HTTP services or Foundation Models was exercised by this pass.
+
+Local signing edits in the generated Xcode project were preserved, not regenerated or hand-edited
+by this validation pass. They are not yet represented in `project.yml`; running XcodeGen may overwrite
+them. Make the intended signing configuration reproducible through the project inputs or a documented
+local override before relying on regeneration. The permission-indicator fix and these signing changes
+were uncommitted at validation time; no commit was created by this pass.

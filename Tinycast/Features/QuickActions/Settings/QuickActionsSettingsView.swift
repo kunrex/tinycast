@@ -55,6 +55,9 @@ struct QuickActionsSettingsView: View {
         .formStyle(.grouped)
         .settingsScrollTarget(.quickActions)
         .onReceive(refreshTimer) { _ in isTrusted = Permissions.isAccessibilityTrusted() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            isTrusted = Permissions.isAccessibilityTrusted()
+        }
         .settingsEditorPanel(item: $editingAction) { action in
             InstructionsEditorPanel(
                 action: action,
@@ -71,6 +74,7 @@ struct QuickActionsSettingsView: View {
                 model: request.action.flatMap { store.modelOverride(for: .custom($0)) })
         }
         .onAppear {
+            isTrusted = Permissions.isAccessibilityTrusted()
             core.quickActionCoordinator.loadLanguages()
             store.repairModel(
                 against: aiSettings.connections,
