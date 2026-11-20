@@ -371,9 +371,6 @@ struct DeepLinkTests {
             DeepLinkConsentPolicy.requiresConsent(.command(.pasteSequentially)),
             "pasting into another app asks first")
         expect(
-            DeepLinkConsentPolicy.requiresConsent(.command(.openCamera)),
-            "turning the camera on asks first")
-        expect(
             DeepLinkConsentPolicy.requiresConsent(.windowCommand(id: .leftHalf)),
             "moving another app's window asks first")
         expect(

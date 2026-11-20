@@ -19,7 +19,7 @@ struct CompactBarTests {
         check(
             defaults == [.clipboardHistory, .searchEmoji, .searchFiles, .searchQuicklinks],
             "the always-on commands lead the default")
-        check(CommandID.compactBarOptions.count == 8, "eight supported destinations")
+        check(CommandID.compactBarOptions.count == 7, "seven supported destinations")
         for count in 0...CommandID.compactBarLimit {
             let commands = Array(defaults.prefix(count))
             var selection = CompactBarSelection()
@@ -45,10 +45,16 @@ struct CompactBarTests {
         check(selection.command == defaults.first, "an obsolete selection starts from Search")
 
         check(CommandID.compactBarCommands(from: []) == [], "empty means no shortcuts")
-        let chosen: [CommandID] = [.quickAI, .searchEmoji, .mySchedule, .showNotes]
+        let chosen: [CommandID] = [.quickAI, .searchEmoji, .showNotes]
         check(
             CommandID.compactBarCommands(from: chosen.map(\.rawValue)) == chosen,
             "all additional destinations retain their order")
+        check(
+            CommandID.compactBarCommands(from: ["command:my-schedule"] + chosen.map(\.rawValue))
+                == chosen, "retired schedule is removed without resetting other shortcuts")
+        check(
+            CommandID.compactBarCommands(from: ["command:my-schedule", "unknown"]) == nil,
+            "removing schedule does not make unknown identifiers valid")
         for invalid in [
             ["unknown"], [CommandID.quit.rawValue],
             [CommandID.searchFiles.rawValue, CommandID.searchFiles.rawValue],

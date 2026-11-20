@@ -11,6 +11,7 @@ struct SettingsFileTests {
         testValues()
         testFormat()
         testParseIssues()
+        try testRetiredCalendarImport()
         try await testRepository()
         try testCommit()
         try testReplace()
@@ -47,7 +48,7 @@ struct SettingsFileTests {
                 "general", "appearance", "hyperKey", "calculator", "search", "applications",
                 "systemSettings", "systemActions", "commands", "quicklinks", "appleShortcuts", "ai",
                 "quickActions", "dictation", "fileSearch", "notes", "snippets", "navigation",
-                "windowManagement", "clipboard", "emoji", "calendar", "extensions"
+                "windowManagement", "clipboard", "emoji", "extensions"
             ])
 
         // A file that could switch one of these on would grant what only the app may ask for.
@@ -59,6 +60,24 @@ struct SettingsFileTests {
         check(
             "no capability grant has a settings.json key",
             grantPaths.allSatisfy { SettingsFileKey(rawValue: $0) == nil })
+    }
+
+    private static func testRetiredCalendarImport() throws {
+        let parsed = try SettingsFileFormat.parse(Data("""
+            {"calendar":{"enabled":true,"commands":{"my-schedule":{}}},
+             "appearance":{"compactBarCommands":["command:my-schedule","command:show-notes","unknown"]},
+             "commands":{"builtIn":{"open-camera":false,"show-notes":{},"unknown":{}}},
+             "windowManagement":{"gap":12},"notes":{"enabled":true}}
+            """.utf8))
+        check("retired calendar imports silently", parsed.issues.isEmpty)
+        check("calendar import preserves window settings", parsed.values[.windowGap] == 12)
+        check("calendar import preserves Notes", parsed.values[.notesEnabled] == true)
+        check(
+            "compact import drops only My Schedule",
+            parsed.values[.compactBarCommands] == .array(["command:show-notes", "unknown"]))
+        check(
+            "command import drops only retired rows",
+            parsed.values[.builtInCommands] == .object(["show-notes": .object([]), "unknown": .object([])]))
     }
 
     // MARK: - Values
