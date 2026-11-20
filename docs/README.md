@@ -34,7 +34,6 @@ open with an `## Invariants` section; read it before changing anything in that a
 [dictionary](features/dictionary.md) ·
 [file search](features/file-search.md) ·
 [menu search](features/menu-search.md) ·
-[notes](features/notes.md) ·
 [snippets](features/snippets.md) ·
 [quicklinks](features/quicklinks.md) ·
 [Apple Shortcuts](features/apple-shortcuts.md) ·
@@ -43,7 +42,6 @@ open with an `## Invariants` section; read it before changing anything in that a
 [navigation](features/navigation.md) ·
 [window recovery](features/window-recovery.md) ·
 [custom commands](features/custom-commands.md) ·
-[uninstall](features/uninstall.md) ·
 [backup](features/backup.md) ·
 [settings file](features/settings-file.md) ·
 [Raycast import](features/raycast-import.md) ·

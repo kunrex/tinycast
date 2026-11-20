@@ -97,7 +97,6 @@ every screen but two: the clipboard lands past its pins
 | `.customCommandEditor` | `CustomCommandEditorScreen` | `CustomCommandEditorView` (see [custom-commands.md](custom-commands.md#launcher-editor))                 |
 | `.customCommands`      | `CustomCommandListScreen`   | `CustomCommandList` + script preview (see [custom-commands.md](custom-commands.md#launcher-integration)) |
 | `.meetingDetails`      | `MeetingDetailsScreen`      | `MeetingDetailsView` (see [calendar.md](calendar.md#the-details-page))                                   |
-| `.uninstall`           | `UninstallScreen`           | `UninstallList` (see [uninstall.md](uninstall.md))                                                       |
 | `.quicklinks`          | `QuicklinkListScreen`       | `QuicklinkList` + preview (see [quicklinks.md](quicklinks.md#search-quicklinks))                         |
 | `.quicklinkEditor`     | `QuicklinkEditorScreen`     | `QuicklinkEditorView` (see [quicklinks.md](quicklinks.md#launcher-editor))                               |
 | `.snippets`            | `SnippetsScreen`            | `SnippetsList` + preview (see [snippets.md](snippets.md#search-snippets))                                |
@@ -108,7 +107,7 @@ every screen but two: the clipboard lands past its pins
 **Tab flips launcher ↔ clipboard**, unless the screen claims it through `tab(at:backwards:)`
 (native editors and extension forms walk their own fields), or the selected row declares arguments,
 in which case it walks those fields first (see below). Every other mode stays off the ring, reached
-by a command or global hotkey, with Uninstall only from a launcher app's Actions menu.
+by a command or global hotkey.
 
 ### Navigation
 
@@ -230,12 +229,13 @@ button per configured `AppSettings.compactBarCommands` entry whose feature
 `AppIndex.isCommandEnabled` reports on. General settings shows **Compact Shortcuts** only
 when Compact is selected: an ordered list of zero to four unique commands, with add, replace,
 remove and move controls. The default is Clipboard History and Emoji & Symbols, both on for a new
-install, then Search Files and Search Quicklinks; Search Snippets, Show Notes, My Schedule and Quick
-AI are also available. Disabled features retain their configured positions but disappear from the
+install, then Search Files and Search Quicklinks; Search Snippets and My Schedule are
+also available. Disabled features retain their configured positions but disappear from the
 bar until re-enabled; Settings still offers them, under **Off** in both menus and marked Off in the
 list, so a slot can be ready before its feature is.
 The ordered command identifiers persist in preferences, backups and `appearance.compactBarCommands`
-in settings.json. Invalid lists are rejected whole, and an empty array deliberately removes all slots.
+in settings.json. Retired conversation and Notes identifiers are filtered before validation. Invalid remaining lists
+are rejected whole, and an empty array deliberately removes all slots.
 
 Search starts selected on every presentation. Left/Right traverses Search and the visible buttons,
 stopping at either end; Down expands Search or opens the selected button, and Return opens only a
@@ -251,8 +251,7 @@ over it. The glyph stays above `GlassEffectContainer` so a morph cannot smear it
 
 Mouse and keyboard activation synchronously call `LauncherCoordinator.runCommand` in a transaction
 with animations disabled. No merge animation or delayed activation survives beneath the destination
-screen. Palette screens push over root search as before; Show Notes closes the palette and opens
-its existing window. The summon reveal still animates independently.
+screen. Palette screens push over root search as before. The summon reveal still animates independently.
 The compact bar lays `panelScrim` over its capsule and buttons through a mask that follows the
 reveal, as the expanded panel lays it over its glass; the selected button stays out of the mask so
 its tint reads undimmed.
@@ -458,7 +457,7 @@ Both clip to their own bounds so AppKit's visible-rect tracking area stays insid
 Without this, the unclipped form scroll view makes each text view track the entire window, and their
 cursor claims overlap even in the gaps between fields. The page itself keeps its edge dissolve.
 Each editor session mounts fresh controls; textarea undo stays local and includes placeholder inserts.
-The textarea routes undo/redo to its own manager, as the Notes editor does in a non-activating panel.
+The textarea routes undo/redo to its own manager in the non-activating panel.
 
 ## One menu at a time
 
@@ -669,11 +668,8 @@ app:
 
 Both require the Accessibility permission (`Permissions.ensureAccessibility()`).
 
-Ordering the palette out makes AppKit pass key to the next of our panels that accepts it, and a
-non-activating panel holds the keyboard even while another app is active. So `hide` sets
-`NotesPanel.refusesInheritedKey` around the order-out unless `previousOwnWindow` is still visible:
-over another app the keyboard returns to that app, and a paste or the next keystroke cannot land in an
-open note. Summoned from a note, the note takes key back, so a paste lands there.
+`hide` restores a still-visible `previousOwnWindow` when summoned from one of Tinycast's own
+windows; otherwise focus returns to the previous external app.
 
 The same show also mirrors that app into `PaletteState.pasteTarget` (a `PasteTarget`: localized
 name + bundle path), so Clipboard and Emoji can name it — the footer pill reads "Paste to Notes" and

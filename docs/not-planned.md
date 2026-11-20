@@ -138,7 +138,7 @@ part of [Navigation](features/navigation.md).
 - **Follow Stage Manager.** ([#1249](https://github.com/abue-ammar/tinycast/issues/1249))
 - **Safari's width after Mission Control.** Safari may reset its width afterwards. ([#1556](https://github.com/abue-ammar/tinycast/issues/1556))
 
-## Notes
+## Notes (retired; historical decisions)
 
 - **More than one Notes window.** One window, many notes. ([#863](https://github.com/abue-ammar/tinycast/issues/863))
 - **Turn off "always on top".** Most people want Notes to float. ([#670](https://github.com/abue-ammar/tinycast/issues/670))

@@ -487,13 +487,6 @@ run CustomCommandTests     Tinycast/Platform/PseudoTerminal.swift \
                            Tinycast/Features/CustomCommands/Service/ShellCommandRunner.swift
 run CustomCommandListTests Tinycast/Features/CustomCommands/Model/CustomCommand.swift \
                              Tinycast/Features/CustomCommands/UI/CustomCommandListScreen.swift
-run UninstallCoordinatorTests Tinycast/Features/Uninstall/Model/*.swift \
-                           Tinycast/Features/Uninstall/UI/UninstallCoordinator.swift
-run UninstallTests         Tinycast/Features/Uninstall/Model/UninstallTarget.swift \
-                           Tinycast/Features/Uninstall/Model/UninstallSearchRoot.swift \
-                           Tinycast/Features/Uninstall/Model/UninstallRules.swift \
-                           Tinycast/Features/Uninstall/Model/UninstallProtection.swift \
-                           Tinycast/Features/Uninstall/Model/UninstallPlan.swift
 run QuicklinkTests         Tinycast/Features/Quicklinks/Model/Quicklink.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkDestination.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkStore.swift \
@@ -516,63 +509,6 @@ run slow SnippetsTests     Tinycast/Platform/NotificationToken.swift \
                            Tinycast/Features/Snippets/Service/*.swift \
                            Tinycast/Features/Snippets/UI/SnippetEditorSession.swift \
                            Tinycast/Features/TextInjection/Service/*.swift
-run NotesTests             Tinycast/Platform/Signposts.swift \
-                           $L/SearchRelevance.swift \
-                           Tinycast/Features/Notes/Model/*.swift \
-                           Tinycast/Features/Notes/Service/*.swift
-run NotesEditorTests       Tinycast/Platform/Signposts.swift \
-                           Tinycast/Platform/Appearance.swift \
-                           Tinycast/DesignSystem/Theme.swift \
-                           Tinycast/DesignSystem/InterfaceMetrics.swift \
-                           Tinycast/Platform/NotificationToken.swift \
-                           Tinycast/Features/TextInjection/Service/InjectableTextView.swift \
-                           Tinycast/Features/Notes/Model/NoteDocument.swift \
-                           Tinycast/Features/Notes/Model/NoteTitle.swift \
-                           Tinycast/Features/Notes/Model/NoteMarkdown.swift \
-                           Tinycast/Features/Notes/Model/NoteMarkdownParser.swift \
-                           Tinycast/Features/Notes/Model/NoteInlineScanner.swift \
-                           Tinycast/Features/Notes/Model/NoteEditPlan.swift \
-                           Tinycast/Features/Notes/Model/NoteEditAction.swift \
-                           Tinycast/Features/Notes/Model/NoteFormatting.swift \
-                           Tinycast/Features/Notes/Model/NoteMarkdownEditing.swift \
-                           Tinycast/Features/Notes/Model/NoteRevealPolicy.swift \
-                           Tinycast/Features/Notes/UI/NoteMarkdownTypography.swift \
-                           Tinycast/Features/Notes/UI/NoteBlockDecoration.swift \
-                           Tinycast/Features/Notes/UI/NoteMarkdownStyler.swift \
-                           Tinycast/Features/Notes/UI/NoteMarkdownRenderer.swift \
-                           Tinycast/Features/Notes/UI/NoteCheckboxGeometry.swift \
-                           Tinycast/Features/Notes/UI/NoteBlockLayoutFragment.swift \
-                           Tinycast/Features/Notes/UI/NoteLayoutFragmentProvider.swift \
-                           Tinycast/Features/Notes/UI/NoteTextViewEditing.swift \
-                           Tinycast/Features/Notes/UI/NoteTextView.swift \
-                           Tinycast/Features/Notes/UI/NoteEditorView.swift
-run -O index NotesEditorPerformanceTests \
-                           Tinycast/Platform/Signposts.swift \
-                           Tinycast/Platform/Appearance.swift \
-                           Tinycast/DesignSystem/Theme.swift \
-                           Tinycast/DesignSystem/InterfaceMetrics.swift \
-                           Tinycast/Platform/NotificationToken.swift \
-                           Tinycast/Features/TextInjection/Service/InjectableTextView.swift \
-                           Tinycast/Features/Notes/Model/NoteDocument.swift \
-                           Tinycast/Features/Notes/Model/NoteTitle.swift \
-                           Tinycast/Features/Notes/Model/NoteMarkdown.swift \
-                           Tinycast/Features/Notes/Model/NoteMarkdownParser.swift \
-                           Tinycast/Features/Notes/Model/NoteInlineScanner.swift \
-                           Tinycast/Features/Notes/Model/NoteEditPlan.swift \
-                           Tinycast/Features/Notes/Model/NoteEditAction.swift \
-                           Tinycast/Features/Notes/Model/NoteFormatting.swift \
-                           Tinycast/Features/Notes/Model/NoteMarkdownEditing.swift \
-                           Tinycast/Features/Notes/Model/NoteRevealPolicy.swift \
-                           Tinycast/Features/Notes/UI/NoteMarkdownTypography.swift \
-                           Tinycast/Features/Notes/UI/NoteBlockDecoration.swift \
-                           Tinycast/Features/Notes/UI/NoteMarkdownStyler.swift \
-                           Tinycast/Features/Notes/UI/NoteMarkdownRenderer.swift \
-                           Tinycast/Features/Notes/UI/NoteCheckboxGeometry.swift \
-                           Tinycast/Features/Notes/UI/NoteBlockLayoutFragment.swift \
-                           Tinycast/Features/Notes/UI/NoteLayoutFragmentProvider.swift \
-                           Tinycast/Features/Notes/UI/NoteTextViewEditing.swift \
-                           Tinycast/Features/Notes/UI/NoteTextView.swift \
-                           Tinycast/Features/Notes/UI/NoteEditorView.swift
 run slow -O RaycastTests   Tinycast/Features/Backup/Model/RaycastImportError.swift \
                            Tinycast/Features/Backup/Service/RaycastDecoder.swift \
                            Tinycast/Features/Backup/Service/Scrypt.swift \
@@ -598,7 +534,19 @@ run SettingsBackupDecodingTests Tinycast/Features/Backup/Model/SettingsBackup.sw
                            Tinycast/Platform/ASCIIKeyboardLayout.swift \
                            Tinycast/Platform/AppPaths.swift
 run SettingsBackupTests    Tinycast/Features/Settings/AppSettingsKey.swift \
-                           Tinycast/Features/Backup/Model/SettingsBackupCoverage.swift
+                           Tinycast/Features/Backup/Model/SettingsBackupCoverage.swift \
+                           Tinycast/Features/Backup/Model/SettingsBackup.swift \
+                           Tinycast/Features/CustomCommands/Model/CustomCommand.swift \
+                           Tinycast/Features/Quicklinks/Model/Quicklink.swift \
+                           Tinycast/Features/Quicklinks/Model/QuicklinkDestination.swift \
+                           Tinycast/Features/HotKeys/Model/HotKeyBinding.swift \
+                           Tinycast/Features/HotKeys/Model/DoubleTapModifier.swift \
+                           Tinycast/Features/HotKeys/Model/ModifierKey.swift \
+                           Tinycast/Features/HotKeys/Model/HyperKey.swift \
+                           Tinycast/Features/HotKeys/Model/HIDKeyMapping.swift \
+                           Tinycast/Features/HotKeys/Service/KeyShortcut.swift \
+                           Tinycast/Platform/LocalizedResource.swift \
+                           Tinycast/Platform/ASCIIKeyboardLayout.swift
 run HyperKeyEngineTests    Tinycast/Features/HotKeys/Model/HyperKeyEngine.swift \
                            Tinycast/Features/HotKeys/Model/HyperKey.swift \
                            Tinycast/Features/HotKeys/Model/HIDKeyMapping.swift \
@@ -732,6 +680,8 @@ run UpdatesTests           Tinycast/Features/Updates/Model/*.swift \
                            Tinycast/Features/Updates/Service/UpdateSignature.swift
 run RetiredAISettingsMigrationTests Tinycast/Migrations/RetiredAISettingsMigration.swift
 run WindowManagementRemovalMigrationTests Tinycast/Migrations/WindowManagementRemovalMigration.swift \
+                           Tinycast/Platform/AppPaths.swift
+run NotesSettingsMigrationTests Tinycast/Migrations/NotesSettingsMigration.swift \
                            Tinycast/Platform/AppPaths.swift
 run BundleIdentifierMigrationTests Tinycast/Migrations/BundleIdentifierMigration.swift \
                            Tinycast/Platform/AppPaths.swift \

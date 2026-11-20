@@ -344,10 +344,6 @@ final class AppSettings {
         }
     }
 
-    var notesEnabled: Bool {
-        didSet { defaults.set(notesEnabled, forKey: Key.notesEnabled.rawValue) }
-    }
-
     var dictationEnabled: Bool {
         didSet { defaults.set(dictationEnabled, forKey: Key.dictationEnabled.rawValue) }
     }
@@ -390,23 +386,6 @@ final class AppSettings {
 
     var dictationLanguage: String? {
         didSet { defaults.set(dictationLanguage, forKey: Key.dictationLanguage.rawValue) }
-    }
-
-    var notesRendersMarkdown: Bool {
-        didSet { defaults.set(notesRendersMarkdown, forKey: Key.notesRendersMarkdown.rawValue) }
-    }
-
-    var notesShowsFormattingBar: Bool {
-        didSet { defaults.set(notesShowsFormattingBar, forKey: Key.notesShowsFormattingBar.rawValue) }
-    }
-
-    var notesShowsInMenuBar: Bool {
-        didSet { defaults.set(notesShowsInMenuBar, forKey: Key.notesShowsInMenuBar.rawValue) }
-    }
-
-    /// The notes folder as the user wrote it, `~` allowed; nil keeps it in Application Support.
-    var notesFolder: String? {
-        didSet { defaults.set(notesFolder, forKey: Key.notesFolder.rawValue) }
     }
 
     var customCommandsEnabled: Bool {
@@ -737,7 +716,6 @@ final class AppSettings {
         fileSearchRemovedDefaultPatterns =
             defaults.stringArray(forKey: Key.fileSearchRemovedDefaultPatterns.rawValue) ?? []
         fileSearchShowInLauncher = defaults.bool(forKey: Key.fileSearchShowInLauncher.rawValue)
-        notesEnabled = defaults.bool(forKey: Key.notesEnabled.rawValue)
         dictationEnabled = defaults.bool(forKey: Key.dictationEnabled.rawValue)
         dictationMode =
             defaults.string(forKey: Key.dictationMode.rawValue)
@@ -763,14 +741,6 @@ final class AppSettings {
         dictationLanguage =
             defaults.string(forKey: Key.dictationLanguage.rawValue)
             .flatMap(DictationLanguage.init(rawValue:))?.rawValue
-        notesRendersMarkdown =
-            defaults.object(forKey: Key.notesRendersMarkdown.rawValue) == nil
-            || defaults.bool(forKey: Key.notesRendersMarkdown.rawValue)
-        notesShowsFormattingBar =
-            defaults.object(forKey: Key.notesShowsFormattingBar.rawValue) == nil
-            || defaults.bool(forKey: Key.notesShowsFormattingBar.rawValue)
-        notesShowsInMenuBar = defaults.bool(forKey: Key.notesShowsInMenuBar.rawValue)
-        notesFolder = defaults.string(forKey: Key.notesFolder.rawValue)
         customCommandsEnabled = defaults.bool(forKey: Key.customCommandsEnabled.rawValue)
         // These default on, so absence must be distinguished from a stored `false`.
         customCommandsShowInLauncher =

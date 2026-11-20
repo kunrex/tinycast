@@ -24,9 +24,6 @@ enum CommandID: String, CaseIterable, Sendable {
     case createEvent = "command:create-event"
     case copyMeetingLink = "command:copy-meeting-link"
     case openInCalendar = "command:open-in-calendar"
-    case showNotes = "command:show-notes"
-    case createNote = "command:create-note"
-    case searchNotes = "command:search-notes"
     case createQuicklink = "command:create-quicklink"
     case searchQuicklinks = "command:search-quicklinks"
     case importQuicklinks = "command:import-quicklinks"
@@ -48,7 +45,7 @@ enum CommandID: String, CaseIterable, Sendable {
 
     static let compactBarOptions: [CommandID] =
         defaultCompactBarCommands + [
-            .searchSnippets, .showNotes, .mySchedule
+            .searchSnippets, .mySchedule
         ]
 
     static let compactBarLimit = 4
@@ -59,9 +56,9 @@ enum CommandID: String, CaseIterable, Sendable {
     }
 
     static func compactBarCommands(from identifiers: [String]) -> [CommandID]? {
-        // Strictly a compatibility check to avoid crashing older records
         let surviving = identifiers.filter {
-            $0 != "command:ai-chat" && $0 != "command:ai-chat-window"
+            !["command:ai-chat", "command:ai-chat-window", "command:show-notes",
+                "command:create-note", "command:search-notes"].contains($0)
         }
         let commands = surviving.compactMap(CommandID.init(rawValue:))
         guard commands.count == surviving.count, validCompactBarCommands(commands) else { return nil }
@@ -97,9 +94,6 @@ enum CommandID: String, CaseIterable, Sendable {
         case .createEvent: return "Create Event"
         case .copyMeetingLink: return "Copy Meeting Link"
         case .openInCalendar: return "Open in Calendar"
-        case .showNotes: return "Show Notes"
-        case .createNote: return "Create Note"
-        case .searchNotes: return "Search Notes"
         case .createQuicklink: return "Create Quicklink"
         case .searchQuicklinks: return "Search Quicklinks"
         case .importQuicklinks: return "Import Quicklinks"
@@ -141,9 +135,6 @@ enum CommandID: String, CaseIterable, Sendable {
         case .createEvent: return "calendar.badge.plus"
         case .copyMeetingLink: return "link"
         case .openInCalendar: return "calendar.badge.clock"
-        case .showNotes: return "text.page"
-        case .createNote: return "note.text.badge.plus"
-        case .searchNotes: return "text.magnifyingglass"
         case .createQuicklink: return "link.badge.plus"
         case .searchQuicklinks: return Quicklink.sfSymbol
         case .importQuicklinks: return "square.and.arrow.down"

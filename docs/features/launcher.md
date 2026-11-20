@@ -8,8 +8,7 @@ Copies sharing a bundle ID keep app-wide aliases, visibility, ranking, favorites
 Favorites and Suggestions show the representative, while the other copies remain in ordinary results.
 Version subtitles distinguish copies; equal or missing versions also show the containing folder.
 Return opens the selected path with running-application substitution disabled, so a different running
-version cannot replace it. Restart also reopens the selected path. Uninstall is unavailable while
-indexed copies share the bundle ID, because their support files and preferences may be shared.
+version cannot replace it. Restart also reopens the selected path.
 
 `./Scripts/run-tests.sh AppInstallationTests` covers the shipped index and app-wide preferences.
 Set `TINYCAST_TEST_APP_LAUNCH=1` for temporary native-app launch, quit and restart checks; the harness
@@ -32,7 +31,7 @@ reports notification-dependent checks as skipped when the session cannot deliver
 - **One command, one pane, one switch.** `SettingsTab.ownedCommands` is the whole table of which pane
   lists a command's shortcut, alias and launcher checkbox. A feature that names its commands there
   already decides whether they exist, so `Enable Commands` neither lists nor gates them — two switches
-  over one row is how somebody ends up with Notes on and its shortcut dead. Everything the table does
+  over one row is how somebody ends up with a feature on and its shortcut dead. Everything the table does
   not name belongs to Settings › Commands and answers to that switch.
 - **The ranking lives in pure files.** `Model/LauncherMatch.swift` (the scorer),
   `Model/LauncherOrder.swift` (the comparator) and `Model/LauncherSuggestions.swift` are
@@ -176,7 +175,8 @@ the Zed app: rule 3 only protects an exact title past three characters.
 - **Apps win the ties.** `KindDescriptor.rankPriority` puts applications (4) above command-like kinds
   (3), quicklinks (2), and System Settings panes and meetings (1), so a first-party app is never
   shadowed by the Tinycast command named after it: Calculator over Calculator History.
-- **No built-in command currently declares boosted terms.** Boosting Show Notes would shadow Apple's Notes.
+- **No built-in command currently declares boosted terms.** Boosting a built-in command must not
+  shadow an application with the same name.
 - **Two entries with the same alias** fall through to the next rule.
 
 `settings` is the case these were measured against. Apple declares `Settings` in System Settings'
@@ -403,7 +403,7 @@ Commands passes `CustomCommand.entryID`, Settings ▸ Extensions passes `extensi
 dims the field when the entry is hidden from launcher search, whose entry the ranker never sees.
 
 Aliases ride along in a settings backup (`launcherAliases`), and deleting what an alias points at —
-uninstalling an app, deleting a quicklink or custom command, uninstalling an extension — removes it
+deleting a quicklink or custom command, uninstalling an extension — removes it
 with the entry's other per-entry preferences.
 
 ### Alternate names
@@ -619,17 +619,12 @@ Activation hands the action to `QuickActionCoordinator.run(_:)` **without** hidi
 the coordinator reads the displaced app and then hides, because after the hide the frontmost app is
 Tinycast. See [quick-actions.md](quick-actions.md).
 
-## Notes commands
+## Retired Notes commands
 
-`CommandID.showNotes`, `.createNote`, and `.searchNotes` publish the three Notes entry points while the
-feature is enabled. Activation hides the palette without restoring focus and calls the matching
-`NotesCoordinator` action; each `HotKeyAction` reaches that same boundary and rechecks enablement.
-
-`AppIndex` projects the three commands together from `notesEnabled`, independently of File Search and
-Quicklinks. They represent collection actions rather than individual notes, so Notes adds no
-`AppEntry.Kind` or launcher section — it owns them through `SettingsTab.ownedCommands` instead, which
-is what keeps them out of Settings › Commands while they stay in the launcher's Commands section. See
-[notes.md](notes.md).
+Show Notes, Create Note and Search Notes have no `CommandID`, catalog row, dispatch or settings
+owner. Saved metadata is left inert; retired links fail rather than launching a different action.
+Compact-shortcut compatibility filters the exact retired string IDs before validation, independently
+of the command enum. See [notes.md](notes.md).
 
 ## Pane-owned commands
 
@@ -640,7 +635,7 @@ and three places read it: `FeatureCommandsSection` draws the pane's rows from it
 category gate for it in both `isVisible` and `allowsHotKey`. Stamping the entry rather than sniffing its
 id is what keeps "which pane owns this" out of the entry-ID namespace.
 
-Ten panes own commands today — AI, Quick Actions, File Search, Notes, Snippets, Navigation,
+Eight panes own commands today — Quick Actions, File Search, Snippets, Navigation,
 Clipboard, Emoji, Calendar and Quicklinks. What is left in Settings › Commands is
 the set no feature switch governs: Calculator History, Open Camera, the three backup commands, Check
 for Updates, Tinycast Settings, About, Support and Quit.

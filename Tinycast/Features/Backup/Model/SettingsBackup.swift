@@ -50,10 +50,6 @@ struct SettingsBackup: Codable {
         var fileSearchIgnorePatterns: [String]?
         var fileSearchRemovedDefaultPatterns: [String]?
         var fileSearchShowInLauncher: Bool?
-        var notesEnabled: Bool?
-        var notesRendersMarkdown: Bool?
-        var notesShowsFormattingBar: Bool?
-        var notesShowsInMenuBar: Bool?
         // `snippetsEnabled` is absent: an import must not enable keystroke listening.
         var customCommandsEnabled: Bool?
         var customCommandsShowInLauncher: Bool?

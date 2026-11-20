@@ -12,7 +12,8 @@ struct HotKeyDispatchTests {
         if !value { failures += 1; print("FAIL \(name)") }
     }
 
-    static func main() {
+    static func main() throws {
+        try retiredNotesBindings()
         for includesShift in [false, true] { dispatch(includesShift: includesShift) }
         navigationSuppression()
         print("\(checks) dispatch checks; \(failures) failures")
@@ -69,6 +70,26 @@ struct HotKeyDispatchTests {
         check(
             "execution restored regardless of visibility",
             commands == [.searchMenuItems, .switchWindows, .switchWindowsBackwards])
+    }
+
+    static func retiredNotesBindings() throws {
+        let domain = "tinycast.retired-hotkeys-test.\(UUID())"
+        let defaults = UserDefaults(suiteName: domain)!
+        defer { defaults.removePersistentDomain(forName: domain) }
+        let binding = HotKeyBinding.combo(
+            KeyShortcut(carbonKeyCode: kVK_ANSI_G, carbonModifiers: controlKey))
+        let json = String(decoding: try JSONEncoder().encode(binding), as: UTF8.self)
+        let keys = ["show-notes", "create-note", "search-notes"].map { "hotkey.command:" + $0 }
+        for key in keys { defaults.set(json, forKey: key) }
+        let manager = HotKeyManager(defaults: defaults)
+        manager.start(customCommandIDs: [], quicklinkIDs: [], quickActionIDs: [])
+        check("retired Notes bindings do not register", HotKeyCenter.current?.entries.isEmpty == true)
+        check("retired Notes preferences remain untouched", keys.allSatisfy {
+            defaults.string(forKey: $0) == json
+        })
+        manager.setBinding(binding, for: .togglePalette)
+        check("retired Notes chord is available to another action",
+            manager.binding(for: .togglePalette) == binding)
     }
 
     static func dispatch(includesShift: Bool) {

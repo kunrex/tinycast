@@ -95,12 +95,12 @@ struct LanguageTests {
             }
         }
 
-        let notes: [String: (String, String)] = [
-            "en": ("1 note", "2 notes"), "de": ("1 Notiz", "2 Notizen"),
-            "es": ("1 nota", "2 notas"), "fr": ("1 note", "2 notes"),
-            "ja": ("1件のメモ", "2件のメモ"), "ko": ("메모 1개", "메모 2개"),
-            "pt": ("1 nota", "2 notas"), "ru": ("1 заметка", "2 заметки"),
-            "zh-Hans": ("1 条笔记", "2 条笔记")
+        let commands: [String: (String, String)] = [
+            "en": ("1 command", "2 commands"), "de": ("1 Befehl", "2 Befehle"),
+            "es": ("1 comando", "2 comandos"), "fr": ("1 commande", "2 commandes"),
+            "ja": ("1件のコマンド", "2件のコマンド"), "ko": ("명령 1개", "명령 2개"),
+            "pt": ("1 comando", "2 comandos"), "ru": ("1 команда", "2 команды"),
+            "zh-Hans": ("1 个命令", "2 个命令")
         ]
         let contextualLabels: [(key: String, source: String, overrides: [String: String])] = [
             ("applications-empty", "Nothing here yet.", ["fr": "Aucune application à afficher."]),
@@ -109,7 +109,6 @@ struct LanguageTests {
             ("commands-empty", "Nothing here yet.", ["fr": "Aucune commande à afficher."]),
             ("apple-shortcuts-empty", "Nothing here yet.", ["fr": "Aucun raccourci à afficher."]),
             ("snippets-use-default-folder", "Use Default", ["fr": "Utiliser le dossier par défaut"]),
-            ("notes-use-default-folder", "Use Default", ["fr": "Utiliser le dossier par défaut"]),
             ("dictation-model-installed", "Installed", ["fr": "Installé"]),
             ("dictation-language-auto", "Auto", ["fr": "Détection automatique"]),
             ("extensions-installed-section", "Installed", ["fr": "Extensions installées"]),
@@ -142,7 +141,7 @@ struct LanguageTests {
         for language in AppLanguage.allCases {
             let code = language.rawValue
             guard let bundle = Bundle(url: root.appendingPathComponent("\(code).lproj")),
-                let expected = notes[code]
+                let expected = commands[code]
             else {
                 check("\(code) resources exist", false)
                 continue
@@ -152,16 +151,16 @@ struct LanguageTests {
             let two = 2
             check(
                 "\(code) singular is selected at runtime",
-                String(localized: "\(one) notes", bundle: bundle, locale: locale) == expected.0)
+                String(localized: "\(one) commands", bundle: bundle, locale: locale) == expected.0)
             check(
                 "\(code) plural is selected at runtime",
-                String(localized: "\(two) notes", bundle: bundle, locale: locale) == expected.1)
-            let size = "5 MB"
+                String(localized: "\(two) commands", bundle: bundle, locale: locale) == expected.1)
+            let title = "Menu"
             let reordered = String(
-                localized: "Reclaims \(size) from \(two) items.", bundle: bundle, locale: locale)
+                localized: "\(title) (\(two) items)", bundle: bundle, locale: locale)
             check(
                 "\(code) mixed string and count arguments survive translation",
-                reordered.contains(size) && reordered.contains("2") && !reordered.contains("%@"))
+                reordered.contains(title) && reordered.contains("2") && !reordered.contains("%@"))
             let privacy = bundle.localizedString(
                 forKey: "NSCameraUsageDescription", value: nil, table: "InfoPlist")
             check("\(code) camera privacy prompt loads", privacy.contains("Tinycast"))
@@ -194,7 +193,7 @@ struct LanguageTests {
                 for (key, expected) in [
                     "Medium": "Moyenne", "High": "Élevée", "Light": "Clair", "Dark": "Sombre",
                     "Time": "Heure", "Pinned": "Épinglés",
-                    "On": "Activé", "Off": "Désactivé", "Untitled": "Sans titre"
+                    "On": "Activé", "Off": "Désactivé"
                 ] {
                     check(
                         "French label \(key) resolves in its context",
@@ -207,10 +206,10 @@ struct LanguageTests {
                 let twentyOne = 21
                 check(
                     "Russian many is selected at runtime",
-                    String(localized: "\(five) notes", bundle: bundle, locale: locale) == "5 заметок")
+                    String(localized: "\(five) commands", bundle: bundle, locale: locale) == "5 команд")
                 check(
                     "Russian 21 selects one rather than other",
-                    String(localized: "\(twentyOne) notes", bundle: bundle, locale: locale) == "21 заметка")
+                    String(localized: "\(twentyOne) commands", bundle: bundle, locale: locale) == "21 команда")
             }
         }
     }

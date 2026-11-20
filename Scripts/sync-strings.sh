@@ -37,4 +37,8 @@ text = re.sub(r"^(\s*)(.*) : \{\}$", lambda m: m[1] + m[2] + " : {\n\n" + m[1] +
 path.write_text(text)
 PY
 
+if [[ "${1:-}" == "--prune-stale" ]]; then
+    node Scripts/prune-stale-strings.js
+fi
+
 node Scripts/check-localizations.js

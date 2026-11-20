@@ -3,8 +3,8 @@ title: The palette
 description: Move around Tinycast's floating palette and adjust its appearance and behavior.
 ---
 
-The launcher, search tools and Quick AI share one floating panel. AI Chat, Notes, Camera and command
-output also have their own windows. The launcher is the palette's root screen. <kbd>esc</kbd> takes
+The launcher and search tools share one floating panel. Camera and command output also have
+their own windows. The launcher is the palette's root screen. <kbd>esc</kbd> takes
 you back one screen at a time.
 
 ## Moving around
@@ -15,7 +15,7 @@ you back one screen at a time.
 | <kbd>⌘</kbd><kbd>return</kbd> | The second action, usually Show in Finder or Copy     |
 | <kbd>⌘</kbd><kbd>K</kbd>      | Open the Actions menu for the selection               |
 | <kbd>↑</kbd> <kbd>↓</kbd>     | Move the selection                                    |
-| <kbd>tab</kbd>                | Move between the launcher, Quick AI and the clipboard |
+| <kbd>tab</kbd>                | Move between the launcher and the clipboard |
 | <kbd>esc</kbd>                | Clear the search, then go back a screen, then close   |
 | <kbd>⌘</kbd><kbd>esc</kbd>    | Go back to the root search from any screen            |
 | <kbd>delete</kbd>             | In an empty search field, go back one screen          |
@@ -55,16 +55,10 @@ source keeps them working. ASCII layouts such as Dvorak keep their own letter po
 the Command positions of Dvorak–QWERTY ⌘. While an input method is composing text, its candidate
 selection keys keep their normal behavior.
 
-## Tab moves between three screens
+## Tab moves between the launcher and clipboard
 
-<kbd>tab</kbd> cycles through three screens: **launcher → Quick AI → clipboard → launcher**.
-
-- From the launcher, <kbd>tab</kbd> sends whatever you typed to [Quick AI](/docs/ai) as a question.
-  When this will happen, the header shows a **Quick AI** hint next to a <kbd>tab</kbd> key.
-- From the clipboard, your search text carries over to the launcher.
-- <kbd>esc</kbd> goes back through the screens in reverse.
-
-Quick AI is skipped while [AI](/docs/ai) is off, and the clipboard is skipped while
+<kbd>tab</kbd> switches between **launcher and clipboard**. Your search text carries over,
+and <kbd>esc</kbd> goes back. The clipboard is skipped while
 [clipboard history](/docs/features/clipboard) is off.
 
 Other screens, like Calculator History or Search Quicklinks, aren't part of the cycle. On screens
@@ -141,7 +135,7 @@ search. **Expanded** always shows the full list.
 **Settings → General → Compact Shortcuts** appears when Compact is selected. Add, change, remove
 and reorder up to four shortcuts, or remove them all for a search-only bar. The defaults are Clipboard
 History, Emoji & Symbols, Search Files and Search Quicklinks. You can also choose Search Snippets,
-Show Notes, My Schedule and Quick AI. Show Notes opens the Notes window. A disabled feature's shortcut
+and My Schedule. A disabled feature's shortcut
 stays configured and marked Off in Settings, then reappears in its place when enabled again.
 
 The [Toggle System Appearance](/docs/launcher/system-actions) action changes the appearance of
@@ -162,9 +156,6 @@ the layout yourself while the palette was open, Tinycast keeps your choice.
 to the launcher: **Immediately** (default), or after 5, 15, 30, 60 or 90 seconds.
 
 Use a longer delay if you often close the palette and then come back to the same screen.
-
-AI Chat has its own setting for reopening a conversation. See
-[AI Chat](/docs/ai#coming-back-to-a-chat).
 
 ## The menu bar
 

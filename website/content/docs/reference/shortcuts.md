@@ -20,7 +20,7 @@ number row. See [the palette](/docs/palette#emacs-chords) for input-method behav
 | <kbd>↑</kbd> <kbd>↓</kbd>                           | Move the selection                                     |
 | <kbd>⌃</kbd><kbd>N</kbd> / <kbd>⌃</kbd><kbd>P</kbd> | Same as <kbd>↓</kbd> / <kbd>↑</kbd>                    |
 | <kbd>⌃</kbd><kbd>F</kbd> / <kbd>⌃</kbd><kbd>B</kbd> | Same as <kbd>→</kbd> / <kbd>←</kbd>                    |
-| <kbd>tab</kbd>                                      | Launcher → Quick AI → clipboard, or move through fields |
+| <kbd>tab</kbd>                                      | Launcher ↔ clipboard, or move through fields |
 | <kbd>esc</kbd>                                      | Clear the search, go back a screen, then close         |
 | <kbd>⌘</kbd><kbd>esc</kbd>                          | Back to the root search from any screen                |
 | <kbd>delete</kbd>                                   | In an empty search, go back a screen                   |
@@ -42,22 +42,6 @@ number row. See [the palette](/docs/palette#emacs-chords) for input-method behav
 | <kbd>⌘</kbd><kbd>E</kbd>                            | Edit Quicklink, Snippet or Custom Command                          |
 | <kbd>⌘</kbd><kbd>return</kbd>                       | Put Answer in Search Bar (calculator)   |
 | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>return</kbd>           | Copy Calculation, on a calculator card  |
-
-## Quick AI
-
-| Key                      | Does                                                |
-| ------------------------ | --------------------------------------------------- |
-| <kbd>return</kbd>        | Send, or stop a reply that's streaming              |
-| <kbd>⌘</kbd><kbd>V</kbd> | Attach an image, PDF or text file                   |
-| <kbd>delete</kbd>        | In an empty message box, remove the last attachment |
-
-## Chat History
-
-| Key                                  | Does             |
-| ------------------------------------ | ---------------- |
-| <kbd>return</kbd>                    | Open Chat        |
-| <kbd>⌃</kbd><kbd>X</kbd>             | Delete Chat      |
-| <kbd>⌃</kbd><kbd>⇧</kbd><kbd>X</kbd> | Delete All Chats |
 
 ## Quick Action panel
 
@@ -159,27 +143,6 @@ activate the selected item.
 | ----------------------------- | ----------------- |
 | <kbd>return</kbd>             | Join Meeting      |
 | <kbd>⌘</kbd><kbd>return</kbd> | Copy Meeting Link |
-
-## Uninstall
-
-| Key                                  | Does                   |
-| ------------------------------------ | ---------------------- |
-| <kbd>return</kbd>                    | Uninstall Application  |
-| <kbd>⌘</kbd><kbd>return</kbd>        | Select / Unselect File |
-| <kbd>⌥</kbd><kbd>⌘</kbd><kbd>C</kbd> | Copy Path              |
-| <kbd>⇧</kbd><kbd>⌘</kbd><kbd>O</kbd> | Show in Finder         |
-| <kbd>⇧</kbd><kbd>⌘</kbd><kbd>I</kbd> | Show Info in Finder    |
-
-## Notes window
-
-| Key                           | Does                            |
-| ----------------------------- | ------------------------------- |
-| <kbd>⌘</kbd><kbd>N</kbd>      | Create a note                   |
-| <kbd>⌘</kbd><kbd>P</kbd>      | Open the switcher               |
-| <kbd>⌘</kbd><kbd>O</kbd>      | Open the Notes folder           |
-| <kbd>⌘</kbd><kbd>W</kbd>      | Hide the window                 |
-| <kbd>esc</kbd>                | Close the switcher, then hide   |
-| <kbd>⌘</kbd><kbd>delete</kbd> | Move the selected note to Trash |
 
 ## Custom commands
 

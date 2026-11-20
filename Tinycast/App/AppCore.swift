@@ -57,8 +57,6 @@ final class AppCore {
     let menuSearch = MenuSearchSession()
     let windowSwitch = WindowSwitchSession()
     let activationPolicy = ActivationPolicy()
-    let uninstall = UninstallSession()
-    let notesStore: NotesStore
     let extensions: ExtensionManager
     let aiSettings = AISettingsStore(
         isAppleIntelligenceAvailable: { AppleIntelligenceProvider.status().isAvailable })
@@ -107,10 +105,6 @@ final class AppCore {
         core: self)
     @ObservationIgnored private(set) lazy var systemActionCoordinator = SystemActionCoordinator(
         paletteCoordinator: paletteCoordinator, core: self)
-    @ObservationIgnored private(set) lazy var uninstallCoordinator = UninstallCoordinator(
-        session: uninstall, palette: palette, paletteCoordinator: paletteCoordinator,
-        appIndex: appIndex, runningApps: runningApps, hotKeys: hotKeys, favorites: favorites,
-        visibility: visibility, ranking: launcherRanking, aliases: aliases, core: self)
     @ObservationIgnored private(set) lazy var extensionCoordinator = ExtensionCoordinator(
         extensions: extensions, palette: palette, paletteCoordinator: paletteCoordinator,
         settingsCoordinator: settingsCoordinator, settings: settings, core: self)
@@ -123,18 +117,6 @@ final class AppCore {
         settings: settings, appIndex: appIndex, hotKeys: hotKeys, favorites: favorites,
         visibility: visibility, ranking: launcherRanking, aliases: aliases,
         paletteCoordinator: paletteCoordinator, core: self)
-    /// Window state, not a preference: it rides `UserDefaults` like the active note's filename.
-    private nonisolated static let noteFormattingBarKey = "notesFormattingBarExpanded"
-    @ObservationIgnored private(set) lazy var notesCoordinator = NotesCoordinator(
-        store: notesStore,
-        settings: settings,
-        appIndex: appIndex,
-        core: self,
-        isFormattingBarExpanded: UserDefaults.standard.bool(forKey: Self.noteFormattingBarKey),
-        saveFormattingBarExpanded: {
-            UserDefaults.standard.set($0, forKey: Self.noteFormattingBarKey)
-        })
-
     @ObservationIgnored private(set) lazy var launcherCoordinator = LauncherCoordinator(
         ranking: launcherRanking, windowController: windowController,
         paletteCoordinator: paletteCoordinator,
@@ -145,7 +127,7 @@ final class AppCore {
         snippetCoordinator: snippetCoordinator, fileSearchCoordinator: fileSearchCoordinator,
         menuSearchCoordinator: menuSearchCoordinator,
         windowSwitchCoordinator: windowSwitchCoordinator,
-        notesCoordinator: notesCoordinator, extensionCoordinator: extensionCoordinator,
+        extensionCoordinator: extensionCoordinator,
         calendarCoordinator: calendarCoordinator,
         core: self)
     @ObservationIgnored private(set) lazy var fallbackCoordinator = FallbackCoordinator(
@@ -221,13 +203,6 @@ final class AppCore {
         textInjector = TextInjector(
             clipboardManager: clipboardManager,
             settings: settings)
-        let noteSelectionKey = "notesActiveFileName"
-        notesStore = NotesStore(
-            repository: Self.notesRepository(for: settings),
-            loadSelection: {
-                UserDefaults.standard.string(forKey: noteSelectionKey).map(NoteID.init(rawValue:))
-            },
-            saveSelection: { UserDefaults.standard.set($0?.rawValue, forKey: noteSelectionKey) })
     }
 
     func start(launchedByUser: Bool) {
@@ -252,7 +227,6 @@ final class AppCore {
             windowSwitchCoordinator.applyEnabled()
             menuSearchCoordinator.applyEnabled()
             fileSearchCoordinator.applyPolicy()
-            notesCoordinator.applyEnabled()
             customQuickActions.onChange = { [weak self] _ in
                 self?.quickActionCoordinator.applyCustomQuickActionsPresence()
             }
@@ -480,10 +454,6 @@ final class AppCore {
         }
     }
 
-    func flushNotesForTermination() async {
-        await notesCoordinator.prepareForTermination()
-    }
-
     func stopDictationForTermination() async {
         if settings.dictationEnabled { dictationCoordinator.prepareForTermination() }
         dictationAudioDucker.restoreImmediately()
@@ -598,9 +568,6 @@ final class AppCore {
         track(
             { _ = $0.navigationMimicsMacOS },
             reproject: { $0.windowSwitchCoordinator.applyNativeSwitching() })
-        track({ _ = $0.notesEnabled }, reproject: { $0.notesCoordinator.applyEnabled() })
-        track(
-            { _ = $0.notesShowsInMenuBar }, reproject: { $0.notesCoordinator.applyMenuBarItem() })
         track(
             { _ = $0.dictationIdleRelease },
             reproject: {
@@ -659,7 +626,6 @@ final class AppCore {
             { _ = $0.extensionsShowInLauncher },
             reproject: { $0.extensionCoordinator.applyExtensionsLauncherPresence() })
         track({ _ = $0.snippetsFolder }, reproject: { $0.applySnippetsFolder() })
-        track({ _ = $0.notesFolder }, reproject: { $0.applyNotesFolder() })
     }
 
     /// `.system` resolves to `nil`, so AppKit follows macOS with nothing polling.
@@ -735,18 +701,9 @@ final class AppCore {
         Task { await snippetsStore.relocate(to: repository) }
     }
 
-    private func applyNotesFolder() {
-        let repository = Self.notesRepository(for: settings)
-        Task { await notesStore.relocate(to: repository) }
-    }
-
     private static func snippetsRepository(for settings: AppSettings) -> SnippetRepository {
         SnippetRepository(
             snippetsDirectory: AppPaths.contentFolder(settings.snippetsFolder, named: "Snippets"))
-    }
-
-    private static func notesRepository(for settings: AppSettings) -> NotesRepository {
-        NotesRepository(notesDirectory: AppPaths.contentFolder(settings.notesFolder, named: "Notes"))
     }
 
     // MARK: - Settings file
@@ -789,7 +746,6 @@ final class AppCore {
         UpdateActivity(
             isExpandingSnippet: textInjector.isDelivering,
             isRunningExtension: extensions.running != nil,
-            isUninstalling: uninstall.isTrashing,
             isRecordingHotKey: hotKeys.recordingAction != nil,
             isShowingDialog: isShowingDialog,
             isPaletteVisible: paletteCoordinator.isVisible)

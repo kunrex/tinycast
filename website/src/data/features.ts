@@ -77,7 +77,6 @@ export const coreFeatures: Feature[] = [
 
 // The long tail: named, linked, and kept out of the way of the features above.
 export const moreFeatures: MinorFeature[] = [
-  { icon: "notes", title: "Floating notes", href: "/docs/features/notes" },
   {
     icon: "fileSearch",
     title: "File search",
@@ -112,11 +111,6 @@ export const moreFeatures: MinorFeature[] = [
   { icon: "globe", title: "Per-app hotkeys", href: "/docs/reference/hotkeys" },
   { icon: "hyper", title: "Hyper key", href: "/docs/reference/hotkeys" },
   { icon: "alias", title: "Aliases", href: "/docs/launcher/aliases" },
-  {
-    icon: "uninstall",
-    title: "App uninstaller",
-    href: "/docs/launcher/uninstall",
-  },
   {
     icon: "inputSource",
     title: "Input source switching",

@@ -14,7 +14,6 @@ enum PaletteMode: String, CaseIterable, Identifiable {
     case customCommands
     /// One meeting's read-only page, pushed from that meeting's own actions.
     case meetingDetails
-    case uninstall
     case quicklinks
     case quicklinkEditor
     case snippets
@@ -42,7 +41,6 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .eventEditor: return "calendar.badge.plus"
         case .customCommandEditor, .customCommands: return CustomCommand.sfSymbol
         case .meetingDetails: return "calendar"
-        case .uninstall: return "trash"
         case .quicklinks, .quicklinkEditor: return Quicklink.sfSymbol
         case .snippets, .snippetEditor: return "curlybraces"
         case .dictionary: return "book.closed"
@@ -64,7 +62,6 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .customCommandEditor: return String(localized: "Command editor")
         case .customCommands: return String(localized: "Search custom commands…")
         case .meetingDetails: return String(localized: "Meeting details")
-        case .uninstall: return String(localized: "Filter files and folders by name…")
         case .quicklinks: return String(localized: "Search quicklinks…")
         case .quicklinkEditor: return String(localized: "Quicklink editor")
         case .snippets: return String(localized: "Search snippets…")

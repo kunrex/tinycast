@@ -4,7 +4,6 @@ import Foundation
 struct UpdateActivity: Sendable {
     var isExpandingSnippet = false
     var isRunningExtension = false
-    var isUninstalling = false
     var isRecordingHotKey = false
     var isShowingDialog = false
     var isPaletteVisible = false
@@ -15,7 +14,6 @@ enum UpdateReadiness {
     enum Blocker: Equatable, Sendable {
         case expandingSnippet
         case runningExtension
-        case uninstalling
         case recordingHotKey
         case dialogOpen
         case paletteOpen
@@ -25,7 +23,6 @@ enum UpdateReadiness {
     static func evaluate(_ activity: UpdateActivity) -> Blocker? {
         if activity.isExpandingSnippet { return .expandingSnippet }
         if activity.isRunningExtension { return .runningExtension }
-        if activity.isUninstalling { return .uninstalling }
         if activity.isRecordingHotKey { return .recordingHotKey }
         if activity.isShowingDialog { return .dialogOpen }
         if activity.isPaletteVisible { return .paletteOpen }

@@ -49,9 +49,6 @@ final class DeepLinkCoordinator {
         case .settings(let slug):
             guard let tab = SettingsTab(slug: slug) else { return reportUnknownLink() }
             settingsCoordinator.showSettings(tab: tab)
-        case .note(let name):
-            guard isAllowed(.command(.showNotes)) else { return }
-            core.notesCoordinator.open(NoteID(rawValue: name))
         case .entry(let action, let input):
             run(action, input: input, source: source)
         }
@@ -62,11 +59,6 @@ final class DeepLinkCoordinator {
     /// Typed field values ride along, so the link fills the fields as they were.
     func url(forEntryID entryID: String, values: [String: String] = [:]) -> URL? {
         DeepLink.url(forEntryID: entryID, scheme: scheme, input: typedInput(values, entryID: entryID))
-    }
-
-    func copyLink(toNote id: NoteID) {
-        guard let url = DeepLink.url(forNote: id.rawValue, scheme: scheme) else { return }
-        copy(url)
     }
 
     func copy(_ url: URL) {
@@ -255,11 +247,6 @@ final class DeepLinkCoordinator {
             return createQuicklinks(from: input)
         case .createSnippet:
             return createSnippets(from: input)
-        case .createNote:
-            guard let text = input.contextFields?["text"] ?? input.fallbackText else { return false }
-            hidePalette()
-            core.notesCoordinator.createNote(text: text)
-            return true
         default:
             guard let text = input.fallbackText else { return false }
             return open(id, with: text)
@@ -361,9 +348,5 @@ final class DeepLinkCoordinator {
     /// `volume` by name, in order, or as `fallbackText`.
     private static func typedVolume(in input: DeepLinkInput) -> String? {
         input.fieldValues(names: ["volume"], fieldID: { _ in "volume" })["volume"]
-    }
-
-    private func hidePalette() {
-        if paletteCoordinator.isVisible { paletteCoordinator.hidePalette(restoreFocus: false) }
     }
 }

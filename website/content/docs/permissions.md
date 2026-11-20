@@ -80,8 +80,8 @@ To paste the text into another app, Dictation also needs Accessibility.
 
 A few actions show their own macOS prompt the first time you run them:
 
-- **Show Info in Finder** in the [uninstaller](/docs/launcher/uninstall), and some
-  [system actions](/docs/launcher/system-actions), control other apps through Apple Events, which
+- **Get Info** and some [system actions](/docs/launcher/system-actions)
+  control other apps through Apple Events, which
   shows the standard Automation prompt.
 - **Toggle Bluetooth** shows the Bluetooth prompt.
 
@@ -95,12 +95,6 @@ Settings → Permissions and Settings → File Search both show its status and o
 System Settings → Privacy & Security → Full Disk Access, where you can grant it manually.
 
 [File Search](/docs/features/file-search) requires this access to build its private index on your Mac.
-For uninstalling apps, it is optional.
-
-The [uninstaller](/docs/launcher/uninstall) checks in the background to work out which files it can
-move. Without Full Disk Access, protected folders like `~/Library/Containers`,
-`~/Library/Group Containers` and `~/Library/Cookies` appear as locked rows. At worst, you remove
-those by hand.
 
 ## What Tinycast never needs
 

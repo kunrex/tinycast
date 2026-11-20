@@ -47,10 +47,14 @@ targets:
         excludes:
           - Features/Clipboard/Service/ClipboardTextExtractor.swift
           - Features/Clipboard/Service/ClipboardTextHelper.swift
+          - Features/Backup/Service/SettingsBackup+AppCore.swift
           - Features/Dictation/Helper
           - Features/FileSearch/Helper
           - Migrations/Handoff
+          - Migrations/NotesSettingsMigration.swift
           - Resources/EmojiKeywords
+      - path: Tinycast/Migrations/NotesSettingsMigration.swift
+      - path: Tinycast/Features/Backup/Service/SettingsBackup+AppCore.swift
       # A folder reference keeps the packs in their own directory, which `EmojiIndex` lists.
       - path: Tinycast/Resources/EmojiKeywords
         type: folder

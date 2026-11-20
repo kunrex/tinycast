@@ -85,12 +85,12 @@ turn off this protection, because the result is pasted into your document.
 
 ## Choosing a model
 
-**Settings → Quick Actions → Model** is separate from AI Chat's model, so a shortcut you use all day
-doesn't have to call a paid API every time. It defaults to **Apple Intelligence**, which runs on your
-Mac for free, and falls back to the chat model when Apple Intelligence isn't available.
+**Settings → Quick Actions → Model** chooses the shared model. An unset or invalid selection
+uses enabled, available **Apple Intelligence**, which runs on your Mac for free; otherwise, choose
+a model explicitly. A configured API connection is never selected automatically.
 
-It offers the same models as [AI Chat](/docs/ai#choosing-a-model), including reasoning effort where
-the model supports it.
+Open **Providers → Manage…** below Model to manage API connections and shown models, even while
+Quick Actions is off. Models offer reasoning effort where supported.
 
 ### A model for one action
 
@@ -118,8 +118,7 @@ into a different language.
 ## When an action won't run
 
 - **In Tinycast's own windows.** Pressing a shortcut while Settings is in front does nothing, and
-  Tinycast tells you why. [Notes](/docs/features/notes) is the exception: Quick Actions work on text
-  you select in a note.
+  Tinycast tells you why.
 - **In a password field**, or anywhere Secure Event Input is on.
 - **While another Quick Action is still running.** Actions run one at a time, so two can't change the
   same selection.

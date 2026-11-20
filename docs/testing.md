@@ -85,11 +85,8 @@ assertion, and it is the more important one.
 A harness also runs in your own login session against the real system, with no sandbox and no fixture
 world, so it must never mutate state the machine shares with the apps you use. `NSPasteboard.general`
 is the trap: a running Tinycast records every write to it as a genuine copy, so a fixture left there
-lands in clipboard history looking like something the user copied. `NotesEditorTests` seeded one on
-every run from #232 onward by calling the native `copy:`/`cut:`/`paste:` actions; it now drives the
-`writeSelection(to:types:)` and `readSelection(from:)` primitives those actions delegate to, against
-`NSPasteboard.withUniqueName()`. Same AppKit path, no shared side effect. `PasteboardTests` is the
-second case, and it is why `ClipboardManager.fileURLs(on:volatileRoots:)` and `Paster.write(_:store:to:)`
+lands in clipboard history looking like something the user copied. Use `NSPasteboard.withUniqueName()`
+for fixtures instead. `PasteboardTests` follows this rule, and it is why `ClipboardManager.fileURLs(on:volatileRoots:)` and `Paster.write(_:store:to:)`
 each take the thing they act on as a parameter: a seam that exists so the harness never has to reach
 for the shared board. Its scratch tree lives under `temporaryDirectory`, which is itself a volatile
 root, so the cases about *reading* files inject an empty root list and the one case about durability
@@ -166,14 +163,10 @@ If a change touches anything in the right column, the harness on the left is man
 | `WindowRecoveryTests` | All shipped `WindowRecovery/` sources — ledger compatibility and persistence, return frames, identity matching and origin confirmation; platform services compile but never act on live windows |
 | `CustomCommandTests` | Command storage and execution, editor drafts, argument identities and dynamic keyboard focus |
 | `CustomCommandListTests` | Browser result snapshots, observation, row actions and empty-library messages |
-| `UninstallTests` | all five pure files in `Uninstall/Model/` |
-| `UninstallCoordinatorTests` | Confirmation and the post-confirmation quit gate; recorded quit and Trash effects only |
 | `QuicklinkTests` | all of `Quicklinks/Model/`, plus editor drafts and placeholder selection |
 | `QuicklinkCoordinatorTests` | Opening and requested arguments, launcher editing, current enabled-state preservation, deletion during editing and feature gates; no platform effects or on-screen focus checks |
 | `AppleShortcutTests` | all of `AppleShortcuts/Model/` — the `shortcuts list` parser and entry ids |
 | `SnippetsTests` | all of `Snippets/Model/` and `Snippets/Service/`, plus editor drafts, placeholder selection and `Platform/HealthTicker.swift` |
-| `NotesTests` | all of `Notes/Model/` and `Notes/Service/`, including the Markdown parser, edit plans and reveal policy, plus the real fuzzy matcher and signposts |
-| `NotesEditorTests` | the Notes editor, rendered and literal, with real TextKit 2 and AppKit editing objects: styling, reveal, layout fragments, keys, chords, checkboxes and links |
 | `RaycastTests` | `Backup/Service/RaycastDecoder.swift`, `Scrypt.swift`, `Platform/Compression/Zlib.swift`, `Clipboard/Model/RaycastClipboardImport.swift` and import-time clipboard retention |
 | `SymbolsTests` | `Extensions/Service/SymbolCatalog.swift`, against this machine's CoreGlyphs |
 | `ExtensionStoreTests` | `Extensions/Model/` — GitHub source parsing and URLs, the store and Git tree parsers |
@@ -187,12 +180,13 @@ If a change touches anything in the right column, the harness on the left is man
 | `EntryIconTests` | `EntryIcon` — that each case draws, caches and prints apart from the others, and that a moved `FileIconStamp` retires the bitmap decoded before it |
 | `TextDiffTests` | `QuickActions/Model/TextDiffEngine.swift` — exact chunks, coalescing, Unicode, ties, token-cap boundaries and fast paths |
 | `SettingsBackupDecodingTests` | Shipped backup Codable payload and serialization — older WindowManagement fields are ignored, unrelated settings/shortcuts and shared launcher data decode and round-trip unchanged; no AppCore or user data is initialized |
-| `SettingsBackupTests` | `Settings/AppSettingsKey.swift`, `Backup/Model/SettingsBackupCoverage.swift` |
+| `SettingsBackupTests` | `Settings/AppSettingsKey.swift`, `Backup/Model/SettingsBackupCoverage.swift`, and the shipped `SettingsBackup` decoder, including ignored legacy Notes fields |
 | `SettingsFileTests` | `Settings/Model/` and `Settings/Service/` — key paths, value tokens, the printer and parser, and the repository's import, replace, save, reload and symlink handling on a scratch folder |
 | `LauncherSettingsFileTests` | Launcher settings application — invalid records, partial edits, deferred bundles, shortcut moves and records outside search scopes; isolated preferences and in-memory scan/Carbon effects |
 | `BackupArchiveTests` | all of `Backup/Model/`, plus `Backup/Service/BackupStaging.swift` |
 | `UpdatesTests` | `Updates/Model/` — version precedence, channel filtering, install route, readiness |
 | `WindowManagementRemovalMigrationTests` | Shipped one-release cleanup with injected scratch paths/preferences — exact retired IDs and UUID namespaces, preserved unrelated values, idempotence, malformed JSON, symlink targets and untouched recovery ledgers |
+| `NotesSettingsMigrationTests` | `Migrations/NotesSettingsMigration.swift` — exact compact-bar retirement, unknown settings preservation, idempotence, isolated preference domains and channel files, symlink targets, absent/invalid files and untouched user Markdown |
 | `BundleIdentifierMigrationTests` | `Migrations/BundleIdentifierMigration.swift` — the id mapping, moving without overwriting, every spelling of a saved path into the old folders, preferences, the login-item flag, the backup and its expiry, the repair of an earlier move |
 | `UpdateCheckTests` | `UpdateCheckStore` — stopping, in-flight cancellation, cached offer suppression, restart and independent manual checking |
 | `SupportTests` | `Support/Model/` — when the support reminder comes due, and a clock moved backwards |
@@ -221,7 +215,6 @@ when touching a pure file:
 
 - `Calculator/Model/` still takes its clock via `now`/`calendar`, its rates via `rates` and its
   separators via `format`
-- `Uninstall/Model/`'s deciding half still receives directory **names** and a `PathFacts`, never URLs
 - `HotKeys/Model/DoubleTap*` still take the clock as a parameter
 - `WindowRecovery/Model/` still touches no `NSScreen` and makes no AX call
 - `Features/PaletteRowIndex.swift` still imports Foundation alone, despite living under `Features/`
@@ -268,9 +261,8 @@ cue to delete it. See [migrations.md](migrations.md).
 
 ## Performance measurement
 
-`Platform/Signposts.swift` emits eight intervals on the `com.tinycast.perf` subsystem: `AppCore.start`,
-`AppIndex.scan`, `AppIndex.rank`, `PaletteWindowController.show`, `UninstallScanner.discover`,
-`UninstallScanner.measure`, `Notes.search` and `FileIndexer.update`. Open the Time Profiler or
+`Platform/Signposts.swift` emits intervals on the `com.tinycast.perf` subsystem: `AppCore.start`,
+`AppIndex.scan`, `AppIndex.rank`, `PaletteWindowController.show` and `FileIndexer.update`. Open the Time Profiler or
 `os_signpost` instrument in Instruments and filter to that subsystem; nothing needs recompiling.
 
 None of the benchmarks below join the suite, so each is registered in `run-tests.sh` as `run index`
@@ -355,29 +347,6 @@ swiftc -O -swift-version 6 Tinycast/Features/Emoji/Model/{EmojiCatalog,EmojiData
 /tmp/EmojiSearchPerformanceTests --languages fr,ja
 ```
 
-`Tests/NotesEditorPerformanceTests.swift` installs a 100,000-character note in a real rendered editor and
-prints, as JSON, the median over 30 runs of the install with its full restyle, one typed character at
-the end, middle and start, the window fit's height read after an install and after each of those
-characters, and a caret move between distant lines. The budget is 150 ms, 8 ms (end and middle) and
-4 ms, and the fit's read gets 10 ms after an install and 1 ms after a character. The read after a
-character runs once the edit has laid out the caret's screen, so it is the fit's cost on top of the
-keystroke. Inside `didChange`, near the top of the note, the read does that layout itself, in about
-2 ms:
-
-```sh
-N=Tinycast/Features/Notes
-swiftc -O -swift-version 6 Tinycast/Platform/{Signposts,Appearance,NotificationToken}.swift \
-    Tinycast/DesignSystem/{Theme,InterfaceMetrics}.swift \
-    Tinycast/Features/TextInjection/Service/InjectableTextView.swift \
-    $N/Model/{NoteDocument,NoteMarkdown,NoteMarkdownParser,NoteInlineScanner}.swift \
-    $N/Model/{NoteEditPlan,NoteEditAction,NoteFormatting,NoteMarkdownEditing,NoteRevealPolicy}.swift \
-    $N/UI/{NoteMarkdownTypography,NoteBlockDecoration,NoteMarkdownStyler,NoteMarkdownRenderer}.swift \
-    $N/UI/{NoteCheckboxGeometry,NoteBlockLayoutFragment,NoteLayoutFragmentProvider}.swift \
-    $N/UI/{NoteTextViewEditing,NoteTextView,NoteEditorView}.swift \
-    Tests/NotesEditorPerformanceTests.swift -o /tmp/NotesEditorPerformanceTests
-/tmp/NotesEditorPerformanceTests
-```
-
 `Signposts.interval` owns an explicit `defer` around the wrapped work on purpose. The obvious spelling
 leaks the interval when the work throws, because the `.end` emit is skipped on the throw path and the
 instrument then shows an interval that never closes.
@@ -405,7 +374,6 @@ Measured at the end of the 2026 refactor, on `main`. Useful as orders of magnitu
 | `PaletteSelectionTests` | 111,684 assertions — a tripwire: a change in this count means the row-order model moved |
 | `SnippetKeywordPolicy` match | 7 µs/keystroke at 50 keywords, 59 µs at 1,000 — the `lowercased()` is 0.09 µs of it |
 | `ClipboardStore.pinnedItems` | 27–127 µs per uncached search, 1,000-row window — no cache earns its invalidation yet |
-| Rendered Notes editor, 100,000 characters | 30 ms install and full restyle; 7.5, 5.9 and 3.3 ms per character typed at the end, middle and start (5.2, 3.1 and 0.6 ms with rendering off); 0.6 ms per caret move |
 | `count items of trash` | 5,000 ms against a cold Finder on an *empty* Trash, 110 ms warm — why AppleScript is detached |
 
 Launch time, allocation counts and RSS have never been captured as numbers. The signposts are in place,
@@ -449,7 +417,7 @@ prefs, caches, TCC grants and login item, so this cannot disturb an installed co
   capsule fills the rest, the whole width with none on. Each summon and each cleared query buds them out
   of the capsule's end, the last one never clipped at the window's edge; with Show animations off they
   appear in place. Mouse and keyboard activation open the command immediately, without a fuse,
-  delayed reveal or shortcut shapes beneath the expanded panel. Show Notes opens its window
+  delayed reveal or shortcut shapes beneath the expanded panel. Notes is not offered as a compact shortcut
 - Compact mode: arrow navigation tints the selected glass circle and uses a white monochrome glyph;
   inspect its native contour at actual size in both appearances, without a second fill or stroke;
   the left capsule and rightmost button must remain whole through opening, hovering, and selection,
@@ -543,8 +511,8 @@ prefs, caches, TCC grants and login item, so this cannot disturb an installed co
 
 ### Hotkeys
 
-- The palette, clipboard, emoji, File Search, and all three Notes shortcuts fire; a per-app shortcut
-  toggles that app
+- The palette, clipboard, emoji and File Search shortcuts fire; a per-app shortcut toggles that app.
+  Old Notes shortcuts do nothing and do not reserve their chords
 - Recording captures a shortcut, and the old binding does not fire while recording
 - A conflicting binding is rejected and names its current owner
 - A double-tap binding fires; Hyper Key remaps and its status dot is green
@@ -580,21 +548,8 @@ prefs, caches, TCC grants and login item, so this cannot disturb an installed co
   quit Tinycast and Karabiner's own remaps keep working. Remap Caps Lock in Karabiner instead:
   Diagnostics… reports a Karabiner conflict
 - Every binding survives quit and relaunch
-- `Enable Commands` off leaves every pane-owned command listed, searchable and firing — Notes,
-  Clipboard, Emoji, File Search, Snippets, Quicklinks, Calendar, AI and Navigation
-
-### Uninstall
-
-- The launcher's Uninstall action opens the scan screen; the bundle is first, leftovers sorted by path
-- Rows appear with no loading copy at any point; folder sizes fill in behind them and totals climb
-- Locked rows cannot be checked; filtering by name works
-- Confirming moves items to the Trash and they are **recoverable from it**
-- A running app exits before any files move, including a menu-bar app or one launched during confirmation
-- An app that refuses to quit leaves every item in place after the grace period
-- Full Disk Access appears in both Permissions and File Search, and both open the correct privacy pane
-- With Full Disk Access granted, protected leftovers become selectable; administrator-only items stay locked
-- Escaping mid-scan cancels promptly with no spinner left behind
-- Hiding and immediately restoring the screen never strands an in-flight file icon as a placeholder
+- `Enable Commands` off leaves every pane-owned command listed, searchable and firing —
+  Clipboard, Emoji, File Search, Snippets, Quicklinks, Calendar, Quick Actions and Navigation
 
 ### Quicklinks
 
@@ -662,117 +617,12 @@ prefs, caches, TCC grants and login item, so this cannot disturb an installed co
 - With Pop to Root Search delayed, close and reopen before the timeout: the launcher keeps its query
   and file results. Let the timeout expire, or use Immediately: reopening starts with an empty query
 
-### Notes
+### Retired Notes
 
-- With Notes **off**: all three commands are absent, their shortcuts no-op, and the Notes directory is
-  not created
-- Enabling in Settings projects Show Notes, Create Note, and Search Notes immediately; the pane's
-  visibility checkboxes and recorders are the only ones — Settings > Commands lists none of the three
-- Show Notes opens the last active note and focuses an already visible window without hiding it
-- Create Note makes one unique Untitled file, including as the first action in an empty channel
-- Command-P and the Browse button focus search, arrows move selection, Return opens, and Command-N
-  creates
-- Empty switcher search reads the complete recent list; title and body searches rank correctly and a
-  superseded query never publishes
-- An Untitled note titles itself from its first line as it is typed, in the title bar and — after the
-  autosave — in the browse list; naming it replaces that, and clearing the name brings it back
-- Inline rename updates the Markdown filename without changing source, and starts from that filename
-  even where the row shows a derived title; collisions receive a suffix
-- Delete confirms through Tinycast, moves the file to Trash, and selecting another note never loses an
-  unsaved edit
-- An existing `Floating Note.md` appears as an ordinary note without conversion
-- A note using every construct renders in Dark and Light: sized headings, emphasis, strikethrough,
-  inline code, coloured links, bullets, numbers, checkboxes with space between tasks, lists nested at
-  two and four spaces, quote bars, a code band with its language label, and a rule
-- The caret's line shows raw Markdown in the tertiary colour and re-renders when the caret leaves; a
-  multi-line selection reveals every selected line, and Select All shows the whole source
-- Dragging a selection across rendered lines does not jump under the pointer; the lines reveal on
-  mouse-up
-- Clicking another app renders the whole note; clicking back reveals the caret line again
-- Inside a code block both fences show and Markdown inside it stays literal
-- A table shows as its literal source in the code font, with no styling inside it; adding the `| --- |`
-  row under existing rows turns them all into the table at once
-- Bullets, numbers and checkboxes are a neutral gray, bullet, numbered and task items are evenly spaced,
-  and revealing a bullet or numbered line leaves its text where it was
-- A checkbox click toggles without moving the caret, autosaves, and Command-Z restores it; the file on
-  disk shows `[x]`
-- A link click opens the browser, a click at the label's edge places the caret, a `file:` link does
-  nothing, and a link on the caret's line is editable text
-- Return continues and leaves lists and quotes, Tab and Shift-Tab nest, ordered lists renumber, `[] `
-  becomes a task, and every formatting shortcut works and undoes in one step
-- Pasting a URL over selected text makes a link; pasting anything else is plain text
-- Copy from a rendered line pastes raw Markdown into another app; a snippet keyword expands inside a
-  rendered note and is styled at once
-- The derived title of an Untitled note shows no Markdown markers
-- A narrow window wraps list items under their text, not under the marker
-- A bullet, task or numbered item whose first word is wider than the window keeps a whole marker on
-  its first line of text, and its checkbox toggles where it is drawn
-- Typing new lines, wrapping text, and pasting grow the note vertically without changing its width,
-  and deleting shrinks it back to the 180pt floor; the top edge stays put until growth reaches the
-  screen's bottom, then the window moves up. It stops at 860pt or the screen's usable height and
-  scrolls. A dragged height holds until the next keystroke, which fits the window again. Switching
-  to a shorter note shrinks it. Repeat with rendering on and off, Find and the formatting bar open,
-  and on a secondary display
-- Typing, Return and Delete in a bulleted list, in its last item and in the middle, grow or shrink the
-  window by whole rows and never shrink it for a frame, scroll the first line away or flash the
-  scrollbar
-- With Render Markdown **off**, the note is fully literal (markers visible, links inert, task syntax
-  plain) and Return, Tab, Delete, and formatting-looking shortcuts keep native plain-text behavior;
-  flipping it back re-renders without dirtying the note or touching undo
-- Edit one note, switch to a shorter note, then Undo and Redo: the new note remains intact and the app
-  does not terminate
-- With rendering on and off, ⌘Z undoes and ⇧⌘Z redoes typing, deletion and paste while another app's
-  menu bar is visible; both update the footer and autosave the restored source. Editing after undo
-  discards redo; reopening a note after switching away starts with no history
-- Marked-text input, emoji, combining marks, Copy, Cut, Paste, Select All, Undo, and Redo preserve
-  exact source; ⌘F finds occurrences in the active note with rendering on and off, and Escape closes
-  the find bar before hiding Notes
-- An empty note shows `Start writing…`; ⌘F moves it below the find bar without overlap, and closing Find
-  restores its position. The footer's word and character counts are right after typing, pasting and
-  undoing, and after switching notes
-- With Render Markdown and Show Formatting Bar on, the band under a note holds the word and character
-  counts on the left and the round formatting button on the right; with either setting off, the old
-  centred counts footer is back and nothing else moved
-- The bar starts collapsed, ⌥⌘T and the round button both expand and collapse it, the buttons slide out
-  from behind that button, and the state survives switching notes, hiding the window and a relaunch
-- Every bar button applies its formatting, undoes in one step with ⌘Z, and autosaves; clicking keeps the
-  caret where it was and the caret's line stays revealed
-- Buttons light for the selection: inside bold, on a list, quote, heading or code line; clicking a lit
-  button removes that formatting and the button goes dark
-- Hovering a button shows its name and shortcut above it, fully visible and not clipped by the capsule;
-  the heading button's tooltip does not show while its menu is open
-- The heading menu opens above the capsule, aligned to its left edge, shows the current level checked,
-  and applies a level on click; it closes on Escape, on a click anywhere in the note window (including
-  the heading button itself, which must not reopen it), on typing, on ⌘P, and when another app is clicked
-- At the smallest window size all eleven controls show and the counts are hidden, the note's text keeps
-  its inset in both states, the heading menu still opens in full above the capsule, and widening the
-  window brings the counts back
-- ⌥⌘C and ⇧⌘B toggle a code block and a quote; with Render Markdown off they do nothing special
-- Settings > Notes > Show Formatting Bar is disabled while Render Markdown is off, Settings search for
-  "formatting" lands on it, and a backup round trip restores it
-- With Show in Menu Bar on, the Notes icon appears at once; a click shows Notes and a second click
-  hides it, and right-, Control- and Option-click open Create Note and Search Notes. Turning the
-  setting or Notes off removes the icon, and a ⌘-dragged position survives a relaunch
-- With VoiceOver, the bar reads as "Formatting" with each button named, lit ones as selected, the round
-  button announcing Expanded or Collapsed, and the heading button its level; menu rows read their titles
-  and the current one as selected
-- Traffic lights sit top-left, the title is centred **on the window**, and the capsule is top-right, all
-  on one line; the yellow light is disabled and green zooms
-- Each capsule button shows a hover capsule and a native tooltip, and fires its action
-- Dragging the title bar moves the window and dragging an edge resizes it; both survive relaunch
-- Clicking another app leaves the panel visible; Escape, Command-W, and the red light hide it
-- Command-Q does nothing anywhere; with Settings in front, Command-W closes Settings
-- Hiding restores the previous external app or Tinycast window
-- Open Notes Folder opens Finder with the active Markdown file selected, or the folder with no note
-- Hide a saved checklist, reset its boxes in another editor, and reopen: the boxes match the file
-- Reopen an unchanged note: Undo still works; an external content change starts fresh history
-- Remove the active file while hidden: reopening selects a remaining note or shows the empty state
-- Deleting every note closes the browse list and leaves one clean empty state with no counts;
-  Command-N from there creates and selects one note
-- The browse list fades only at its bottom edge and rests opaque once it reaches the end
-- Quitting inside the debounce window saves the last edit
-- Over a light desktop, the corner matches the palette's, the shadow follows it, and no dark edge shows
-  around the glass controls
+- No Notes launcher, settings or menu-bar entry points remain; old hotkey preferences register nothing
+- Old command, note and settings links report unknown without opening another screen
+- Launching and quitting leave user Markdown, Notes preferences and inert window/launcher metadata alone
+- `NotesSettingsMigrationTests` continues to cover only settings-file and compact-shortcut retirement
 
 ### Snippets
 
@@ -908,8 +758,9 @@ Debug answers `tinycast-dev://`; use that scheme for every link below.
   values, and opening it fills the same fields
 - Right-click a shortcut field in Settings (a command, a quicklink, an extension command): Copy
   Deeplink copies its link. Onboarding's and General's App Launcher field offer no menu
-- The note switcher's link button copies a link that reopens that note; a renamed note's old link
-  reports the missing file. Retired chat/Quick AI/window command links must be rejected
+- Retired chat/Quick AI/window command links must be rejected. Retired `note/*`,
+  `command/show-notes`, `command/create-note`, `command/search-notes` and `settings/notes` links
+  report unknown and perform no action, including links with input
 - `open -g` each copied link with the palette closed: it runs what the row's shortcut runs
 - Quit Tinycast, then `open -g` a command link: the app starts and runs it
 - Open a command's link twice: it toggles, as its shortcut does. Turn the feature off: the link shows
@@ -931,8 +782,8 @@ Debug answers `tinycast-dev://`; use that scheme for every link below.
   `?fallbackText=x` both open `?q=x`; with no input it asks for the argument. A custom command with
   one argument and `?arguments=%5B%22x%22%5D` runs with `$1` = `x`
 - `command/create-quicklink?context=%7B%22name%22%3A%22Docs%22%2C%22link%22%3A%22https%3A%2F%2Fexample.com%22%7D`
-  opens the editor filled in; Cancel saves nothing. `command/create-snippet?fallbackText=hello` and
-  `command/create-note?fallbackText=hello` start with `hello`
+  opens the editor filled in; Cancel saves nothing. `command/create-snippet?fallbackText=hello`
+  starts with `hello`
 - `command/create-quicklink?context=` with a list of two, one already in the library: it asks to add
   two, showing each name and link, adds one, and the HUD says so. The same for `create-snippet`,
   whose question shows names
@@ -981,6 +832,9 @@ Debug answers `tinycast-dev://`; use that scheme for every link below.
 - A file whose `manifest.json` `format` was hand-edited is refused **with a message naming it**
 - Cancelling the save panel leaves nothing in `~/Library/Caches/com.abueammar.tinycast.dev/backup-staging/`
 - **`snippetsEnabled` is not in the exported file**, and importing does not enable snippets
+- Notes has no export/import category; its documents and preferences are not exported or applied
+- A legacy mixed format 1 backup offers all remaining categories; a Notes-only backup opens with
+  nothing importable. Neither changes local Notes preferences or Markdown files
 - Nothing in the extracted tree names a Keychain item, an extension, or an AI conversation
 
 ### Clean install
@@ -1003,7 +857,7 @@ tccutil reset Accessibility com.abueammar.tinycast.dev 2>/dev/null || true
   Settings still adds a Dock entry while open and removes it when the last ordinary window closes
 - Palette opens and lists apps; clipboard, quicklinks, snippets and calculator history are all empty
   and all accept a first entry
-- Notes creates no directory until Show, Create, or Search is first used, then accepts its first edit
+- Notes creates no directory; its retired entry points cannot create a note
 - **Every setting shows its intended default.** Walk the panes: this is what catches a broken
   absence-versus-`false` read
 - Quit and relaunch: everything created above persisted

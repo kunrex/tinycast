@@ -60,16 +60,6 @@ export const galleryItems: GalleryItem[] = [
   },
   {
     type: "video",
-    src: `${site.cdn}/notes.mp4`,
-    poster: "/notes.jpg",
-    title: "Notes",
-    caption:
-      "Capture ideas in Markdown. Keep your notes close, without breaking your flow.",
-    width: 1728,
-    height: 1118,
-  },
-  {
-    type: "video",
     src: `${site.cdn}/quick-ai.mp4`,
     poster: "/quick-ai.jpg",
     title: "Quick AI",

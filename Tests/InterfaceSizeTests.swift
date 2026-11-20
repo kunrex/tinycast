@@ -101,7 +101,6 @@ struct InterfaceSizeTests {
         expect(m.size.compactKeyCap, Theme.Size.compactKeyCap, "size.compactKeyCap")
         expect(m.size.heroKeyCap, Theme.Size.heroKeyCap, "size.heroKeyCap")
         expect(m.size.menuButton, Theme.Size.menuButton, "size.menuButton")
-        expect(m.size.checkbox, Theme.Size.checkbox, "size.checkbox")
         expect(m.size.menuWidth, Theme.Size.menuWidth, "size.menuWidth")
         expect(m.size.formMenuMinimumWidth, Theme.Size.formMenuMinimumWidth, "size.formMenuMinimumWidth")
         expect(
@@ -322,7 +321,7 @@ struct InterfaceSizeTests {
             ("size.calendarBarHeight", m.size.calendarBarHeight),
             ("size.keyCap", m.size.keyCap), ("size.compactKeyCap", m.size.compactKeyCap),
             ("size.heroKeyCap", m.size.heroKeyCap), ("size.menuButton", m.size.menuButton),
-            ("size.checkbox", m.size.checkbox), ("size.menuWidth", m.size.menuWidth),
+            ("size.menuWidth", m.size.menuWidth),
             ("size.formMenuMinimumWidth", m.size.formMenuMinimumWidth),
             ("size.formMenuExtraRowsHeight", m.size.formMenuExtraRowsHeight),
             ("size.formFieldFocusStroke", m.size.formFieldFocusStroke),

@@ -26,8 +26,8 @@ in `Features/Settings/` (`Model/`, `Service/`, `SettingsFileSchema.swift`), the 
   record's field left out or of the wrong type keeps its value, and `null` clears it.
 - **Applying the file never writes it.** Only a change made in the app rewrites the file, so hand
   formatting stays until then.
-- **Content and machine state never enter it.** Notes, snippets, custom commands, quicklinks and AI
-  connections stay where they are — the file can say which folder notes and snippets
+- **Content and machine state never enter it.** Snippets, custom commands, quicklinks and AI
+  connections stay where they are — the file can say which folder snippets
   live in, never what is in them — as do the palette's position, the extension toolchain,
   and the shortcuts and aliases of content, extensions and Apple Shortcuts.
 
@@ -35,16 +35,21 @@ in `Features/Settings/` (`Model/`, `Service/`, `SettingsFileSchema.swift`), the 
 
 `appearance.compactBarCommands` is an ordered array of zero to four unique command identifiers.
 For example, `["command:clipboard-history", "command:search-emoji", "command:search-files"]` shows
-Clipboard History, Emoji & Symbols and Search Files in that order. Only the seven commands offered by
+Clipboard History, Emoji & Symbols and Search Files in that order. Only the six commands offered by
 Compact Shortcuts are accepted; unknown, duplicate, unsupported or excess entries reject the whole
-value. The two known retired conversation IDs (`command:ai-chat` and `command:ai-chat-window`)
-are filtered before validation, preserving surviving order in both preferences and file imports.
+value. Retired conversation IDs (`command:ai-chat` and `command:ai-chat-window`) and Notes IDs
+(`command:show-notes`, `command:create-note` and `command:search-notes`) are filtered before
+validation, preserving surviving order in preferences, file imports and backup imports.
 `[]` removes every shortcut, and omitting the key leaves the current selection unchanged.
 
 For one release, `RetiredAISettingsMigration` silently removes the retired conversation `ai.*` keys
 and command records from this mirror at launch, including compact-bar references. It is idempotent,
 follows symlinks, leaves malformed JSON alone, and preserves unknown keys and provider settings.
 Preferences, saved conversations, presets and credentials are not migrated or deleted.
+
+The one-release `NotesSettingsMigration` removes the obsolete top-level `notes` section and those
+compact-bar IDs before startup reads preferences or imports the settings file. Unknown settings are
+preserved and symlinks are followed, not replaced. Notes preferences and user files are untouched.
 
 | File | Role |
 | --- | --- |
@@ -132,7 +137,7 @@ Where a number has a special case, the case is a word:
 | `calendar.menuBar` | `"disabled"`, `"meetingIcon"`, `"meetingTitle"` |
 | `calendar.menuBarUpcomingEvents` | `"today"`, or 2, 5, 10, 30 minutes before |
 | `calendar.hideCurrentEventAfterMinutes` | `"never"`, 0 (as it starts), 5, 10, 30 |
-| `snippets.folder`, `notes.folder` | an absolute or `~/` path, or `null` for Application Support |
+| `snippets.folder` | an absolute or `~/` path, or `null` for Application Support |
 
 On first launch, `general.language` is set to the primary system language if supported, otherwise
 `"en"`. That explicit choice is saved; later system-language changes do not change it.

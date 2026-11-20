@@ -55,7 +55,6 @@ index or use memory. That's how the app stays small with a long feature list.
 | [AI Chat](/docs/ai)                                   | Settings → AI                |
 | [Quick Actions](/docs/ai/quick-actions)               | Settings → Quick Actions     |
 | [File Search](/docs/features/file-search)             | Settings → File Search       |
-| [Notes](/docs/features/notes)                         | Settings → Notes             |
 | [Snippets](/docs/features/snippets)                   | Settings → Snippets          |
 | [Navigation](/docs/features/navigation)               | Settings → Navigation        |
 | [Calendar](/docs/features/calendar)                   | Settings → Calendar          |

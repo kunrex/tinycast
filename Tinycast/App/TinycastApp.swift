@@ -5,6 +5,7 @@ enum TinycastLaunch {
     static func main() {
         BundleIdentifierMigration.run()
         WindowManagementRemovalMigration.run()
+        NotesSettingsMigration.run()
         AppSettings.pinLanguage()
         TinycastApp.main()
     }
@@ -81,7 +82,6 @@ struct TinycastApp: App {
         }
         CommandGroup(replacing: .appTermination) {
             Button("Close Window") {
-                // The chat window closes itself when it is in front; otherwise ⌘Q is Settings'.
                 AppCore.shared.settingsCoordinator.closeSettings()
             }
             .keyboardShortcut("q")

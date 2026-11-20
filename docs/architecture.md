@@ -21,8 +21,7 @@ Independently of the folder tree, every mature subsystem has converged on the sa
 │ VolumeLevel ·                                                              │
 │ WindowRecoveryPolicy ·                                                    │
 │ PaletteRowIndex ·                                                          │
-│ Uninstall{Target,SearchRoot,Rules,Protection,Plan} ·                       │
-│ Quicklink{,Destination,Store,Archive} · AppleShortcut · Notes/Model/* ·    │
+│ Quicklink{,Destination,Store,Archive} · AppleShortcut ·    │
 │ Snippets/Model/* ·                                                         │
 │ ShellCommandRunner · DoubleTap{Modifier,Detector} · ClipboardStore ·       │
 │ RaycastDecoder · Scrypt · AppSettingsKey · SettingsBackupCoverage          │
@@ -38,9 +37,9 @@ Independently of the folder tree, every mature subsystem has converged on the sa
 │ All platform I/O, one folder per feature.                                  │
 │ AppIndex · FileIndexer · SettingsPaneScanner ·                             │
 │ AXWindowAccess · AXScreens · WindowRecoverySweep · WindowRecoveryRunner ·   │
-│ IconCache · WindowMover · UninstallScanner · UninstallRunner ·             │
+│ IconCache ·                                                              │
 │ SystemActionRunner · QuicklinkLauncher · TextInjector ·             │
-│ SnippetKeywordListener · NotesRepository · CurrencyRateStore · Paster ·    │
+│ SnippetKeywordListener · CurrencyRateStore · Paster ·    │
 │ HotKeyCenter · HyperKeyTap · KeyboardRemapper · ModifierTapMonitor ·       │
 │ SecureInputMonitor · RunningAppsMonitor ·                                  │
 │ CalendarStore · MeetingLauncher · MeetingClock · CameraSession ·           │
@@ -62,8 +61,7 @@ in whichever of the two owns it.
 
 - **`Model/` — pure.** Foundation only, plus SQLite3 or CoreGraphics where the data demands it.
   Everything from the environment is **injected**: `CalcEngine` takes `now` / `calendar` / `rates`,
-  `LauncherRankingStore` takes `now` and its file URL,
-  `UninstallRules` is handed directory *names* rather than URLs, and `QuicklinkStore` is handed the home
+  `LauncherRankingStore` takes `now` and its file URL, and `QuicklinkStore` is handed the home
   directory. This is the layer that **decides** things.
 - **`Service/` — effects.** Stores, monitors, runners, scanners and AppKit glue. Every `AXUIElement`
   call, `CGEventTap`, `NSWorkspace.open`, `URLSession` request, `FileManager` walk and CoreAudio read
@@ -97,8 +95,8 @@ app: the stores (`AppIndex`, `ClipboardStore`, `SnippetsStore`, `QuicklinkStore`
 (`ClipboardManager`, the opt-in `ClipboardTextIndexer`, the opt-in `SettingsFileRepository`,
 `HotKeyManager`, `HyperKeyManager`, `DictationKeyManager`, `RunningAppsMonitor`,
 `SnippetKeywordListener`), the shared state
-(`AppSettings`, `PaletteState`, `FileSearchSession`, `MenuSearchSession`, `UninstallSession`,
-`MeetingClock`), `NotesStore`, the twenty-one feature coordinators, and the
+(`AppSettings`, `PaletteState`, `FileSearchSession`, `MenuSearchSession`,
+`MeetingClock`), the feature coordinators, and the
 window controllers.
 
 `AppDelegate.applicationDidFinishLaunching` calls `AppCore.shared.start(launchedByUser:)` and nothing
@@ -149,11 +147,6 @@ driven imperatively from AppKit. Extension menu extras are dynamic `NSStatusItem
   unreliable for accessory apps, so this is deliberate. Their lifecycles are independent of the
   palette's in both directions. Onboarding stays accessory rather than registering Dock ownership,
   so completing it can open the palette without an activation-policy change stealing focus.
-- **Notes** — a persistent, titled, non-activating `NotesPanel` managed by `NotesWindowController`.
-  Its height fits the note up to 860pt and AppKit autosaves the frame; its TextKit 2 editor renders
-  Markdown over the literal source, switches among local Markdown files and stays visible on focus
-  loss. The displayed string is the canonical file source; there is no source/display mapping.
-  See [features/notes.md](features/notes.md).
 - **AI providers** — Settings → Quick Actions opens the provider manager below its default model,
   independently of the feature's enabled switch. Quick Actions owns
   generation, not a conversation surface. No chat stores, windows, observers or MCP runtime are
@@ -245,8 +238,8 @@ Tinycast/
   Migrations/       one-shot repairs, each deleted after one stable release (migrations.md)
   Features/
     PaletteRowIndex.swift   the flat selection index — palette-owned, so it sits at the top
-    Launcher/ Clipboard/ Calculator/ Calendar/ Emoji/ FileSearch/ MenuSearch/ Notes/
-    Quicklinks/ Snippets/ Uninstall/ SystemActions/ CustomCommands/ HotKeys/ Backup/
+    Launcher/ Clipboard/ Calculator/ Calendar/ Emoji/ FileSearch/ MenuSearch/
+    Quicklinks/ Snippets/ SystemActions/ CustomCommands/ HotKeys/ Backup/
     WindowSwitcher/ WindowRecovery/ Onboarding/ Updates/ Support/ AI/ Settings/
     Extensions/
         Model/      pure — the harness inputs

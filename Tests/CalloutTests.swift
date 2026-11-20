@@ -48,7 +48,6 @@ struct CalloutTests {
         horizontalClamping()
         caretTracking()
         degenerateContainers()
-        rowGrammar()
         localizedInstructions()
 
         print("\(passes) passed, \(failures) failed")
@@ -203,16 +202,6 @@ struct CalloutTests {
                     "\(key) fits two lines in \(language)")
             }
         }
-    }
-
-    // MARK: - Shared row grammar
-    // Here because this is the only harness compiling `Theme.swift`: one `rowIcon` slot.
-
-    static func rowGrammar() {
-        expect(
-            Theme.Size.checkbox <= Theme.Size.rowIcon,
-            "the uninstall checkbox fits inside the shared leading slot")
-        expect(Theme.Size.checkbox > 0, "and is a real size")
     }
 
     // MARK: - Containers smaller than the callout

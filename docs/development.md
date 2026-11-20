@@ -53,9 +53,9 @@ download on demand; none are app resources.
 
 Debug builds are a separate channel: **`Tinycast Dev.app`**, bundle id `com.abueammar.tinycast.dev`.
 Every persisted thing is keyed by bundle id — `~/Library/Preferences/<id>.plist` (settings and hotkey
-bindings), `~/Library/Application Support/<id>/` (the onboarding marker, Notes, snippets, quicklinks,
-clipboard history, calculator history, launch ranking and frequent emoji; Notes and snippets unless
-a folder is chosen),
+bindings), `~/Library/Application Support/<id>/` (the onboarding marker, snippets, quicklinks,
+clipboard history, calculator history, launch ranking and frequent emoji; snippets unless
+a folder is chosen; retired Notes files remain untouched),
 `~/Library/Caches/<id>/` (exchange rates, the update check, staged downloads), the opt-in
 `~/.config/tinycast-dev/settings.json` (`tinycast` on stable), the `tinycast-dev://` link scheme
 (`tinycast://` on stable), the `SMAppService`
@@ -154,6 +154,11 @@ missing plural form, a stale entry, or a translation whose format specifiers dif
 does — so run this after changing UI text, then translate what it added (Xcode's catalog editor, or
 the JSON directly). A string whose source changed leaves its old entry stale; delete it. The rules for
 writing localizable code are in [standards.md](standards.md#localization).
+
+For source removals, run `./Scripts/sync-strings.sh --prune-stale`. After compiler extraction it runs
+`Scripts/prune-stale-strings.js` to remove only compiler-marked stale entries, preserving surviving
+translations and their formatting. Review the removed keys; it does not translate or rewrite other
+catalogs.
 
 To see a language without changing the setting, launch the Debug build with
 `-AppleLanguages '(de)'`; add `-NSDoubleLocalizedStrings YES` to find labels that truncate.

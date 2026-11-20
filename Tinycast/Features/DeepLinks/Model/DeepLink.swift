@@ -6,13 +6,10 @@ enum DeepLink: Equatable, Sendable {
     /// `<kind>/<id>` for the launcher row `<kind>:<id>`, run as its shortcut would be.
     case entry(HotKeyAction, DeepLinkInput)
     case settings(slug: String)
-    /// A note by its file name, which is all a note is known by.
-    case note(name: String)
 
     /// Extension links own this host, so built-in parsing must never claim it.
     static let extensionsHost = "extensions"
     static let searchHost = "search"
-    private static let noteHost = "note"
 
     init?(url: URL, scheme: String) {
         guard url.scheme?.lowercased() == scheme else { return nil }
@@ -35,10 +32,6 @@ enum DeepLink: Equatable, Sendable {
             path: String(entryID[entryID.index(after: colon)...]), input: input)
     }
 
-    static func url(forNote name: String, scheme: String) -> URL? {
-        url(scheme: scheme, host: noteHost, path: name, input: .none)
-    }
-
     private static func url(scheme: String, host: String, path: String, input: DeepLinkInput) -> URL? {
         var components = URLComponents()
         components.scheme = scheme
@@ -55,8 +48,6 @@ enum DeepLink: Equatable, Sendable {
             return .launcher(fallbackText: input.fallbackText)
         case ("settings", false):
             return path.contains("/") ? nil : .settings(slug: path.lowercased())
-        case (noteHost, false):
-            return path.contains("/") || path == "." || path == ".." ? nil : .note(name: path)
         case (extensionsHost, _), (_, true):
             return nil
         default:

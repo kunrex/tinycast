@@ -186,8 +186,7 @@ Give a snippet a keyword, and typing that keyword in any app replaces it with th
 
 Settings shows the current status: **Off**, **Needs Accessibility** or **Active**.
 
-Keywords never expand in Tinycast's own search field or in Settings. A keyword typed in
-[Notes](/docs/features/notes) or the AI Chat message field expands directly there.
+Keywords never expand in Tinycast's own search field or in Settings.
 
 ### How the text gets inserted
 

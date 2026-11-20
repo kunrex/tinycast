@@ -40,10 +40,6 @@ extension SettingsBackup {
             fileSearchIgnorePatterns: s.fileSearchIgnorePatterns,
             fileSearchRemovedDefaultPatterns: s.fileSearchRemovedDefaultPatterns,
             fileSearchShowInLauncher: s.fileSearchShowInLauncher,
-            notesEnabled: s.notesEnabled,
-            notesRendersMarkdown: s.notesRendersMarkdown,
-            notesShowsFormattingBar: s.notesShowsFormattingBar,
-            notesShowsInMenuBar: s.notesShowsInMenuBar,
             customCommandsEnabled: s.customCommandsEnabled,
             customCommandsShowInLauncher: s.customCommandsShowInLauncher,
             snippetsShowInLauncher: s.snippetsShowInLauncher,
@@ -277,22 +273,6 @@ extension SettingsBackup {
         }
         if let flag = s.fileSearchShowInLauncher {
             settings.fileSearchShowInLauncher = flag
-            count += 1
-        }
-        if let flag = s.notesEnabled {
-            settings.notesEnabled = flag
-            count += 1
-        }
-        if let flag = s.notesRendersMarkdown {
-            settings.notesRendersMarkdown = flag
-            count += 1
-        }
-        if let flag = s.notesShowsFormattingBar {
-            settings.notesShowsFormattingBar = flag
-            count += 1
-        }
-        if let flag = s.notesShowsInMenuBar {
-            settings.notesShowsInMenuBar = flag
             count += 1
         }
         if let flag = s.customCommandsEnabled {

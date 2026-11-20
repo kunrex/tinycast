@@ -9,6 +9,7 @@ enum SettingsBackupDecodingTests {
             "appearance": "dark", "clipboardEnabled": false, "clipboardRetentionDays": 90,
             "navigationEnabled": true, "menuSearchDisabledApps": ["com.example.private"],
             "menuSearchShowsAppleMenu": false, "language": "ja", "notesEnabled": true,
+            "notesRendersMarkdown": true, "notesShowsFormattingBar": false, "notesShowsInMenuBar": true,
             "windowManagementEnabled": true, "windowManagementGap": 8,
             "windowManagementCycleMode": "cycle", "windowRoomsShowInLauncher": false
         ]
@@ -37,7 +38,6 @@ enum SettingsBackupDecodingTests {
         precondition(backup.settings?.menuSearchDisabledApps == ["com.example.private"])
         precondition(backup.settings?.menuSearchShowsAppleMenu == false)
         precondition(backup.settings?.language == "ja")
-        precondition(backup.settings?.notesEnabled == true)
         precondition(backup.hotkeys?.togglePalette == binding)
         precondition(backup.hotkeys?.commands?["command:switch-windows"] == binding)
         precondition(backup.hotkeys?.apps?["com.example.app"] == binding)
@@ -54,7 +54,9 @@ enum SettingsBackupDecodingTests {
             precondition(encodedHotkeys[key] == nil)
         }
         precondition(encodedHotkeys["windowCommands"] == nil)
-        for key in settings.keys where key.hasPrefix("window") { precondition(encodedSettings[key] == nil) }
+        for key in settings.keys where key.hasPrefix("window") || key.hasPrefix("notes") {
+            precondition(encodedSettings[key] == nil)
+        }
         let decodedAgain = try SettingsBackup(json: backup.encoded())
         precondition(decodedAgain.hotkeys?.commands?["command:switch-windows"] == binding)
         precondition(decodedAgain.settings?.clipboardRetentionDays == 90)
