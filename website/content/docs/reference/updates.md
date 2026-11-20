@@ -30,7 +30,7 @@ still works.
 ## It waits until you're not busy
 
 The update window never interrupts you. It waits while the palette is open, a snippet is expanding,
-an extension command is running, the uninstaller is working, you're recording a shortcut, or a
+an extension command is running, you're recording a shortcut, or a
 dialog is open. It tries again every two minutes for half an hour, then goes back to checking once a
 day.
 

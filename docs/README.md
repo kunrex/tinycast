@@ -45,7 +45,6 @@ open with an `## Invariants` section; read it before changing anything in that a
 [window layouts](features/window-layouts.md) ·
 [rooms](features/window-rooms.md) ·
 [custom commands](features/custom-commands.md) ·
-[uninstall](features/uninstall.md) ·
 [backup](features/backup.md) ·
 [settings file](features/settings-file.md) ·
 [Raycast import](features/raycast-import.md) ·

@@ -152,7 +152,7 @@ missing plural form, a stale entry, or a translation whose format specifiers dif
 
 `xcodebuild` extracts strings but never writes them back to the catalog — only a build in Xcode's IDE
 does — so run this after changing UI text, then translate what it added (Xcode's catalog editor, or
-the JSON directly). A string whose source changed leaves its old entry stale; delete it. The rules for
+the JSON directly). The script prunes compiler-marked stale entries. The rules for
 writing localizable code are in [standards.md](standards.md#localization).
 
 To see a language without changing the setting, launch the Debug build with

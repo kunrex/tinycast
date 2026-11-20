@@ -22,7 +22,6 @@ Independently of the folder tree, every mature subsystem has converged on the sa
 │ WindowCommand · WindowPlacementEngine · WindowActionMemory · WindowLayout/* ·      │
 │ CustomWindowSize{,Store} · Room/* ·                                        │
 │ PaletteRowIndex ·                                                          │
-│ Uninstall{Target,SearchRoot,Rules,Protection,Plan} ·                       │
 │ Quicklink{,Destination,Store,Archive} · AppleShortcut · Notes/Model/* ·    │
 │ Snippets/Model/* ·                                                         │
 │ ShellCommandRunner · DoubleTap{Modifier,Detector} · ClipboardStore ·       │
@@ -40,7 +39,7 @@ Independently of the folder tree, every mature subsystem has converged on the sa
 │ AppIndex · FileIndexer · SettingsPaneScanner ·                             │
 │ AXWindowAccess · AXScreens · WindowInventory · WindowLayoutRunner ·        │
 │ RoomWindowSweep · RoomRunner ·                                             │
-│ IconCache · WindowMover · UninstallScanner · UninstallRunner ·             │
+│ IconCache · WindowMover ·                                                 │
 │ SystemActionRunner · QuicklinkLauncher · TextInjector ·             │
 │ SnippetKeywordListener · NotesRepository · CurrencyRateStore · Paster ·    │
 │ HotKeyCenter · HyperKeyTap · KeyboardRemapper · ModifierTapMonitor ·       │
@@ -52,7 +51,7 @@ Independently of the folder tree, every mature subsystem has converged on the sa
 └──────────────────────────────────┬─────────────────────────────────────────┘
                                    │ published through
 ┌─ OBSERVABLE STATE ───────────────▼─────────────────────────────────────────┐
-│ 39 @MainActor @Observable stores, sessions, indices and State types        │
+│ @MainActor @Observable stores, sessions, indices and State types           │
 └──────────────────────────────────┬─────────────────────────────────────────┘
                                    │ rendered by
 ┌─ VIEW ───────────────────────────▼─────────────────────────────────────────┐
@@ -66,7 +65,7 @@ in whichever of the two owns it.
 - **`Model/` — pure.** Foundation only, plus SQLite3 or CoreGraphics where the data demands it.
   Everything from the environment is **injected**: `CalcEngine` takes `now` / `calendar` / `rates`,
   `LauncherRankingStore` takes `now` and its file URL, `WindowActionMemory` takes `now` as a parameter,
-  `UninstallRules` is handed directory *names* rather than URLs, and `QuicklinkStore` is handed the home
+  and `QuicklinkStore` is handed the home
   directory. This is the layer that **decides** things.
 - **`Service/` — effects.** Stores, monitors, runners, scanners and AppKit glue. Every `AXUIElement`
   call, `CGEventTap`, `NSWorkspace.open`, `URLSession` request, `FileManager` walk and CoreAudio read
@@ -95,8 +94,8 @@ app: the stores (`AppIndex`, `ClipboardStore`, `SnippetsStore`, `QuicklinkStore`
 (`ClipboardManager`, the opt-in `ClipboardTextIndexer`, the opt-in `SettingsFileRepository`,
 `HotKeyManager`, `HyperKeyManager`, `DictationKeyManager`, `RunningAppsMonitor`,
 `SnippetKeywordListener`), the shared state
-(`AppSettings`, `PaletteState`, `FileSearchSession`, `MenuSearchSession`, `UninstallSession`,
-`MeetingClock`), `NotesStore`, the twenty-one feature coordinators, and the
+(`AppSettings`, `PaletteState`, `FileSearchSession`, `MenuSearchSession`,
+`MeetingClock`), `NotesStore`, the feature coordinators, and the
 window controllers.
 
 `AppDelegate.applicationDidFinishLaunching` calls `AppCore.shared.start(launchedByUser:)` and nothing
@@ -185,7 +184,7 @@ every live `AnimatedPanel` (see [ui.md](ui.md#non-negotiable-invariants)).
 
 ## Observation
 
-39 types are `@MainActor @Observable`. Nothing uses `ObservableObject` or `@Published`, and views read
+Shared UI-facing state is `@MainActor @Observable`. Nothing uses `ObservableObject` or `@Published`, and views read
 state through `@Environment` rather than `@EnvironmentObject`.
 
 Three things about this model are easy to get wrong:
@@ -244,7 +243,7 @@ Tinycast/
   Features/
     PaletteRowIndex.swift   the flat selection index — palette-owned, so it sits at the top
     Launcher/ Clipboard/ Calculator/ Calendar/ Emoji/ FileSearch/ MenuSearch/ Notes/
-    Quicklinks/ Snippets/ Uninstall/ SystemActions/ CustomCommands/ HotKeys/ Backup/
+    Quicklinks/ Snippets/ SystemActions/ CustomCommands/ HotKeys/ Backup/
     WindowManagement/ Onboarding/ Updates/ Support/ AI/ Settings/
     Extensions/
         Model/      pure — the harness inputs

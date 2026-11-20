@@ -43,8 +43,8 @@ named.
 
 Aliases are included in [backups](/docs/reference/backup).
 
-An alias is removed along with the thing it names. If you uninstall the app, delete the quicklink or
-remove the extension, its alias is deleted too, so it can't linger and match nothing.
+Deleting a quicklink or removing an extension deletes its alias too, so it can't linger and match
+nothing.
 
 Raycast exports include an alias for each command. The
 [importer](/docs/reference/import-from-raycast) brings over the aliases for apps.

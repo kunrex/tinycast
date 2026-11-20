@@ -59,15 +59,6 @@ enum AppActionsMenu {
                     core.launcherCoordinator.quit(app, force: true)
                 })
         }
-        if app.kind == .application, app.primaryInstallationID == nil {
-            items.append(
-                PopoverMenuItem(
-                    title: String(localized: "Uninstall Application"), systemImage: "trash",
-                    startsSection: true, isDestructive: true
-                ) {
-                    core.uninstallCoordinator.beginUninstall(app)
-                })
-        }
         if app.kind == .quicklink, let quicklink = core.quicklinks.quicklink(entryID: app.id) {
             items.append(
                 PopoverMenuItem(

@@ -9,8 +9,7 @@ Favorites and Suggestions show the representative, while the other copies remain
 Version subtitles distinguish copies; equal or missing versions also show the containing folder.
 Return opens the selected path with running-application substitution disabled, so a different running
 version cannot replace it. Restart also reopens the selected path. Bundle-ID-based operations such as
-Window Layouts retain macOS's default running-application substitution. Uninstall is unavailable while
-indexed copies share the bundle ID, because their support files and preferences may be shared.
+Window Layouts retain macOS's default running-application substitution.
 
 `./Scripts/run-tests.sh AppInstallationTests` covers the shipped index and app-wide preferences.
 Set `TINYCAST_TEST_APP_LAUNCH=1` for temporary native-app launch, quit and restart checks; the harness
@@ -407,7 +406,7 @@ Settings ▸ Window Management passes each command, custom size, layout and room
 dims the field when the entry is hidden from launcher search, whose entry the ranker never sees.
 
 Aliases ride along in a settings backup (`launcherAliases`), and deleting what an alias points at —
-uninstalling an app, deleting a quicklink or custom command, uninstalling an extension — removes it
+deleting a quicklink or custom command, uninstalling an extension — removes it
 with the entry's other per-entry preferences.
 
 ### Alternate names

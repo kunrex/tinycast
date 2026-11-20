@@ -149,8 +149,7 @@ uses that copy's path.
 Copies share their alias, favorite, visibility, learned ranking and global shortcut. Favorites,
 Suggestions and Settings use one representative: the earliest search scope wins, and within a
 folder the newest version wins. An app's global shortcut uses the running app or macOS's default
-copy. Uninstall is unavailable while several indexed copies share the same bundle identifier,
-because their support files can be shared.
+copy.
 
 ## Actions on an app
 
@@ -167,7 +166,6 @@ Press <kbd>⌘</kbd><kbd>K</kbd> with an app selected:
 | Restart Application                               | <kbd>⌘</kbd><kbd>R</kbd>                            |
 | Quit Application                                  | <kbd>⌃</kbd><kbd>⇧</kbd><kbd>Q</kbd>                |
 | Force Quit Application                            | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>Q</kbd>    |
-| [Uninstall Application](/docs/launcher/uninstall) |                                                     |
 
 **Restart Application**, **Quit Application** and **Force Quit Application** only appear while the
 app is running. Restart and Quit ask the app to quit normally, so an app with unsaved work still asks

@@ -65,7 +65,6 @@ final class AppCore {
     let menuSearch = MenuSearchSession()
     let windowSwitch = WindowSwitchSession()
     let activationPolicy = ActivationPolicy()
-    let uninstall = UninstallSession()
     let notesStore: NotesStore
     let extensions: ExtensionManager
     let chatHistory: ChatHistoryStore
@@ -127,10 +126,6 @@ final class AppCore {
         core: self)
     @ObservationIgnored private(set) lazy var systemActionCoordinator = SystemActionCoordinator(
         paletteCoordinator: paletteCoordinator, core: self)
-    @ObservationIgnored private(set) lazy var uninstallCoordinator = UninstallCoordinator(
-        session: uninstall, palette: palette, paletteCoordinator: paletteCoordinator,
-        appIndex: appIndex, runningApps: runningApps, hotKeys: hotKeys, favorites: favorites,
-        visibility: visibility, ranking: launcherRanking, aliases: aliases, core: self)
     @ObservationIgnored private(set) lazy var extensionCoordinator = ExtensionCoordinator(
         extensions: extensions, palette: palette, paletteCoordinator: paletteCoordinator,
         settingsCoordinator: settingsCoordinator, settings: settings, core: self)
@@ -956,7 +951,6 @@ final class AppCore {
         UpdateActivity(
             isExpandingSnippet: textInjector.isDelivering,
             isRunningExtension: extensions.running != nil,
-            isUninstalling: uninstall.isTrashing,
             isRecordingHotKey: hotKeys.recordingAction != nil,
             isShowingDialog: isShowingDialog,
             isPaletteVisible: paletteCoordinator.isVisible)

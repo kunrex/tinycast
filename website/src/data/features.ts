@@ -121,11 +121,6 @@ export const moreFeatures: MinorFeature[] = [
   { icon: "hyper", title: "Hyper key", href: "/docs/reference/hotkeys" },
   { icon: "alias", title: "Aliases", href: "/docs/launcher/aliases" },
   {
-    icon: "uninstall",
-    title: "App uninstaller",
-    href: "/docs/launcher/uninstall",
-  },
-  {
     icon: "inputSource",
     title: "Input source switching",
     href: "/docs/palette#input-source",

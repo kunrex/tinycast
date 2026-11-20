@@ -160,16 +160,6 @@ activate the selected item.
 | <kbd>return</kbd>             | Join Meeting      |
 | <kbd>⌘</kbd><kbd>return</kbd> | Copy Meeting Link |
 
-## Uninstall
-
-| Key                                  | Does                   |
-| ------------------------------------ | ---------------------- |
-| <kbd>return</kbd>                    | Uninstall Application  |
-| <kbd>⌘</kbd><kbd>return</kbd>        | Select / Unselect File |
-| <kbd>⌥</kbd><kbd>⌘</kbd><kbd>C</kbd> | Copy Path              |
-| <kbd>⇧</kbd><kbd>⌘</kbd><kbd>O</kbd> | Show in Finder         |
-| <kbd>⇧</kbd><kbd>⌘</kbd><kbd>I</kbd> | Show Info in Finder    |
-
 ## Notes window
 
 | Key                           | Does                            |

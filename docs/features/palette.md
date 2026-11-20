@@ -102,7 +102,6 @@ every screen but two: the clipboard lands past its pins
 | `.customCommandEditor` | `CustomCommandEditorScreen` | `CustomCommandEditorView` (see [custom-commands.md](custom-commands.md#launcher-editor))                 |
 | `.customCommands`      | `CustomCommandListScreen`   | `CustomCommandList` + script preview (see [custom-commands.md](custom-commands.md#launcher-integration)) |
 | `.meetingDetails`      | `MeetingDetailsScreen`      | `MeetingDetailsView` (see [calendar.md](calendar.md#the-details-page))                                   |
-| `.uninstall`           | `UninstallScreen`           | `UninstallList` (see [uninstall.md](uninstall.md))                                                       |
 | `.quicklinks`          | `QuicklinkListScreen`       | `QuicklinkList` + preview (see [quicklinks.md](quicklinks.md#search-quicklinks))                         |
 | `.quicklinkEditor`     | `QuicklinkEditorScreen`     | `QuicklinkEditorView` (see [quicklinks.md](quicklinks.md#launcher-editor))                               |
 | `.snippets`            | `SnippetsScreen`            | `SnippetsList` + preview (see [snippets.md](snippets.md#search-snippets))                                |
@@ -113,8 +112,8 @@ every screen but two: the clipboard lands past its pins
 **Tab rings the three surfaces a reader opens directly — launcher → AI chat → clipboard → launcher**
 — unless the screen claims it through `tab(at:backwards:)` (native editors and extension forms walk
 their own fields), or the selected row declares arguments, in which case it walks those fields first (see
-below); every other mode stays off the ring, and is reached by a command or a global hotkey, with
-Uninstall only from a launcher app's Actions menu, scoped to that app. Chat is skipped whole when
+below); every other mode stays off the ring, and is reached by a command or a global hotkey.
+Chat is skipped whole when
 `aiEnabled` is off, which leaves the launcher ↔ clipboard flip the ring replaced.
 
 ### Navigation

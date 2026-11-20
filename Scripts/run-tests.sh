@@ -556,13 +556,6 @@ run CustomCommandTests     Tinycast/Platform/PseudoTerminal.swift \
                            Tinycast/Features/CustomCommands/Service/ShellCommandRunner.swift
 run CustomCommandListTests Tinycast/Features/CustomCommands/Model/CustomCommand.swift \
                              Tinycast/Features/CustomCommands/UI/CustomCommandListScreen.swift
-run UninstallCoordinatorTests Tinycast/Features/Uninstall/Model/*.swift \
-                           Tinycast/Features/Uninstall/UI/UninstallCoordinator.swift
-run UninstallTests         Tinycast/Features/Uninstall/Model/UninstallTarget.swift \
-                           Tinycast/Features/Uninstall/Model/UninstallSearchRoot.swift \
-                           Tinycast/Features/Uninstall/Model/UninstallRules.swift \
-                           Tinycast/Features/Uninstall/Model/UninstallProtection.swift \
-                           Tinycast/Features/Uninstall/Model/UninstallPlan.swift
 run QuicklinkTests         Tinycast/Features/Quicklinks/Model/Quicklink.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkDestination.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkStore.swift \

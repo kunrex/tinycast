@@ -379,10 +379,6 @@ struct UpdatesTests {
         expect(UpdateReadiness.evaluate(busy) == .recordingHotKey, "a live recorder blocks an interruption")
 
         busy = UpdateActivity()
-        busy.isUninstalling = true
-        expect(UpdateReadiness.evaluate(busy) == .uninstalling, "a running uninstall blocks an interruption")
-
-        busy = UpdateActivity()
         busy.isRunningExtension = true
         expect(
             UpdateReadiness.evaluate(busy) == .runningExtension,

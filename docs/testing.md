@@ -165,8 +165,6 @@ If a change touches anything in the right column, the harness on the left is man
 | `WindowRoomTests` | `WindowManagement/Model/Room*.swift` — every room layout and its minimum sizes, the grid, arrangement reading, window matching, parking, the plan, Tab's choices and the three stores |
 | `CustomCommandTests` | Command storage and execution, editor drafts, argument identities and dynamic keyboard focus |
 | `CustomCommandListTests` | Browser result snapshots, observation, row actions and empty-library messages |
-| `UninstallTests` | all five pure files in `Uninstall/Model/` |
-| `UninstallCoordinatorTests` | Confirmation and the post-confirmation quit gate; recorded quit and Trash effects only |
 | `QuicklinkTests` | all of `Quicklinks/Model/`, plus editor drafts and placeholder selection |
 | `QuicklinkCoordinatorTests` | Opening and requested arguments, launcher editing, current enabled-state preservation, deletion during editing and feature gates; no platform effects or on-screen focus checks |
 | `AppleShortcutTests` | all of `AppleShortcuts/Model/` — the `shortcuts list` parser and entry ids |
@@ -230,7 +228,6 @@ when touching a pure file:
 
 - `Calculator/Model/` still takes its clock via `now`/`calendar`, its rates via `rates` and its
   separators via `format`
-- `Uninstall/Model/`'s deciding half still receives directory **names** and a `PathFacts`, never URLs
 - `HotKeys/Model/DoubleTap*` still take the clock as a parameter
 - `WindowManagement/Model/` still touches no `NSScreen` and makes no AX call, layouts included
 - `Features/PaletteRowIndex.swift` still imports Foundation alone, despite living under `Features/`
@@ -277,9 +274,9 @@ cue to delete it. See [migrations.md](migrations.md).
 
 ## Performance measurement
 
-`Platform/Signposts.swift` emits eight intervals on the `com.tinycast.perf` subsystem: `AppCore.start`,
-`AppIndex.scan`, `AppIndex.rank`, `PaletteWindowController.show`, `UninstallScanner.discover`,
-`UninstallScanner.measure`, `Notes.search` and `FileIndexer.update`. Open the Time Profiler or
+`Platform/Signposts.swift` emits intervals on the `com.tinycast.perf` subsystem: `AppCore.start`,
+`AppIndex.scan`, `AppIndex.rank`, `PaletteWindowController.show`,
+`Notes.search` and `FileIndexer.update`. Open the Time Profiler or
 `os_signpost` instrument in Instruments and filter to that subsystem; nothing needs recompiling.
 
 None of the benchmarks below join the suite, so each is registered in `run-tests.sh` as `run index`
@@ -591,19 +588,6 @@ prefs, caches, TCC grants and login item, so this cannot disturb an installed co
 - Every binding survives quit and relaunch
 - `Enable Commands` off leaves every pane-owned command listed, searchable and firing — Notes,
   Clipboard, Emoji, File Search, Snippets, Quicklinks, Calendar, AI and the two layout commands
-
-### Uninstall
-
-- The launcher's Uninstall action opens the scan screen; the bundle is first, leftovers sorted by path
-- Rows appear with no loading copy at any point; folder sizes fill in behind them and totals climb
-- Locked rows cannot be checked; filtering by name works
-- Confirming moves items to the Trash and they are **recoverable from it**
-- A running app exits before any files move, including a menu-bar app or one launched during confirmation
-- An app that refuses to quit leaves every item in place after the grace period
-- Full Disk Access appears in both Permissions and File Search, and both open the correct privacy pane
-- With Full Disk Access granted, protected leftovers become selectable; administrator-only items stay locked
-- Escaping mid-scan cancels promptly with no spinner left behind
-- Hiding and immediately restoring the screen never strands an in-flight file icon as a placeholder
 
 ### Quicklinks
 

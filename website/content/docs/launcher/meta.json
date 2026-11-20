@@ -8,7 +8,6 @@
     "system-settings",
     "system-actions",
     "commands",
-    "quicklinks",
-    "uninstall"
+    "quicklinks"
   ]
 }

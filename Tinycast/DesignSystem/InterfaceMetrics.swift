@@ -79,7 +79,6 @@ struct InterfaceMetrics: Equatable, Sendable {
         var compactKeyCap: CGFloat { scaledPoints(Theme.Size.compactKeyCap, scale) }
         var heroKeyCap: CGFloat { scaledPoints(Theme.Size.heroKeyCap, scale) }
         var menuButton: CGFloat { scaledPoints(Theme.Size.menuButton, scale) }
-        var checkbox: CGFloat { scaledPoints(Theme.Size.checkbox, scale) }
 
         var menuWidth: CGFloat { scaledPoints(Theme.Size.menuWidth, scale) }
         var formMenuMinimumWidth: CGFloat { scaledPoints(Theme.Size.formMenuMinimumWidth, scale) }

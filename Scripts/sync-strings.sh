@@ -15,6 +15,19 @@ while IFS= read -r f; do args+=(--stringsdata "$f"); done < <(
         -name '*.stringsdata'
 )
 # The catalog's file name is its table, so only `Localizable` strings land in it.
-xcrun xcstringstool sync Tinycast/Resources/Localizable.xcstrings "${args[@]}"
+CATALOG=Tinycast/Resources/Localizable.xcstrings
+xcrun xcstringstool sync "$CATALOG" "${args[@]}"
+
+# Only compiler-proven unused strings are pruned; shared strings keep their translations.
+node - "$CATALOG" <<'JS'
+const fs = require("fs");
+const file = process.argv[2];
+const catalog = JSON.parse(fs.readFileSync(file, "utf8"));
+for (const [key, entry] of Object.entries(catalog.strings)) {
+  if (entry.extractionState === "stale") delete catalog.strings[key];
+}
+const json = JSON.stringify(catalog, null, 2).replace(/^(\s*"(?:[^"\\]|\\.)*"):/gm, "$1 :");
+fs.writeFileSync(file, json + "\n");
+JS
 
 node Scripts/check-localizations.js
