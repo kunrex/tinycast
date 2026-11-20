@@ -3,8 +3,13 @@
 Export and import of Tinycast's own data as a single `.tinycast` file, plus the entry point for
 importing a Raycast export. The feature lives in `Features/Backup/`.
 
-A backup carries five independently selectable categories, ticked on export and again on import:
-**Settings & Shortcuts**, **Clipboard History**, **Snippets**, **Notes** and **Launcher Learning**.
+A backup carries four independently selectable categories, ticked on export and again on import:
+**Settings & Shortcuts**, **Clipboard History**, **Snippets** and **Launcher Learning**.
+
+Notes documents and Notes preferences are not exported or applied. Format 1 backups made before this
+change remain readable: mixed backups offer every supported category and ignore Notes; Notes-only
+backups offer no importable categories. Extraction still preserves legacy Notes payload bytes in
+staging without applying them, and never modifies the source archive or user documents.
 
 ## Invariants
 
@@ -49,6 +54,7 @@ A backup carries five independently selectable categories, ticked on export and 
 | `Model/SettingsBackupCoverage.swift` | The coverage declaration the harness checks |
 | `Model/RaycastImport.swift` | The importable categories, the `Result` and its per-category trim |
 | `Model/RaycastImportError.swift` | The three failures an import reports |
+| `Service/SettingsBackup+AppCore.swift` | The settings snapshot's live-store gather and apply extension |
 | `Service/BackupStaging.swift` | One scratch tree, created on init and removed on discard |
 | `Service/BackupComposer.swift` | Stores → staging; `plan` on main, `write` off it |
 | `Service/BackupApplier.swift` | Staging → stores, returning a per-category summary |
@@ -67,7 +73,6 @@ settings.json              SettingsBackup, exactly as it encoded before
 clipboard/items.jsonl      one clip per line
 clipboard/images/<uuid>.png
 snippets/<name>.md         copied verbatim
-notes/<name>.md            copied verbatim
 learning/{ranking,emoji,calculator}.json
 ```
 
@@ -82,15 +87,15 @@ because a newline inside a clip is escaped as `\n` by the encoder and can never 
 
 **AppleArchive, LZFSE, and a deliberately narrow keyset.** `"TYP,PAT,DAT,MOD,MTM"` rather than
 `.defaultForArchive`: no `UID`/`GID`, which would restore another Mac's numeric owner, and no `IDX`,
-whose hardlink dedup would record a link to a blob outside the staged tree. `MTM` stays because the
-note list sorts on modification date. LZFSE rather than LZMA because clipboard PNGs dominate the
+whose hardlink dedup would record a link to a blob outside the staged tree. `MTM` stays to preserve
+document modification dates. LZFSE rather than LZMA because clipboard PNGs dominate the
 payload and are already compressed.
 
 **Extraction is filtered, not trusted.** `BackupArchive.open` passes an `ArchiveHeader.EntryFilter`
 that returns `.skip` for any entry whose path is absolute or contains `..`, and then refuses an extract
 holding a symbolic link — a link entry names no `..` at all, so the path filter passes it, and reading
 through one would leave the tree the caller chose. Composing resolves a link for the same reason, so a
-symlinked note travels as a file. `BackupArchiveTests` builds both hostile archives header-by-header
+symlinked snippet travels as a file. `BackupArchiveTests` builds both hostile archives header-by-header
 and asserts nothing escapes.
 
 **Staging lives in `Caches`, not `temporaryDirectory`.** It has to sit on the same volume as
@@ -112,7 +117,10 @@ claims a key twice, that every exclusion names a real key and carries a non-empt
 capability-granting key — `snippetsEnabled`, `extensionsEnabled`, `calendarEnabled`,
 `autoJoinMeetings`, `cameraPreview`, `quickActionsEnabled` — is named individually as excluded. The
 duplication between `AppSettings` and this file is the point: it forces a decision about every new
-setting rather than defaulting it into a backup.
+setting rather than defaulting it into a backup. During the staged Notes removal, its still-live
+preferences are deliberately excluded rather than deleting their persisted keys. Legacy Notes JSON
+fields are unknown to `SettingsBackup` and ignored by its shipped decoder; supported fields still
+merge through the existing apply path.
 
 ## Importing
 
@@ -131,8 +139,6 @@ Per category:
   `imagesDir` is one retention can ever reclaim, which is why the blob moves there before the row lands.
 - **Snippets** merge through `importSnippets`, deduped on name and body so importing the same file
   twice doesn't leave a second copy of everything. Importing snippets does not enable snippets.
-- **Notes** land as new files through `NotesRepository.importNotes`, which suffixes a title that is
-  already taken rather than overwriting it.
 - **Learning** replaces. Merging two Macs' frecency tables produces a table describing neither.
 
 An `id` never travels with a clip: `items.id` is `UNIQUE`, so a re-import minting fresh identities is

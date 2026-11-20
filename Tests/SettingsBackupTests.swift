@@ -55,19 +55,43 @@ struct SettingsBackupTests {
         check(
             "removed default ignore patterns ride the settings backup",
             mirrored["fileSearchRemovedDefaultPatterns"] == .fileSearchRemovedDefaultPatterns)
-        check("notes enablement rides the settings backup", mirrored["notesEnabled"] == .notesEnabled)
         check(
             "compact shortcuts ride the settings backup",
             mirrored["compactBarCommands"] == .compactBarCommands)
-        check(
-            "Markdown rendering rides the settings backup",
-            mirrored["notesRendersMarkdown"] == .notesRendersMarkdown)
-        check(
-            "the formatting bar rides the settings backup",
-            mirrored["notesShowsFormattingBar"] == .notesShowsFormattingBar)
-        check(
-            "the Notes menu bar item rides the settings backup",
-            mirrored["notesShowsInMenuBar"] == .notesShowsInMenuBar)
+        for key: AppSettingsKey in [
+            .notesEnabled, .notesRendersMarkdown, .notesShowsFormattingBar, .notesShowsInMenuBar,
+            .notesFolder
+        ] {
+            check(
+                "\(key.rawValue) is intentionally excluded while Notes remains installed",
+                excluded[key.rawValue] != nil && !mirrored.values.contains(key))
+        }
+
+        do {
+            let legacy = Data("""
+                {"settings": {"notesEnabled": true, "notesRendersMarkdown": false,
+                 "notesShowsFormattingBar": true, "notesShowsInMenuBar": true,
+                 "notesFolder": "/unused/legacy", "clipboardEnabled": false,
+                 "clipboardRetentionDays": 30, "fileSearchEnabled": true}}
+                """.utf8)
+            let backup = try SettingsBackup(json: legacy)
+            check("supported settings decode alongside legacy Notes fields",
+                backup.settings?.clipboardEnabled == false
+                    && backup.settings?.clipboardRetentionDays == 30
+                    && backup.settings?.fileSearchEnabled == true)
+            let encoded = try backup.encoded()
+            let object = try JSONSerialization.jsonObject(with: encoded) as? [String: Any]
+            let settings = object?["settings"] as? [String: Any]
+            check("legacy Notes fields are ignored, not re-encoded",
+                settings != nil && settings?.keys.contains { $0.hasPrefix("notes") } == false)
+            let notesOnly = try SettingsBackup(json: Data(
+                "{\"settings\":{\"notesEnabled\":\"unknown type\",\"notesShowsInMenuBar\":[]}}".utf8))
+            let empty = try JSONSerialization.jsonObject(with: notesOnly.encoded()) as? [String: Any]
+            check("unknown Notes values do not prevent decoding",
+                (empty?["settings"] as? [String: Any])?.isEmpty == true)
+        } catch {
+            check("shipped settings decoder accepts legacy Notes fields (\(error))", false)
+        }
         check(
             "clipboard enablement rides the settings backup",
             mirrored["clipboardEnabled"] == .clipboardEnabled)

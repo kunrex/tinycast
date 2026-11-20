@@ -55,12 +55,12 @@ struct BackupArchiveTests {
         let png = Data((0..<200_000).map { UInt8($0 % 251) })
         try? bundle.write(png, to: bundle.clipboardImagesDirectory.appendingPathComponent("a.png"))
         _ = try? bundle.writeDocument(
-            title: "Café — notes/with:separators", extension: "md", contents: "héllo\nwörld",
-            in: bundle.notesDirectory)
+            title: "Café — snippet/with:separators", extension: "md", contents: "héllo\nwörld",
+            in: bundle.snippetsDirectory)
         try? bundle.write(Data(), to: bundle.snippetsDirectory.appendingPathComponent("empty.md"))
         let manifest = BackupManifest(
             appVersion: "1.2.3", createdAt: Date(timeIntervalSince1970: 1_700_000_000),
-            counts: ["clipboard": 1, "notes": 1])
+            counts: ["clipboard": 1, "snippets": 2])
         try? bundle.writeManifest(manifest)
 
         let archive = root.appendingPathComponent("out.tinycast")
@@ -79,21 +79,21 @@ struct BackupArchiveTests {
             (try? Data(
                 contentsOf: reopened.clipboardImagesDirectory.appendingPathComponent("a.png")))
                 == png)
-        let notes = reopened.documents(in: reopened.notesDirectory, extension: "md")
-        check("a note with separators and non-ASCII survives", notes.first?.contents == "héllo\nwörld")
+        let snippets = reopened.documents(in: reopened.snippetsDirectory, extension: "md")
+        let document = snippets.first { $0.contents == "héllo\nwörld" }
+        check("a snippet with separators and non-ASCII survives", document != nil)
         check(
             "a title's path separators never become directories",
-            notes.first.map { !$0.name.contains("/") } ?? false)
-        check(
-            "a zero-byte file survives",
-            reopened.documents(
-                in: reopened.snippetsDirectory, extension: "md"
-            ).first?.contents == "")
+            document.map { !$0.name.contains("/") } ?? false)
+        check("a zero-byte file survives", snippets.contains { $0.contents == "" })
         let decoded = try? reopened.readManifest()
         check("the manifest round trips", decoded == manifest)
-        check("an absent category reads as absent", decoded?.categories == [.clipboard, .notes])
+        check("an absent category reads as absent", decoded?.categories == [.clipboard, .snippets])
         check("a present category keeps its count", decoded?.count(.clipboard) == 1)
-        check("an absent category counts zero", decoded?.count(.snippets) == 0)
+        check("an absent category counts zero", decoded?.count(.learning) == 0)
+        check(
+            "preparing all supported categories creates no Notes directory",
+            !FileManager.default.fileExists(atPath: source.appendingPathComponent("notes").path))
 
         // Ownership must not travel: the extract belongs to whoever opened it.
         let attributes = try? FileManager.default.attributesOfItem(
@@ -187,9 +187,8 @@ struct BackupArchiveTests {
                         decoded.count(.clipboard) == 2 && decoded.count(.snippets) == 3
                             && decoded.count(.learning) == 0)
                 }
-                // These contracts intentionally fail until Notes is removed from category selection.
                 check(
-                    "FORWARD: \(name) offers only supported import categories",
+                    "\(name) offers only supported import categories",
                     decoded.categories == (notesOnly ? [] : supported))
             } catch {
                 check("BASELINE: \(name) fixture opens (\(error))", false)

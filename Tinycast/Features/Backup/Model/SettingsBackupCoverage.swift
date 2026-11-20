@@ -34,10 +34,6 @@ enum SettingsBackupCoverage {
         "fileSearchIgnorePatterns": .fileSearchIgnorePatterns,
         "fileSearchRemovedDefaultPatterns": .fileSearchRemovedDefaultPatterns,
         "fileSearchShowInLauncher": .fileSearchShowInLauncher,
-        "notesEnabled": .notesEnabled,
-        "notesRendersMarkdown": .notesRendersMarkdown,
-        "notesShowsFormattingBar": .notesShowsFormattingBar,
-        "notesShowsInMenuBar": .notesShowsInMenuBar,
         "customCommandsEnabled": .customCommandsEnabled,
         "customCommandsShowInLauncher": .customCommandsShowInLauncher,
         "snippetsShowInLauncher": .snippetsShowInLauncher,
@@ -194,6 +190,14 @@ enum SettingsBackupCoverage {
             "Names a folder on this Mac; the one a backup lands on may not have it.",
         AppSettingsKey.notesFolder.rawValue:
             "Names a folder on this Mac; the one a backup lands on may not have it.",
+        AppSettingsKey.notesEnabled.rawValue:
+            "Notes is no longer backed up; its live preferences stay local until feature removal.",
+        AppSettingsKey.notesRendersMarkdown.rawValue:
+            "Notes is no longer backed up; its live preferences stay local until feature removal.",
+        AppSettingsKey.notesShowsFormattingBar.rawValue:
+            "Notes is no longer backed up; its live preferences stay local until feature removal.",
+        AppSettingsKey.notesShowsInMenuBar.rawValue:
+            "Notes is no longer backed up; its live preferences stay local until feature removal.",
         AppSettingsKey.settingsFileEnabled.rawValue:
             "Lets a file on this Mac change its settings; an import must not hand that to another."
     ]

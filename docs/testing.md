@@ -185,7 +185,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `IconCacheTests` | `Platform/Images/IconCache.swift` — row sizing at 1×/2×, warm reuse, stamp and style invalidation, bitmap release, fitted geometry across all 256 alpha values, and that a row icon draws identically to the 96px one |
 | `EntryIconTests` | `EntryIcon` — that each case draws, caches and prints apart from the others, and that a moved `FileIconStamp` retires the bitmap decoded before it |
 | `TextDiffTests` | `QuickActions/Model/TextDiffEngine.swift` — exact chunks, coalescing, Unicode, ties, token-cap boundaries and fast paths |
-| `SettingsBackupTests` | `Settings/AppSettingsKey.swift`, `Backup/Model/SettingsBackupCoverage.swift` |
+| `SettingsBackupTests` | `Settings/AppSettingsKey.swift`, `Backup/Model/SettingsBackupCoverage.swift`, and the shipped `SettingsBackup` decoder, including ignored legacy Notes fields |
 | `SettingsFileTests` | `Settings/Model/` and `Settings/Service/` — key paths, value tokens, the printer and parser, and the repository's import, replace, save, reload and symlink handling on a scratch folder |
 | `WindowFileTests` | `WindowManagement/Model/WindowManagementFileFormat.swift` — command shortcuts, custom sizes, layouts and rooms as settings.json spells them, hand edits and bad records |
 | `LauncherSettingsFileTests` | Launcher settings application — invalid records, partial edits, deferred bundles, shortcut moves and records outside search scopes; isolated preferences and in-memory scan/Carbon effects |
@@ -759,7 +759,7 @@ prefs, caches, TCC grants and login item, so this cannot disturb an installed co
   window brings the counts back
 - ⌥⌘C and ⇧⌘B toggle a code block and a quote; with Render Markdown off they do nothing special
 - Settings > Notes > Show Formatting Bar is disabled while Render Markdown is off, Settings search for
-  "formatting" lands on it, and a backup round trip restores it
+  "formatting" lands on it; backup import leaves this local preference unchanged
 - With Show in Menu Bar on, the Notes icon appears at once; a click shows Notes and a second click
   hides it, and right-, Control- and Option-click open Create Note and Search Notes. Turning the
   setting or Notes off removes the icon, and a ⌘-dragged position survives a relaunch
@@ -993,6 +993,9 @@ Debug answers `tinycast-dev://`; use that scheme for every link below.
 - A file whose `manifest.json` `format` was hand-edited is refused **with a message naming it**
 - Cancelling the save panel leaves nothing in `~/Library/Caches/com.abueammar.tinycast.dev/backup-staging/`
 - **`snippetsEnabled` is not in the exported file**, and importing does not enable snippets
+- Notes has no export/import category; its documents and preferences are not exported or applied
+- A legacy mixed format 1 backup offers all remaining categories; a Notes-only backup opens with
+  nothing importable. Neither changes local Notes preferences or Markdown files
 - Nothing in the extracted tree names a Keychain item, an extension, or an AI conversation
 
 ### Clean install
