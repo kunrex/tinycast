@@ -23,7 +23,7 @@ Independently of the folder tree, every mature subsystem has converged on the sa
 │ CustomWindowSize{,Store} · Room/* ·                                        │
 │ PaletteRowIndex ·                                                          │
 │ Uninstall{Target,SearchRoot,Rules,Protection,Plan} ·                       │
-│ Quicklink{,Destination,Store,Archive} · AppleShortcut · Notes/Model/* ·    │
+│ Quicklink{,Destination,Store,Archive} · AppleShortcut ·    │
 │ Snippets/Model/* ·                                                         │
 │ ShellCommandRunner · DoubleTap{Modifier,Detector} · ClipboardStore ·       │
 │ RaycastDecoder · Scrypt · AppSettingsKey · SettingsBackupCoverage          │
@@ -42,7 +42,7 @@ Independently of the folder tree, every mature subsystem has converged on the sa
 │ RoomWindowSweep · RoomRunner ·                                             │
 │ IconCache · WindowMover · UninstallScanner · UninstallRunner ·             │
 │ SystemActionRunner · QuicklinkLauncher · TextInjector ·             │
-│ SnippetKeywordListener · NotesRepository · CurrencyRateStore · Paster ·    │
+│ SnippetKeywordListener · CurrencyRateStore · Paster ·    │
 │ HotKeyCenter · HyperKeyTap · KeyboardRemapper · ModifierTapMonitor ·       │
 │ SecureInputMonitor · RunningAppsMonitor ·                                  │
 │ CalendarStore · MeetingLauncher · MeetingClock · CameraSession ·           │
@@ -147,9 +147,6 @@ driven imperatively from AppKit. Extension menu extras are dynamic `NSStatusItem
   unreliable for accessory apps, so this is deliberate. Their lifecycles are independent of the
   palette's in both directions. Onboarding stays accessory rather than registering Dock ownership,
   so completing it can open the palette without an activation-policy change stealing focus.
-- **Notes is disconnected.** Its source tree is excluded from the app target in `project.yml`,
-  retained with standalone harnesses until Step5. No core owner or window is created.
-  See [features/notes.md](features/notes.md).
 - **AI Chat** — a titled `AppWindowController` window owned by `AIChatCoordinator`: an
   `NSSplitViewController` with a collapsible sidebar of saved chats beside the open conversation, as
   Settings is built. The conversation lives on `AppCore.aiChats`, not the window, so closing it cancels
@@ -241,7 +238,7 @@ Tinycast/
   Migrations/       one-shot repairs, each deleted after one stable release (migrations.md)
   Features/
     PaletteRowIndex.swift   the flat selection index — palette-owned, so it sits at the top
-    Launcher/ Clipboard/ Calculator/ Calendar/ Emoji/ FileSearch/ MenuSearch/ Notes/
+    Launcher/ Clipboard/ Calculator/ Calendar/ Emoji/ FileSearch/ MenuSearch/
     Quicklinks/ Snippets/ Uninstall/ SystemActions/ CustomCommands/ HotKeys/ Backup/
     WindowManagement/ Onboarding/ Updates/ Support/ AI/ Settings/
     Extensions/

@@ -1,9 +1,10 @@
 # Deeplinks
 
 Every launcher row that can take a hotkey can also be run by URL, and so can a saved AI chat
-and a one-off window size. Retired `note/*`, Notes command and `settings/notes` links report an
-unknown link and run nothing; they never fall back to the launcher or another action. Karabiner-Elements, a Shortcut, a script, a Stream Deck or a web page can
-drive Tinycast without a chord of its own:
+and a one-off window size. Retired `note/*`, `command/show-notes`, `command/create-note`,
+`command/search-notes` and `settings/notes` links report an unknown link and run nothing; they never
+fall back to the launcher or another action. Karabiner-Elements, a Shortcut, a script, a Stream Deck
+or a web page can drive Tinycast without a chord of its own:
 
 ```sh
 open -g "tinycast://command/clipboard-history"

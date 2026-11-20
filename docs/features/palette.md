@@ -478,7 +478,7 @@ Both clip to their own bounds so AppKit's visible-rect tracking area stays insid
 Without this, the unclipped form scroll view makes each text view track the entire window, and their
 cursor claims overlap even in the gaps between fields. The page itself keeps its edge dissolve.
 Each editor session mounts fresh controls; textarea undo stays local and includes placeholder inserts.
-The textarea routes undo/redo to its own manager, as the Notes editor does in a non-activating panel.
+The textarea routes undo/redo to its own manager in the non-activating panel.
 
 ## One menu at a time
 
@@ -689,11 +689,8 @@ app:
 
 Both require the Accessibility permission (`Permissions.ensureAccessibility()`).
 
-Ordering the palette out makes AppKit pass key to the next of our panels that accepts it, and a
-non-activating panel holds the keyboard even while another app is active. So `hide` sets
-`NotesPanel.refusesInheritedKey` around the order-out unless `previousOwnWindow` is still visible:
-over another app the keyboard returns to that app, and a paste or the next keystroke cannot land in an
-open note. Summoned from a note, the note takes key back, so a paste lands there.
+`hide` restores a still-visible `previousOwnWindow` when summoned from one of Tinycast's own
+windows; otherwise focus returns to the previous external app.
 
 The same show also mirrors that app into `PaletteState.pasteTarget` (a `PasteTarget`: localized
 name + bundle path), so Clipboard and Emoji can name it — the footer pill reads "Paste to Notes" and

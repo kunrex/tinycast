@@ -23,7 +23,7 @@ export const ethosPillars: EthosPillar[] = [
   {
     icon: "local",
     title: "Local",
-    body: "Your clipboard, notes and snippets are stored on your Mac. AI stays off until you turn it on and pick a provider.",
+    body: "Your clipboard and snippets are stored on your Mac. AI stays off until you turn it on and pick a provider.",
   },
   {
     icon: "source",

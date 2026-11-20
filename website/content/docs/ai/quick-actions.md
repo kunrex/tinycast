@@ -118,8 +118,7 @@ into a different language.
 ## When an action won't run
 
 - **In Tinycast's own windows.** Pressing a shortcut while Settings is in front does nothing, and
-  Tinycast tells you why. [Notes](/docs/features/notes) is the exception: Quick Actions work on text
-  you select in a note.
+  Tinycast tells you why.
 - **In a password field**, or anywhere Secure Event Input is on.
 - **While another Quick Action is still running.** Actions run one at a time, so two can't change the
   same selection.

@@ -33,7 +33,7 @@ reports notification-dependent checks as skipped when the session cannot deliver
 - **One command, one pane, one switch.** `SettingsTab.ownedCommands` is the whole table of which pane
   lists a command's shortcut, alias and launcher checkbox. A feature that names its commands there
   already decides whether they exist, so `Enable Commands` neither lists nor gates them — two switches
-  over one row is how somebody ends up with Notes on and its shortcut dead. Everything the table does
+  over one row is how somebody ends up with a feature on and its shortcut dead. Everything the table does
   not name belongs to Settings › Commands and answers to that switch.
 - **The ranking lives in pure files.** `Model/LauncherMatch.swift` (the scorer),
   `Model/LauncherOrder.swift` (the comparator) and `Model/LauncherSuggestions.swift` are
@@ -177,8 +177,8 @@ the Zed app: rule 3 only protects an exact title past three characters.
 - **Apps win the ties.** `KindDescriptor.rankPriority` puts applications (4) above command-like kinds
   (3), quicklinks (2), and System Settings panes and meetings (1), so a first-party app is never
   shadowed by the Tinycast command named after it: Calculator over Calculator History.
-- **One boosted command.** Only AI Chat carries boosted terms (`CommandID.boostedTerms`); boosting Show
-  Notes would shadow Apple's Notes.
+- **One boosted command.** Only AI Chat carries boosted terms (`CommandID.boostedTerms`); boosting
+  a built-in command must not shadow an application with the same name.
 - **Two entries with the same alias** fall through to the next rule.
 
 `settings` is the case these were measured against. Apple declares `Settings` in System Settings'

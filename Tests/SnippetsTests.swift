@@ -2163,5 +2163,5 @@ private final class FakeSnippetKeywordTapController: SnippetKeywordTapControllin
     }
 }
 
-/// Stands in for `NoteTextView`: the conformance is the whole opt-in.
+/// Stands in for `ComposerTextView`: the conformance is the whole opt-in.
 private final class HarnessEditor: NSTextView, InjectableTextView {}

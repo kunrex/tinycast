@@ -1,9 +1,9 @@
 ---
 title: Deeplinks
-description: Run any command, note or chat from a tinycast:// link, with text and arguments, from Karabiner, Shortcuts, scripts or a web page.
+description: Run any command or chat from a tinycast:// link, with text and arguments, from Karabiner, Shortcuts, scripts or a web page.
 ---
 
-**Anything you can give a shortcut, you can also run from a link.** So can a note, a saved AI chat
+**Anything you can give a shortcut, you can also run from a link.** So can a saved AI chat
 and a window size. Use links from Karabiner-Elements, Shortcuts, a Stream Deck, a script or a web
 page:
 
@@ -20,7 +20,6 @@ when you rename them.
   actions with <kbd>⌘</kbd><kbd>K</kbd> and choose **Copy Deeplink**. Anything you typed into the
   row's fields is part of the link.
 - **In Settings**: right-click a shortcut field and choose **Copy Deeplink**.
-- **In Notes**: open the note switcher and click the link button on a note.
 - **In AI Chat**: right-click a chat in the sidebar, or use the window's menu.
 
 Apps and System Settings panes have no Tinycast link. Use `open -a` and `x-apple.systempreferences:`
@@ -35,12 +34,12 @@ for them.
 | `tinycast://command/clipboard-history` | Runs a built-in command                               |
 | `tinycast://window-command/left-half`  | Moves the front window                                |
 | `tinycast://system-action/lock-screen` | Runs a [system action](/docs/launcher/system-actions) |
-| `tinycast://note/Groceries.md`         | Opens that note                                       |
 | `tinycast://chat/<id>`                 | Opens that saved chat                                 |
 | `tinycast://settings/permissions`      | Opens Settings on a pane                              |
 
 A link to a command that opens a screen works like its shortcut: open it twice and the screen
-closes. A note link uses the note's file name, so it stops working when you rename the note.
+closes. Retired `note/*`, `command/show-notes`, `command/create-note`, `command/search-notes`
+and `settings/notes` links report unknown and do nothing, including when they carry input.
 
 ## Send text and arguments
 
@@ -55,7 +54,7 @@ Links take three parameters. Encode their values for a URL.
 
 `fallbackText` works with Clipboard History, Search Emoji & Symbols, Calculator History, Search
 Quicklinks, Search Files, Define Word, Search Snippets, Search Custom Commands, Search Menu Items,
-Switch Windows, Create Snippet and Create Note. In Quick AI and the AI Chat window, it types your
+Switch Windows and Create Snippet. In Quick AI and the AI Chat window, it types your
 text but doesn't send it.
 
 A few more things links can carry:

@@ -109,7 +109,6 @@ struct LanguageTests {
             ("commands-empty", "Nothing here yet.", ["fr": "Aucune commande à afficher."]),
             ("apple-shortcuts-empty", "Nothing here yet.", ["fr": "Aucun raccourci à afficher."]),
             ("snippets-use-default-folder", "Use Default", ["fr": "Utiliser le dossier par défaut"]),
-            ("notes-use-default-folder", "Use Default", ["fr": "Utiliser le dossier par défaut"]),
             ("dictation-model-installed", "Installed", ["fr": "Installé"]),
             ("dictation-language-auto", "Auto", ["fr": "Détection automatique"]),
             ("ai-installed-tools", "Installed", ["fr": "Outils installés"]),
@@ -201,7 +200,7 @@ struct LanguageTests {
                 for (key, expected) in [
                     "Medium": "Moyenne", "High": "Élevée", "Light": "Clair", "Dark": "Sombre",
                     "Time": "Heure", "Center": "Centrer", "Pinned": "Épinglés",
-                    "On": "Activé", "Off": "Désactivé", "Untitled": "Sans titre"
+                    "On": "Activé", "Off": "Désactivé"
                 ] {
                     check(
                         "French label \(key) resolves in its context",

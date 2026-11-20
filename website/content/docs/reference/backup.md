@@ -78,7 +78,7 @@ yourself, in the app, after reading what they do. Importing snippets doesn't tur
 | Quick Actions model, prompts, language and custom actions                                                                  | An import should never change what a shortcut does to your text  |
 | Extension package manager and custom search paths                                                                          | They're specific to this Mac, not part of your setup             |
 | Dictation settings, its shortcut and downloaded models                                                                     | They belong to this Mac's microphone and disk                    |
-| Palette position, auto-switch input source, calendar checkboxes, the browser for meeting links, Snippets and Notes folders | They name things on this Mac that another Mac may not have       |
+| Palette position, auto-switch input source, calendar checkboxes, the browser for meeting links, Snippets folders | They name things on this Mac that another Mac may not have       |
 | Cached data, like currency rates and update checks                                                                         | Tinycast downloads it again as needed                            |
 
 Clipboard images are stored inside the backup by name, not by their location on your Mac. The only
@@ -100,7 +100,7 @@ dotfiles repository.
 
 The file holds your preferences, the shortcuts and aliases of apps, System Settings panes, system
 actions and built-in commands, and all of window management, including custom sizes, layouts and
-rooms. It never holds your snippets, notes, quicklinks, custom commands, MCP servers or AI
+rooms. It never holds your snippets, quicklinks, custom commands, MCP servers or AI
 connections.
 
 If the file already exists when you turn sync on, Tinycast asks whether to **Import** it or
@@ -118,10 +118,10 @@ Your data is stored as regular files, including some data not included in backup
 | What                                          | Where                                             |
 | --------------------------------------------- | ------------------------------------------------- |
 | [Snippets](/docs/features/snippets)           | `Snippets/`, or the **Snippets Folder** you chose |
-| [Notes](/docs/features/notes)                 | `Notes/`, or the **Notes Folder** you chose; not included in backups |
 | [Quicklinks](/docs/launcher/quicklinks)       | `quicklinks.sqlite3`, with its own JSON export    |
 | [Clipboard history](/docs/features/clipboard) | `clipboard.sqlite3`, with images next to it       |
 | [AI chats](/docs/ai)                          | `ai-chats.sqlite3`, never included in a backup    |
 
-Snippets and notes are plain Markdown files. Copying those folders works as a backup, and you can
-read the files without Tinycast.
+Snippets are plain Markdown files. Copying that folder works as a backup, and you can read the
+files without Tinycast. Files from the retired Notes feature remain untouched in `Notes/` or your
+previously chosen folder. Open or back them up with another Markdown editor.

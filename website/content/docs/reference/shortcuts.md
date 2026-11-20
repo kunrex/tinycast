@@ -170,17 +170,6 @@ activate the selected item.
 | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>O</kbd> | Show in Finder         |
 | <kbd>⇧</kbd><kbd>⌘</kbd><kbd>I</kbd> | Show Info in Finder    |
 
-## Notes window
-
-| Key                           | Does                            |
-| ----------------------------- | ------------------------------- |
-| <kbd>⌘</kbd><kbd>N</kbd>      | Create a note                   |
-| <kbd>⌘</kbd><kbd>P</kbd>      | Open the switcher               |
-| <kbd>⌘</kbd><kbd>O</kbd>      | Open the Notes folder           |
-| <kbd>⌘</kbd><kbd>W</kbd>      | Hide the window                 |
-| <kbd>esc</kbd>                | Close the switcher, then hide   |
-| <kbd>⌘</kbd><kbd>delete</kbd> | Move the selected note to Trash |
-
 ## Switch Room
 
 | Shortcut                                    | Action                                 |

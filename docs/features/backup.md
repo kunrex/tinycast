@@ -6,8 +6,8 @@ importing a Raycast export. The feature lives in `Features/Backup/`.
 A backup carries four independently selectable categories, ticked on export and again on import:
 **Settings & Shortcuts**, **Clipboard History**, **Snippets** and **Launcher Learning**.
 
-Notes documents and Notes preferences are not exported or applied. Format 1 backups made before this
-change remain readable: mixed backups offer every supported category and ignore Notes; Notes-only
+The Notes implementation is removed; its documents and preferences are not exported or applied.
+Format 1 backups made before its retirement remain readable: mixed backups offer every supported category and ignore Notes; Notes-only
 backups offer no importable categories. Extraction still preserves legacy Notes payload bytes in
 staging without applying them, and never modifies the source archive or user documents.
 

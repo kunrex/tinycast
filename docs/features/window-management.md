@@ -227,9 +227,8 @@ is looking at. `WindowTarget` is the answer to "what does this command act on": 
 window of ours, falling back to the frontmost app only when there is none.
 
 `canBecomeMain` is the filter, and it needed no new flag — every transient panel in the app already
-declines it, which leaves exactly the Notes editor and the `AppWindowController` windows. When a key
-child is in front, such as the note switcher that `addChildWindow`s itself onto the editor,
-`WindowTarget` looks one level up through `parent` so the command still places the editor.
+declines it, which leaves the `AppWindowController` windows. When a key child is in front,
+`WindowTarget` looks one level up through `parent` so the command still places the parent window.
 
 `PalettePanel` is the one main-capable panel of ours and would pass the filter. It never reaches
 here, because `WindowCommandCoordinator.handOffTarget()` branches on `paletteCoordinator.isVisible`
@@ -241,8 +240,7 @@ this section exists.
 Fullscreen on a window of ours fires when it is `.resizable` and its `collectionBehavior` opts out of
 neither `.fullScreenAuxiliary` nor `.fullScreenNone`. AppKit fullscreens a resizable window without
 ever setting `.fullScreenPrimary` on it, so testing that flag would make Fullscreen a silent no-op on
-Settings. The Notes panel is `.fullScreenAuxiliary` and stays a no-op, as an unwilling external
-window already is.
+Settings. Windows that opt out remain a no-op, as an unwilling external window already is.
 
 This mirrors `InjectionTarget` in [Text injection](text-injection.md), which solved the same problem
 for keystrokes: same shape, same `Service/` position, one idea applied twice.

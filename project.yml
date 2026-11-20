@@ -50,7 +50,6 @@ targets:
           - Features/Backup/Service/SettingsBackup+AppCore.swift
           - Features/Dictation/Helper
           - Features/FileSearch/Helper
-          - Features/Notes
           - Migrations/Handoff
           - Migrations/NotesSettingsMigration.swift
           - Resources/EmojiKeywords

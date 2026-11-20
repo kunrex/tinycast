@@ -26,7 +26,7 @@ in `Features/Settings/` (`Model/`, `Service/`, `SettingsFileSchema.swift`), the 
   record's field left out or of the wrong type keeps its value, and `null` clears it.
 - **Applying the file never writes it.** Only a change made in the app rewrites the file, so hand
   formatting stays until then.
-- **Content and machine state never enter it.** Notes, snippets, custom commands, quicklinks, MCP
+- **Content and machine state never enter it.** Snippets, custom commands, quicklinks, MCP
   servers and AI connections stay where they are — the file can say which folder snippets
   live in, never what is in them — as do the palette's position, the extension toolchain,
   the shortcuts and aliases of content, extensions and Apple Shortcuts, and what a room learns by
