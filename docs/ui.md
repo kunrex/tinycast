@@ -652,18 +652,6 @@ Motion is `Theme.RoomMotion.glide` for a card that changes place, a fade for one
 leaves, and `fadeIn`/`fadeOut` for the panels; Reduce Motion, or **Show animations** off, removes all of it. See
 [features/window-rooms.md](features/window-rooms.md#the-preview).
 
-## The camera preview panel
-
-`CameraPanel` is the third borderless surface, beside the dialog and the notes panel. It takes
-the same recipe — `panelScrim`, then `GlassEffectView`, then the clip — and the same optical lift a
-dialog takes, but sits at `.floating` rather than `.dialog` so a failure report still lands on
-top of it.
-
-`AVCaptureVideoPreviewLayer` is hosted in one `NSViewRepresentable` and nothing else; the title,
-countdown and buttons around it are Tinycast's own. Its buttons are a **deliberate copy** of
-`DialogButton` rather than a share: the dialog owns its button, and a preview that had to move with
-it would couple two unrelated surfaces.
-
 ## Dialog accessories
 
 A dialog carries at most one control beyond its buttons, and `DialogAccessory` makes that structural
@@ -672,7 +660,7 @@ rather than a convention — `.volume` for the Set Volume prompt, `.snippetArgum
 inline enumerated arguments are `DialogChip`s. `DialogPanel.handlesArrowKeys` is set from
 `DialogAccessory.claimsArrowKeys`, so the slider steps on ←/→ while snippet argument text fields
 keep their caret, and `acceptsLineBreaks` from the accessory of the same name, so only Edit Entry's
-`dialogTextHeight` text area takes ↵. Create Event uses the launcher form instead.
+`dialogTextHeight` text area takes ↵.
 
 The first text field or text view takes focus from `DialogController.windowDidBecomeKey`, never from
 the view. When the panel turns key AppKit picks its own first responder — the Cancel button with
@@ -752,7 +740,7 @@ system-drawn and a pane reads exactly as macOS System Settings does.
   **`FeatureSwitchSection`** (a feature's master switch plus its launcher-visibility companion),
   **`SettingsFilterField`** (the filter row above a long list), **`launcherVisibilityHelp()`**, and the
   Settings editor header, fields and surface. `ModalActionButtonStyle.swift` keeps every borderless surface's actions on one
-  implementation — dialogs, Settings editors, the camera footers and the Quick Action panel. `Onboarding/OnboardingCard.swift` keeps the older hand-drawn card,
+  implementation — dialogs, Settings editors and the Quick Action panel. `Onboarding/OnboardingCard.swift` keeps the older hand-drawn card,
   which that window still uses.
 - **A Settings editor borrows the dialog language, not its job.** `SettingsEditorPresenter` hosts the
   existing form in an activating, transparent child `NSPanel`, with the same `panel 26` Liquid Glass

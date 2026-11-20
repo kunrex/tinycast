@@ -37,6 +37,7 @@ When the check fails, delete everything the row lists, then the row. Then run `x
 | Migration | Repairs | Delete with it |
 | --- | --- | --- |
 | `BundleIdentifierMigration` | Moves `com.tinycast.app[.beta\|.dev]`'s preferences, Application Support and Caches folders and login item to `com.abueammar.tinycast[.beta\|.dev]`, and repoints every saved path into the old folders: in preferences (JSON-encoded ones too), JSON files, clipboard and quicklink rows, and `settings.json`. A `paths-repointed` marker in its backup makes it repair, once, a copy 0.12.14-beta.141 moved without repointing. Keychain secrets stay behind: moving them asks once per item, so users enter them again. Kept until **2027-05-13** | Everything in [Removing the bundle id move](#removing-the-bundle-id-move) |
+| `CalendarRemovalMigration` | Removes retired Calendar/Meetings and Camera preferences, hotkeys, launcher references, ranking and settings-file records before `AppCore` is created. Leaves calendar events and unrelated state untouched. One stable release, then gone | `Tinycast/Migrations/CalendarRemovalMigration.swift`, its call in `TinycastLaunch.main`, `Tests/CalendarRemovalMigrationTests.swift`, its `Scripts/run-tests.sh` entry, its [testing.md](testing.md) row, and this row |
 
 ### Removing the bundle id move
 

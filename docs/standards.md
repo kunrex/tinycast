@@ -248,7 +248,7 @@ AppKit element whose label lookup calls itself until the stack overflows — the
 Tinycast ships English plus German, Spanish, French, Japanese, Korean, Portuguese, Russian and
 Simplified Chinese. Every string lives in `Tinycast/Resources/Localizable.xcstrings`, keyed by its
 English source text; the compiler extracts the keys, and `./Scripts/sync-strings.sh` writes them into
-the catalog (Xcode's own build does the same in the IDE). The six privacy prompts live in
+the catalog (Xcode's own build does the same in the IDE). The four privacy prompts live in
 `InfoPlist.xcstrings`, keyed by their `Info.plist` key.
 
 - **SwiftUI's own initializers localize literals already** — `Text("…")`, `Button("…")`, `.help("…")`

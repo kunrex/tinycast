@@ -97,11 +97,8 @@ every screen but two: the clipboard lands past its pins
 | `.calculatorHistory`   | `CalculatorHistoryScreen`   | `CalculatorHistoryList`                                                                                  |
 | `.emoji`               | `EmojiScreen`               | `EmojiGridView`                                                                                          |
 | `.fileSearch`          | `FileSearchScreen`          | `FileSearchList` (see [file-search.md](file-search.md))                                                  |
-| `.schedule`            | `ScheduleScreen`            | `ScheduleList` (see [calendar.md](calendar.md))                                                          |
-| `.eventEditor`         | `EventEditorScreen`         | `EventEditorView` (see [calendar.md](calendar.md#create-event))                                          |
 | `.customCommandEditor` | `CustomCommandEditorScreen` | `CustomCommandEditorView` (see [custom-commands.md](custom-commands.md#launcher-editor))                 |
 | `.customCommands`      | `CustomCommandListScreen`   | `CustomCommandList` + script preview (see [custom-commands.md](custom-commands.md#launcher-integration)) |
-| `.meetingDetails`      | `MeetingDetailsScreen`      | `MeetingDetailsView` (see [calendar.md](calendar.md#the-details-page))                                   |
 | `.uninstall`           | `UninstallScreen`           | `UninstallList` (see [uninstall.md](uninstall.md))                                                       |
 | `.quicklinks`          | `QuicklinkListScreen`       | `QuicklinkList` + preview (see [quicklinks.md](quicklinks.md#search-quicklinks))                         |
 | `.quicklinkEditor`     | `QuicklinkEditorScreen`     | `QuicklinkEditorView` (see [quicklinks.md](quicklinks.md#launcher-editor))                               |
@@ -239,8 +236,8 @@ its own, so it also sets `argumentEntryID`, which lists that row alone in root s
 is its name. Both are set **after** `showPalette`, since `prepare` clears them.
 
 The flat `selection` index is the single source of truth for highlight / activation and **must always
-match the visible row order**, including the card at index 0 when present — the calculator's (see
-[calculator.md](calculator.md)) or the meeting join card (see [calendar.md](calendar.md)), never both.
+match the visible row order**, including the calculator card at index 0 when present (see
+[calculator.md](calculator.md)).
 
 ## The compact bar
 
@@ -250,7 +247,7 @@ button per configured `AppSettings.compactBarCommands` entry whose feature
 `AppIndex.isCommandEnabled` reports on. General settings shows **Compact Shortcuts** only
 when Compact is selected: an ordered list of zero to four unique commands, with add, replace,
 remove and move controls. The default is Clipboard History and Emoji & Symbols, both on for a new
-install, then Search Files and Search Quicklinks; Search Snippets, Show Notes, My Schedule and Quick
+install, then Search Files and Search Quicklinks; Search Snippets, Show Notes and Quick
 AI are also available. Disabled features retain their configured positions but disappear from the
 bar until re-enabled; Settings still offers them, under **Off** in both menus and marked Off in the
 list, so a slot can be ready before its feature is.
