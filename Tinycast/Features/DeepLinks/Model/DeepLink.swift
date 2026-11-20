@@ -6,8 +6,6 @@ enum DeepLink: Equatable, Sendable {
     /// `<kind>/<id>` for the launcher row `<kind>:<id>`, run as its shortcut would be.
     case entry(HotKeyAction, DeepLinkInput)
     case settings(slug: String)
-    /// A note by its file name, which is all a note is known by.
-    case note(name: String)
     case chat(id: UUID)
     case windowSize(CustomWindowSize)
 
@@ -15,7 +13,6 @@ enum DeepLink: Equatable, Sendable {
     static let extensionsHost = "extensions"
     static let searchHost = "search"
     static let windowSizeHost = "window-size"
-    private static let noteHost = "note"
     private static let chatHost = "chat"
 
     init?(url: URL, scheme: String) {
@@ -39,10 +36,6 @@ enum DeepLink: Equatable, Sendable {
             path: String(entryID[entryID.index(after: colon)...]), input: input)
     }
 
-    static func url(forNote name: String, scheme: String) -> URL? {
-        url(scheme: scheme, host: noteHost, path: name, input: .none)
-    }
-
     static func url(forChat id: UUID, scheme: String) -> URL? {
         url(scheme: scheme, host: chatHost, path: id.uuidString.lowercased(), input: .none)
     }
@@ -63,8 +56,6 @@ enum DeepLink: Equatable, Sendable {
             return .launcher(fallbackText: input.fallbackText)
         case ("settings", false):
             return path.contains("/") ? nil : .settings(slug: path.lowercased())
-        case (noteHost, false):
-            return path.contains("/") || path == "." || path == ".." ? nil : .note(name: path)
         case (chatHost, false):
             return UUID(uuidString: path).map { .chat(id: $0) }
         case (windowSizeHost, true):

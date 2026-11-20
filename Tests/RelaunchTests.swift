@@ -78,8 +78,7 @@ struct RelaunchTests {
             "repeated termination runs cleanup and teardown once",
             first == [
                 "first.start", "first.request-returned", "first.cleanup-start", "first.repeat-deferred",
-                "first.heartbeat", "first.cleanup-end", "first.flush-start", "first.flush-end",
-                "first.teardown"
+                "first.heartbeat", "first.cleanup-end", "first.teardown"
             ])
         guard relaunch else { return }
         let responsive = await waitUntil { events().contains("second.heartbeat") }
@@ -168,12 +167,6 @@ final class AppCore {
         }
         try? await Task.sleep(for: .milliseconds(150))
         record("cleanup-end")
-    }
-
-    func flushNotesForTermination() async {
-        record("flush-start")
-        try? await Task.sleep(for: .milliseconds(50))
-        record("flush-end")
     }
 
     func prepareForTermination() {

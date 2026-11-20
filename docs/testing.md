@@ -553,8 +553,8 @@ prefs, caches, TCC grants and login item, so this cannot disturb an installed co
 
 ### Hotkeys
 
-- The palette, clipboard, emoji, File Search, and all three Notes shortcuts fire; a per-app shortcut
-  toggles that app
+- The palette, clipboard, emoji and File Search shortcuts fire; a per-app shortcut toggles that app.
+  Old Notes shortcuts do nothing and do not reserve their chords
 - Recording captures a shortcut, and the old binding does not fire while recording
 - A conflicting binding is rejected and names its current owner
 - A double-tap binding fires; Hyper Key remaps and its status dot is green
@@ -590,7 +590,7 @@ prefs, caches, TCC grants and login item, so this cannot disturb an installed co
   quit Tinycast and Karabiner's own remaps keep working. Remap Caps Lock in Karabiner instead:
   Diagnostics… reports a Karabiner conflict
 - Every binding survives quit and relaunch
-- `Enable Commands` off leaves every pane-owned command listed, searchable and firing — Notes,
+- `Enable Commands` off leaves every pane-owned command listed, searchable and firing —
   Clipboard, Emoji, File Search, Snippets, Quicklinks, Calendar, AI and the two layout commands
 
 ### Uninstall
@@ -672,7 +672,13 @@ prefs, caches, TCC grants and login item, so this cannot disturb an installed co
 - With Pop to Root Search delayed, close and reopen before the timeout: the launcher keeps its query
   and file results. Let the timeout expire, or use Immediately: reopening starts with an empty query
 
-### Notes
+### Notes (disconnected; historical editor sweep retained until Step5)
+
+The app target excludes Notes. For Step4, verify there are no Notes launcher/settings/menu-bar
+entry points, old command/note/settings links report unknown without opening another screen, and
+old hotkey preferences register nothing. Launching and quitting must not touch user Markdown or
+Notes preferences. The standalone model/editor harnesses still run independently. The checklist
+below applies only to the retained implementation, not the running app.
 
 - With Notes **off**: all three commands are absent, their shortcuts no-op, and the Notes directory is
   not created
@@ -917,8 +923,9 @@ Debug answers `tinycast-dev://`; use that scheme for every link below.
   values, and opening it fills the same fields
 - Right-click a shortcut field in Settings (a command, a quicklink, an extension command): Copy
   Deeplink copies its link. Onboarding's and General's App Launcher field offer no menu
-- The note switcher's link button, and Copy Deeplink in the AI Chat sidebar and window menu, copy a
-  link that reopens that note or chat; a renamed note's old link reports the missing file
+- Copy Deeplink in the AI Chat sidebar and window menu copies a link that reopens that chat.
+  Retired `note/*`, `command/show-notes`, `command/create-note`, `command/search-notes` and
+  `settings/notes` links report unknown and perform no action, including links with input
 - `open -g` each copied link with the palette closed: it runs what the row's shortcut runs
 - Quit Tinycast, then `open -g` a command link: the app starts and runs it
 - Open a window command's link with a plain `open` (no `-g`): after the question, it moves the
@@ -942,8 +949,8 @@ Debug answers `tinycast-dev://`; use that scheme for every link below.
   `?fallbackText=x` both open `?q=x`; with no input it asks for the argument. A custom command with
   one argument and `?arguments=%5B%22x%22%5D` runs with `$1` = `x`
 - `command/create-quicklink?context=%7B%22name%22%3A%22Docs%22%2C%22link%22%3A%22https%3A%2F%2Fexample.com%22%7D`
-  opens the editor filled in; Cancel saves nothing. `command/create-snippet?fallbackText=hello` and
-  `command/create-note?fallbackText=hello` start with `hello`
+  opens the editor filled in; Cancel saves nothing. `command/create-snippet?fallbackText=hello`
+  starts with `hello`
 - `command/create-quicklink?context=` with a list of two, one already in the library: it asks to add
   two, showing each name and link, adds one, and the HUD says so. The same for `create-snippet`,
   whose question shows names
@@ -1018,7 +1025,7 @@ tccutil reset Accessibility com.abueammar.tinycast.dev 2>/dev/null || true
   Settings still adds a Dock entry while open and removes it when the last ordinary window closes
 - Palette opens and lists apps; clipboard, quicklinks, snippets and calculator history are all empty
   and all accept a first entry
-- Notes creates no directory until Show, Create, or Search is first used, then accepts its first edit
+- Notes creates no directory; its retired entry points cannot create a note
 - **Every setting shows its intended default.** Walk the panes: this is what catches a broken
   absence-versus-`false` read
 - Quit and relaunch: everything created above persisted

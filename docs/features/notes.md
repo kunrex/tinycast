@@ -1,5 +1,12 @@
 # Notes
 
+**Retired from the app (Step4).** Notes has no launcher commands, hotkeys, deep-link routes,
+settings pane, menu-bar item, Quick Actions integration or core lifecycle. `project.yml` excludes
+`Features/Notes` from the app target; its sources and standalone harnesses remain pending Step5.
+The implementation reference below describes the disconnected feature, not current app behavior.
+User Markdown, stored preferences and inert window/launcher metadata are not deleted. Only the
+previously agreed `NotesSettingsMigration` edits settings-file sections and compact shortcuts.
+
 Notes is an unlimited local collection of plain Markdown files in one persistent floating editor, which
 renders the Markdown in place. One window edits one active note at a time; a title-bar button opens the searchable switcher, and launcher
 commands and global shortcuts can show, search, or extend the collection.

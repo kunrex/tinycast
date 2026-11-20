@@ -49,9 +49,6 @@ final class DeepLinkCoordinator {
         case .settings(let slug):
             guard let tab = SettingsTab(slug: slug) else { return reportUnknownLink() }
             settingsCoordinator.showSettings(tab: tab)
-        case .note(let name):
-            guard isAllowed(.command(.showNotes)) else { return }
-            core.notesCoordinator.open(NoteID(rawValue: name))
         case .chat(let id):
             guard isAllowed(.command(.aiChat)) else { return }
             core.aiChatCoordinator.showChat(id: id)
@@ -67,11 +64,6 @@ final class DeepLinkCoordinator {
     /// Typed field values ride along, so the link fills the fields as they were.
     func url(forEntryID entryID: String, values: [String: String] = [:]) -> URL? {
         DeepLink.url(forEntryID: entryID, scheme: scheme, input: typedInput(values, entryID: entryID))
-    }
-
-    func copyLink(toNote id: NoteID) {
-        guard let url = DeepLink.url(forNote: id.rawValue, scheme: scheme) else { return }
-        copy(url)
     }
 
     func copyLink(toChat id: UUID) {
@@ -279,11 +271,6 @@ final class DeepLinkCoordinator {
             return createQuicklinks(from: input)
         case .createSnippet:
             return createSnippets(from: input)
-        case .createNote:
-            guard let text = input.contextFields?["text"] ?? input.fallbackText else { return false }
-            hidePalette()
-            core.notesCoordinator.createNote(text: text)
-            return true
         case .aiChat:
             guard let text = input.fallbackText else { return false }
             hidePalette()

@@ -117,8 +117,9 @@ claims a key twice, that every exclusion names a real key and carries a non-empt
 capability-granting key — `snippetsEnabled`, `extensionsEnabled`, `calendarEnabled`,
 `autoJoinMeetings`, `cameraPreview`, `quickActionsEnabled` — is named individually as excluded. The
 duplication between `AppSettings` and this file is the point: it forces a decision about every new
-setting rather than defaulting it into a backup. During the staged Notes removal, its still-live
-preferences are deliberately excluded rather than deleting their persisted keys. Legacy Notes JSON
+setting rather than defaulting it into a backup. Notes' settings declarations are retired, but their
+persisted preferences are left alone. Generic command-shortcut export iterates the remaining
+`CommandID` cases, so obsolete Notes IDs no longer export. Legacy Notes JSON
 fields are unknown to `SettingsBackup` and ignored by its shipped decoder; supported fields still
 merge through the existing apply path.
 

@@ -281,11 +281,20 @@ struct DeepLinkTests {
     }
 
     static func routeInputChecks() {
-        let note = "Groceries & plans?.md"
-        expect(
-            DeepLink.url(forNote: note, scheme: scheme).flatMap { DeepLink(url: $0, scheme: scheme) }
-                == .note(name: note),
-            "a note's link reads back as its file name")
+        for slug in ["show-notes", "create-note", "search-notes"] {
+            let entryID = "command:" + slug
+            expect(CommandID(rawValue: entryID) == nil, "\(slug) is no longer a command")
+            expect(HotKeyAction(entryID: entryID) == nil, "\(slug) has no action fallback")
+            expect(DeepLink.url(forEntryID: entryID, scheme: scheme) == nil,
+                "\(slug) cannot be exported as a link")
+            for query in ["", "?fallbackText=hello", "?context=%7B%22text%22:%22hello%22%7D"] {
+                expect(parse("tinycast://command/\(slug)\(query)") == nil,
+                    "retired \(slug) refuses input without running another action")
+            }
+        }
+        expect(SettingsTab(slug: "notes") == nil, "the retired settings tab cannot resolve")
+        expect(parse("tinycast://note/Groceries%20%26%20plans%3F.md") == nil,
+            "retired note links do not resolve")
         expect(parse("tinycast://note/a/b.md") == nil, "a note name is one segment")
         for name in [".", "..", "%2E%2E"] {
             expect(parse("tinycast://note/\(name)") == nil, "\(name) is never a note")

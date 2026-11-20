@@ -40,7 +40,7 @@ struct CompactBarTests {
         check(selection.command == .searchFiles, "reordering preserves the selected command")
         selection.reconcile(commands: [.clipboardHistory])
         check(selection.command == nil, "removing or disabling the selected command returns to Search")
-        selection.command = .showNotes
+        selection.command = .openCamera
         selection.move(by: 1, commands: defaults)
         check(selection.command == defaults.first, "an obsolete selection starts from Search")
 
@@ -76,9 +76,15 @@ struct CompactBarTests {
             "an explicitly empty preference stays empty")
 
         let state = Commands()
-        let binding = SettingsFileBinding(.compactBarCommands, state, \.value) {
-            CommandID.compactBarCommands(from: $0.map(\.rawValue))
-        }
+        let binding = SettingsFileBinding(
+            .compactBarCommands, read: { state.value.settingsJSON },
+            write: { json in
+                guard let identifiers = [String](settingsJSON: json),
+                    let commands = CommandID.compactBarCommands(from: identifiers)
+                else { return [.invalidValue(.compactBarCommands)] }
+                state.value = commands
+                return []
+            })
         check(
             binding.write(chosen.settingsJSON).isEmpty && state.value == chosen,
             "settings binding accepts the configured order")

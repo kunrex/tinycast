@@ -108,7 +108,7 @@ enum SettingsSearchCatalog {
     static let entries: [SettingsSearchEntry] =
         general + applications + systemSettings + systemActions + commands + quicklinks
         + appleShortcuts + fallbacks + clipboard + snippets + fileSearch + windowManagement
-        + navigation + notes + calendar + emoji + ai + quickActions + dictation + extensions + permissions
+        + navigation + calendar + emoji + ai + quickActions + dictation + extensions + permissions
         + backup + about
 
     private static let general: [SettingsSearchEntry] = [
@@ -151,7 +151,7 @@ enum SettingsSearchCatalog {
             keywords: ["compact", "expanded", "slim", "search bar", "small"]),
         .init(
             group: .generalCompactShortcuts, "Compact Shortcuts",
-            keywords: ["slots", "buttons", "reorder", "clipboard", "emoji", "notes", "schedule", "quick ai"]),
+            keywords: ["slots", "buttons", "reorder", "clipboard", "emoji", "schedule", "quick ai"]),
         .init(
             .generalAppearance, "Follow the cursor across displays",
             keywords: ["monitor", "screen", "pointer", "multi display"]),
@@ -385,28 +385,6 @@ enum SettingsSearchCatalog {
         .init(
             group: .fileSearchIgnorePatterns, "Ignore Patterns",
             keywords: ["exclude", "glob", "node_modules", "skip", "ignore folder"])
-    ]
-
-    private static let notes: [SettingsSearchEntry] = [
-        .init(pane: .notes, keywords: ["markdown", "scratchpad", "floating"]),
-        .init(
-            .notesNotes, "Enable Notes",
-            keywords: ["markdown", "scratchpad"]),
-        .init(
-            .notesOptions, "Render Markdown",
-            keywords: ["markdown", "formatting", "preview", "raw", "source"]),
-        .init(
-            .notesOptions, "Show Formatting Bar",
-            keywords: ["toolbar", "format bar", "buttons", "bold", "heading", "markdown"]),
-        .init(
-            .notesOptions, "Show in Menu Bar",
-            keywords: ["status bar", "menu bar icon", "status item", "toolbar icon"]),
-        .init(
-            .notesOptions, "Notes Folder",
-            keywords: ["location", "path", "dotfiles", "files", "markdown"]),
-        .init(
-            group: .notesCommands, "Notes commands",
-            keywords: ["shortcut", "new note", "search notes"])
     ]
 
     private static let snippets: [SettingsSearchEntry] = [

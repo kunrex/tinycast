@@ -96,7 +96,7 @@ app: the stores (`AppIndex`, `ClipboardStore`, `SnippetsStore`, `QuicklinkStore`
 `HotKeyManager`, `HyperKeyManager`, `DictationKeyManager`, `RunningAppsMonitor`,
 `SnippetKeywordListener`), the shared state
 (`AppSettings`, `PaletteState`, `FileSearchSession`, `MenuSearchSession`, `UninstallSession`,
-`MeetingClock`), `NotesStore`, the twenty-one feature coordinators, and the
+`MeetingClock`), the feature coordinators, and the
 window controllers.
 
 `AppDelegate.applicationDidFinishLaunching` calls `AppCore.shared.start(launchedByUser:)` and nothing
@@ -147,10 +147,8 @@ driven imperatively from AppKit. Extension menu extras are dynamic `NSStatusItem
   unreliable for accessory apps, so this is deliberate. Their lifecycles are independent of the
   palette's in both directions. Onboarding stays accessory rather than registering Dock ownership,
   so completing it can open the palette without an activation-policy change stealing focus.
-- **Notes** — a persistent, titled, non-activating `NotesPanel` managed by `NotesWindowController`.
-  Its height fits the note up to 860pt and AppKit autosaves the frame; its TextKit 2 editor renders
-  Markdown over the literal source, switches among local Markdown files and stays visible on focus
-  loss. The displayed string is the canonical file source; there is no source/display mapping.
+- **Notes is disconnected.** Its source tree is excluded from the app target in `project.yml`,
+  retained with standalone harnesses until Step5. No core owner or window is created.
   See [features/notes.md](features/notes.md).
 - **AI Chat** — a titled `AppWindowController` window owned by `AIChatCoordinator`: an
   `NSSplitViewController` with a collapsible sidebar of saved chats beside the open conversation, as

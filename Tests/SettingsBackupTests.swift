@@ -58,13 +58,11 @@ struct SettingsBackupTests {
         check(
             "compact shortcuts ride the settings backup",
             mirrored["compactBarCommands"] == .compactBarCommands)
-        for key: AppSettingsKey in [
-            .notesEnabled, .notesRendersMarkdown, .notesShowsFormattingBar, .notesShowsInMenuBar,
-            .notesFolder
+        for key in [
+            "notesEnabled", "notesRendersMarkdown", "notesShowsFormattingBar", "notesShowsInMenuBar",
+            "notesFolder"
         ] {
-            check(
-                "\(key.rawValue) is intentionally excluded while Notes remains installed",
-                excluded[key.rawValue] != nil && !mirrored.values.contains(key))
+            check("\(key) is retired", AppSettingsKey(rawValue: key) == nil)
         }
 
         do {

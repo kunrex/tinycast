@@ -1,7 +1,8 @@
 # Deeplinks
 
-Every launcher row that can take a hotkey can also be run by URL, and so can a note, a saved AI chat
-and a one-off window size. Karabiner-Elements, a Shortcut, a script, a Stream Deck or a web page can
+Every launcher row that can take a hotkey can also be run by URL, and so can a saved AI chat
+and a one-off window size. Retired `note/*`, Notes command and `settings/notes` links report an
+unknown link and run nothing; they never fall back to the launcher or another action. Karabiner-Elements, a Shortcut, a script, a Stream Deck or a web page can
 drive Tinycast without a chord of its own:
 
 ```sh
@@ -78,7 +79,6 @@ Settings shortcut field; only the Settings window sets it.
 | `tinycast://quicklink/<uuid>`               | Opens a quicklink                                               |
 | `tinycast://apple-shortcut/<uuid>`          | Runs an Apple Shortcut                                          |
 | `tinycast://snippet/<percent-encoded path>` | Expands a snippet                                               |
-| `tinycast://note/<file name>`               | Opens that note                                                 |
 | `tinycast://chat/<uuid>`                    | Opens that saved chat in the AI Chat window                     |
 | `tinycast://settings/<tab>`                 | Opens Settings on a tab (`SettingsTab.slug`)                    |
 | `tinycast://extensions/<owner>/<ext>/<cmd>` | Extension command, see [extensions.md](extensions.md#deeplinks) |
@@ -86,8 +86,7 @@ Settings shortcut field; only the Settings window sets it.
 A row's path is its `AppEntry.id` with the first `:` turned into `/`: `command:clipboard-history`
 becomes `tinycast://command/clipboard-history`. Built-in commands use their `CommandID` slug. Quick
 AI keeps the slug it shipped with, `ai-chat`, and the AI Chat window is `ai-chat-window`. Rows you
-create are keyed by UUID, which survives a rename. A note is known only by its file name, so
-renaming a note breaks its link; the store then reports the missing file.
+create are keyed by UUID, which survives a rename.
 
 Applications and System Settings panes have no link: `open -a` and `x-apple.systempreferences:`
 already cover them.
@@ -113,7 +112,6 @@ ignored, because each built-in already knows whether it shows a screen.
 | `command/ai-chat-window`     | `fallbackText` joins the window's unsent line, never sent                                    |
 | `command/create-quicklink`   | `context` `{name, link, openWith}`, or a list of them; `fallbackText` is the link            |
 | `command/create-snippet`     | `context` `{name, text, keyword}`, or a list of them; `fallbackText` is the text             |
-| `command/create-note`        | `context` `{text}` or `fallbackText` becomes the new note's text                             |
 | `quicklink/<uuid>`           | `arguments` by argument name; `fallbackText` fills the first required one                    |
 | `custom-command/<uuid>`      | `arguments` as `["a", "b"]`, or by argument name; `fallbackText` is `$1`                     |
 | `system-action/set-volume`   | `arguments` `{volume}`, `["50"]` or `fallbackText`: `0`–`100`, `%` allowed; skips the picker |
@@ -126,7 +124,7 @@ row's fields, as a hotkey with no selection does. Any other target ignores its i
 
 - A `create-*` list asks once, then adds every item it can, skipping duplicates as a file import
   does, and reports the count in a HUD. A quicklink list's question shows each name and link.
-- A volume outside `0`–`100`, or a note named `.` or `..`, refuses the link before anything asks.
+- A volume outside `0`–`100` refuses the link before anything asks.
 - `openWith` is kept only when it names an installed app's bundle ID.
 - A window size refuses, rather than clamps, a value outside what a saved size allows. `anchor` is a
   `WindowLayoutAnchor` raw value (`top-left`, `center`, …) and `x`/`y` shift it in points.
@@ -141,7 +139,7 @@ carries input, or when its target acts outside Tinycast.** The second half is an
 so a new command fails to build until it is classed:
 
 - **Never asks without input**: anything that only opens a Tinycast screen or editor — search
-  screens, Settings, notes, chats, the create commands, Quick AI.
+  screens, Settings, chats, the create commands, Quick AI.
 - **Always asks**: window commands and sizes, layouts, rooms, system actions, quicklinks, snippets,
   custom commands, Apple Shortcuts, custom Quick Actions, the AI text actions, Paste Sequentially,
   Open Camera, the meeting commands and Capture Window Layout.
@@ -172,7 +170,6 @@ through LaunchServices either.
 - **Launcher rows**: ⇧⌘C, or ⌘K on the row. Values typed into the row's argument fields ride along:
   by name for a quicklink or an extension, in order for a custom command. Empty fields are dropped.
 - **Settings**: right-click any shortcut field. The link is the row's, with no fields typed.
-- **Notes**: the link button on a note switcher row.
 - **AI Chat**: the sidebar's menu on a saved chat, and the window's menu.
 
 ## Focus
