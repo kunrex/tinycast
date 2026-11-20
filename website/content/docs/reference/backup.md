@@ -53,8 +53,6 @@ not just setting a preference:
 
 - **Snippets**: agreeing to keyword matching
 - **Extensions**: agreeing to run third-party code
-- **Calendar**: agreeing to let Tinycast read your calendar
-- **Auto Join Meetings** and **Camera Preview**: agreeing to open links and turn on the camera
 - **Quick Actions**: agreeing to let Tinycast type into other apps
 - **AI** and **MCP servers**: agreeing to send text to a model and run server code
 - **Search text in images and PDFs**: agreeing to text recognition in the background
@@ -62,8 +60,8 @@ not just setting a preference:
 - **Sync settings file**: agreeing to let a file on this Mac change your settings
 - **Fallback order and checkboxes**: these could add a shell command runner to your launcher
 
-This means a backup someone sends you can't turn on keystroke listening, run third-party code, read
-your calendar, record from your microphone or contact an AI provider. You turn those features on
+This means a backup someone sends you can't turn on keystroke listening, run third-party code,
+record from your microphone or contact an AI provider. You turn those features on
 yourself, in the app, after reading what they do. Importing snippets doesn't turn snippets on.
 
 ## Other things that aren't included
@@ -75,7 +73,7 @@ yourself, in the app, after reading what they do. Importing snippets doesn't tur
 | Quick Actions model, prompts, language and custom actions                                                                  | An import should never change what a shortcut does to your text  |
 | Extension package manager and custom search paths                                                                          | They're specific to this Mac, not part of your setup             |
 | Dictation settings, its shortcut and downloaded models                                                                     | They belong to this Mac's microphone and disk                    |
-| Palette position, auto-switch input source, calendar checkboxes, the browser for meeting links, Snippets and Notes folders | They name things on this Mac that another Mac may not have       |
+| Palette position, auto-switch input source, Snippets and Notes folders | They name things on this Mac that another Mac may not have       |
 | Cached data, like currency rates and update checks                                                                         | Tinycast downloads it again as needed                            |
 
 Clipboard images are stored inside the backup by name, not by their location on your Mac. The only
@@ -104,8 +102,11 @@ If the file already exists when you turn sync on, Tinycast asks whether to **Imp
 **Replace** it with your current settings. A value Tinycast can't use keeps the current one, and a
 message tells you what was wrong. Turning sync off leaves the file where it is.
 
-Like a backup, the file can't turn on Snippets, Extensions, Calendar, Auto Join Meetings, Camera
-Preview, Quick Actions, MCP servers, Dictation or text recognition.
+Like a backup, the file can't turn on Snippets, Extensions, Quick Actions, MCP servers, Dictation
+or text recognition.
+
+Legacy Calendar settings are ignored. Removed Calendar/Meetings and Camera commands are not restored
+from old backups or settings files.
 
 ## Where your data is stored
 

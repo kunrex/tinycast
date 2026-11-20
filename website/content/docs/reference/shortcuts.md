@@ -153,13 +153,6 @@ activate the selected item.
 | <kbd>⌘</kbd><kbd>E</kbd>      | Edit Snippet   |
 | <kbd>⌘</kbd><kbd>N</kbd>      | Create Snippet |
 
-## Meeting card
-
-| Key                           | Does              |
-| ----------------------------- | ----------------- |
-| <kbd>return</kbd>             | Join Meeting      |
-| <kbd>⌘</kbd><kbd>return</kbd> | Copy Meeting Link |
-
 ## Uninstall
 
 | Key                                  | Does                   |

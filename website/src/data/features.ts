@@ -92,11 +92,6 @@ export const moreFeatures: MinorFeature[] = [
     href: "/docs/features/file-search",
   },
   {
-    icon: "calendar",
-    title: "Calendar & meetings",
-    href: "/docs/features/calendar",
-  },
-  {
     icon: "navigation",
     title: "Window & menu search",
     href: "/docs/features/navigation",

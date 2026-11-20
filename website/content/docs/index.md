@@ -59,7 +59,6 @@ index or use memory. That's how the app stays small with a long feature list.
 | [Snippets](/docs/features/snippets)                   | Settings → Snippets          |
 | [Navigation](/docs/features/navigation)               | Settings → Navigation        |
 | [Window Management](/docs/features/window-management) | Settings → Window Management |
-| [Calendar](/docs/features/calendar)                   | Settings → Calendar          |
 | [Quicklinks](/docs/launcher/quicklinks)               | Settings → Quicklinks        |
 | Apple Shortcuts                                       | Settings → Apple Shortcuts   |
 | Dictation                                             | Settings → Dictation         |

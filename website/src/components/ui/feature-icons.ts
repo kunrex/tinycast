@@ -2,7 +2,6 @@ import {
   AppWindow,
   Archive,
   Calculator,
-  CalendarDays,
   ClipboardList,
   FileSearch,
   Globe,
@@ -49,7 +48,6 @@ export const featureIcons = {
   keyboard: Keyboard,
   aiChat: MessagesSquare,
   quickActions: WandSparkles,
-  calendar: CalendarDays,
   navigation: AppWindow,
 } satisfies Record<string, LucideIcon>;
 

@@ -173,7 +173,7 @@ keys on, press fn+🎤. Tinycast sends it as F20, so other apps' F20 shortcuts f
 **Enable System Actions** and **Enable Commands** each turn off every shortcut in their pane.
 
 **Turning off a feature turns off its shortcuts.** File Search, Notes, AI, Quick Actions,
-Navigation, Calendar, window commands, quicklinks, snippets, custom commands and extensions all check
+Navigation, window commands, quicklinks, snippets, custom commands and extensions all check
 their switch before doing anything. Turn the feature back on and its shortcuts work again.
 
 A [system action's confirmation](/docs/launcher/system-actions#confirmation) appears when you use its

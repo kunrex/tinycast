@@ -1,7 +1,7 @@
 import type { IconName } from "../components/ui/feature-icons";
 
 // Every claim here is stated in the docs: Getting started, Settings → Features,
-// Permissions, Extensions, AI, Snippets, Calendar and Clipboard. Don't add one
+// Permissions, Extensions, AI, Snippets and Clipboard. Don't add one
 // that isn't.
 
 export const privacyStats = [
@@ -37,12 +37,6 @@ export const defaultSwitches: DefaultSwitch[] = [
     icon: "snippets",
     name: "Snippets",
     note: "The only feature that reads what you type. Matching happens on your Mac.",
-    isOn: false,
-  },
-  {
-    icon: "calendar",
-    name: "Calendar",
-    note: "Tells you what it reads before macOS asks for access. Events stay on your Mac.",
     isOn: false,
   },
   {

@@ -5,21 +5,21 @@ description: One search across everything Tinycast knows about, and how it order
 
 The launcher is the root screen. One search covers your apps, System Settings panes, commands,
 quicklinks, Apple Shortcuts, snippets, system actions, window commands, layouts and rooms, custom
-commands, Quick Actions, extension commands and upcoming meetings.
+commands, Quick Actions and extension commands.
 
 <kbd>return</kbd> opens the selection. <kbd>⌘</kbd><kbd>K</kbd> shows everything else you can do
 with it.
 
 ## With nothing typed
 
-[Favorites](/docs/launcher/favorites) come first, then upcoming Meetings and
+[Favorites](/docs/launcher/favorites) come first, then
 [Suggestions](#suggestions), followed by each section in this order:
 
 Applications → System Settings → Extensions → Quicklinks → Apple Shortcuts → Snippets → System
 Actions → Window Layouts → Rooms → Window Management → Custom Commands → Quick Actions → Commands
 
 Within a section, the entries you open most come first, then entries with an alias. The rest are
-sorted alphabetically. Meetings stay in the order they start.
+sorted alphabetically.
 
 ### Suggestions
 
@@ -29,11 +29,8 @@ sorted alphabetically. Meetings stay in the order they start.
 - the entries you open most, unless they already have a shortcut
 - while you have little history, a few built-in commands like Clipboard History and Search Files
 
-Favorites, meetings and AI commands are never suggested. A suggested entry doesn't appear again in
+Favorites and AI commands are never suggested. A suggested entry doesn't appear again in
 its own section. To hide Suggestions, turn off **Settings → General → Search → Show suggestions**.
-
-When a meeting is about to start, a [join card](/docs/features/calendar#the-join-card) appears above
-everything else.
 
 ## When you type
 
