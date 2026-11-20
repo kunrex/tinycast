@@ -31,6 +31,7 @@ struct BackupArchiveTests {
 
         roundTrip(in: root)
         clipboardLines(in: root)
+        legacyNotesArchives(in: root)
         noAbsolutePathsEscape(in: root)
         formatGuard(in: root)
         rejectsGarbage(in: root)
@@ -100,6 +101,100 @@ struct BackupArchiveTests {
         check(
             "the extracted file is owned by the current user",
             (attributes?[.ownerAccountID] as? NSNumber)?.uint32Value == getuid())
+    }
+
+    // MARK: - Legacy compatibility for Notes Removal
+
+    static func legacyNotesArchives(in root: URL) {
+        let settings = Data("""
+            {
+              "settings": {
+                "notesEnabled": true,
+                "notesRendersMarkdown": false,
+                "notesShowsFormattingBar": true,
+                "notesShowsInMenuBar": true,
+                "clipboardEnabled": false,
+                "clipboardRetentionDays": 30,
+                "fileSearchEnabled": true,
+                "compactBarCommands": ["command:search-emoji", "command:show-notes"]
+              }
+            }
+            """.utf8)
+        let document = Data("# User document\nDo not delete or rewrite.\n".utf8)
+        let supported: Set<BackupCategory> = [.configuration, .clipboard, .snippets, .learning]
+        let payloads: [String: Data] = [
+            "clipboard/items.jsonl": Data("{\"kind\":\"text\",\"text\":\"Keep clipboard\"}\n".utf8),
+            "clipboard/images/keep.png": Data([0x89, 0x50, 0x4E, 0x47, 0, 0xFF]),
+            "snippets/Keep.md": Data("# Supported snippet\nKeep these bytes.\n".utf8),
+            "learning/ranking.json": Data("{\"keep\": 3}\n".utf8)
+        ]
+        for notesOnly in [false, true] {
+            let name = notesOnly ? "legacy-notes-only" : "legacy-mixed"
+            let source = root.appendingPathComponent(name)
+            let bundle = BackupBundle(root: source)
+            let counts = notesOnly
+                ? "\"notes\": 1"
+                : "\"configuration\": 1, \"clipboard\": 2, \"snippets\": 3, \"learning\": 0, \"notes\": 1"
+            let manifest = Data("""
+                {"format": 1, "appVersion": "1.0", "createdAt": "2025-01-01T00:00:00Z",
+                 "counts": {\(counts)}}
+                """.utf8)
+            let archive = root.appendingPathComponent("\(name).tinycast")
+            let destination = root.appendingPathComponent("\(name)-opened")
+            let noteURL = source.appendingPathComponent("notes/Keep.md")
+            do {
+                try bundle.prepare([])
+                try FileManager.default.createDirectory(
+                    at: noteURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try document.write(to: noteURL)
+                try manifest.write(to: bundle.manifestURL)
+                if !notesOnly {
+                    try settings.write(to: bundle.settingsURL)
+                    for (path, bytes) in payloads {
+                        let url = source.appendingPathComponent(path)
+                        try FileManager.default.createDirectory(
+                            at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+                        try bytes.write(to: url)
+                    }
+                }
+                try BackupArchive.seal(directory: source, into: archive)
+                try BackupArchive.open(file: archive, into: destination)
+                let reopened = BackupBundle(root: destination)
+                let decoded = try reopened.readManifest()
+                check("BASELINE: \(name) remains readable as format 1", decoded.format == 1)
+                check("BASELINE: \(name) retains legacy Notes counts", decoded.counts["notes"] == 1)
+                let extractedDocument = try Data(
+                    contentsOf: destination.appendingPathComponent("notes/Keep.md"))
+                let sourceDocument = try Data(contentsOf: noteURL)
+                check(
+                    "BASELINE: \(name) extraction preserves the user document bytes",
+                    extractedDocument == document)
+                check(
+                    "BASELINE: \(name) leaves the source document untouched",
+                    sourceDocument == document)
+                if !notesOnly {
+                    for (path, bytes) in payloads {
+                        check("BASELINE: supported payload \(path) survives legacy mixed extraction",
+                            (try? Data(contentsOf: destination.appendingPathComponent(path))) == bytes)
+                    }
+                    // Byte preservation is not a SettingsBackup decode/apply check.
+                    let extractedSettings = try Data(contentsOf: reopened.settingsURL)
+                    check(
+                        "BASELINE: legacy Notes and supported settings survive extraction unchanged",
+                        extractedSettings == settings)
+                    check(
+                        "BASELINE: supported category counts survive alongside Notes",
+                        decoded.count(.clipboard) == 2 && decoded.count(.snippets) == 3
+                            && decoded.count(.learning) == 0)
+                }
+                // These contracts intentionally fail until Notes is removed from category selection.
+                check(
+                    "FORWARD: \(name) offers only supported import categories",
+                    decoded.categories == (notesOnly ? [] : supported))
+            } catch {
+                check("BASELINE: \(name) fixture opens (\(error))", false)
+            }
+        }
     }
 
     // MARK: - Clipboard

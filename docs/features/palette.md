@@ -250,12 +250,13 @@ button per configured `AppSettings.compactBarCommands` entry whose feature
 `AppIndex.isCommandEnabled` reports on. General settings shows **Compact Shortcuts** only
 when Compact is selected: an ordered list of zero to four unique commands, with add, replace,
 remove and move controls. The default is Clipboard History and Emoji & Symbols, both on for a new
-install, then Search Files and Search Quicklinks; Search Snippets, Show Notes, My Schedule and Quick
-AI are also available. Disabled features retain their configured positions but disappear from the
+install, then Search Files and Search Quicklinks; Search Snippets, My Schedule and Quick AI are
+also available. Disabled features retain their configured positions but disappear from the
 bar until re-enabled; Settings still offers them, under **Off** in both menus and marked Off in the
 list, so a slot can be ready before its feature is.
 The ordered command identifiers persist in preferences, backups and `appearance.compactBarCommands`
-in settings.json. Invalid lists are rejected whole, and an empty array deliberately removes all slots.
+in settings.json. Retired Notes identifiers are filtered before validation. Invalid remaining lists
+are rejected whole, and an empty array deliberately removes all slots.
 
 Search starts selected on every presentation. Left/Right traverses Search and the visible buttons,
 stopping at either end; Down expands Search or opens the selected button, and Return opens only a
@@ -271,8 +272,7 @@ over it. The glyph stays above `GlassEffectContainer` so a morph cannot smear it
 
 Mouse and keyboard activation synchronously call `LauncherCoordinator.runCommand` in a transaction
 with animations disabled. No merge animation or delayed activation survives beneath the destination
-screen. Palette screens push over root search as before; Show Notes closes the palette and opens
-its existing window. The summon reveal still animates independently.
+screen. Palette screens push over root search as before. The summon reveal still animates independently.
 The compact bar lays `panelScrim` over its capsule and buttons through a mask that follows the
 reveal, as the expanded panel lays it over its glass; the selected button stays out of the mask so
 its tint reads undimmed.

@@ -4,6 +4,7 @@ import SwiftUI
 enum TinycastLaunch {
     static func main() {
         BundleIdentifierMigration.run()
+        NotesSettingsMigration.run()
         AppSettings.pinLanguage()
         TinycastApp.main()
     }

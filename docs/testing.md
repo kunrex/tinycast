@@ -191,6 +191,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `LauncherSettingsFileTests` | Launcher settings application — invalid records, partial edits, deferred bundles, shortcut moves and records outside search scopes; isolated preferences and in-memory scan/Carbon effects |
 | `BackupArchiveTests` | all of `Backup/Model/`, plus `Backup/Service/BackupStaging.swift` |
 | `UpdatesTests` | `Updates/Model/` — version precedence, channel filtering, install route, readiness |
+| `NotesSettingsMigrationTests` | `Migrations/NotesSettingsMigration.swift` — exact compact-bar retirement, unknown settings preservation, idempotence, isolated preference domains and channel files, symlink targets, absent/invalid files and untouched user Markdown |
 | `BundleIdentifierMigrationTests` | `Migrations/BundleIdentifierMigration.swift` — the id mapping, moving without overwriting, every spelling of a saved path into the old folders, preferences, the login-item flag, the backup and its expiry, the repair of an earlier move |
 | `UpdateCheckTests` | `UpdateCheckStore` — stopping, in-flight cancellation, cached offer suppression, restart and independent manual checking |
 | `SupportTests` | `Support/Model/` — when the support reminder comes due, and a clock moved backwards |
@@ -458,7 +459,7 @@ prefs, caches, TCC grants and login item, so this cannot disturb an installed co
   capsule fills the rest, the whole width with none on. Each summon and each cleared query buds them out
   of the capsule's end, the last one never clipped at the window's edge; with Show animations off they
   appear in place. Mouse and keyboard activation open the command immediately, without a fuse,
-  delayed reveal or shortcut shapes beneath the expanded panel. Show Notes opens its window
+  delayed reveal or shortcut shapes beneath the expanded panel. Notes is not offered as a compact shortcut
 - Compact mode: arrow navigation tints the selected glass circle and uses a white monochrome glyph;
   inspect its native contour at actual size in both appearances, without a second fill or stroke;
   the left capsule and rightmost button must remain whole through opening, hovering, and selection,

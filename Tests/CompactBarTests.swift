@@ -19,7 +19,7 @@ struct CompactBarTests {
         check(
             defaults == [.clipboardHistory, .searchEmoji, .searchFiles, .searchQuicklinks],
             "the always-on commands lead the default")
-        check(CommandID.compactBarOptions.count == 8, "eight supported destinations")
+        check(CommandID.compactBarOptions.count == 7, "seven supported destinations")
         for count in 0...CommandID.compactBarLimit {
             let commands = Array(defaults.prefix(count))
             var selection = CompactBarSelection()
@@ -45,7 +45,7 @@ struct CompactBarTests {
         check(selection.command == defaults.first, "an obsolete selection starts from Search")
 
         check(CommandID.compactBarCommands(from: []) == [], "empty means no shortcuts")
-        let chosen: [CommandID] = [.quickAI, .searchEmoji, .mySchedule, .showNotes]
+        let chosen: [CommandID] = [.quickAI, .searchEmoji, .mySchedule, .searchSnippets]
         check(
             CommandID.compactBarCommands(from: chosen.map(\.rawValue)) == chosen,
             "all additional destinations retain their order")
@@ -77,7 +77,7 @@ struct CompactBarTests {
 
         let state = Commands()
         let binding = SettingsFileBinding(.compactBarCommands, state, \.value) {
-            CommandID.validCompactBarCommands($0) ? $0 : nil
+            CommandID.compactBarCommands(from: $0.map(\.rawValue))
         }
         check(
             binding.write(chosen.settingsJSON).isEmpty && state.value == chosen,
@@ -99,8 +99,57 @@ struct CompactBarTests {
         check(
             binding.write(.array([])).isEmpty && state.value.isEmpty,
             "settings binding accepts zero shortcuts")
+        retiredNotesPreferences(preferences, key: key)
+        retiredNotesSettings(binding, state: state)
         print("Compact bar tests: \(failures) failure(s)")
         exit(failures == 0 ? 0 : 1)
+    }
+
+    private static func retiredNotesPreferences(_ preferences: UserDefaults, key: String) {
+        let retired = ["command:show-notes", "command:create-note", "command:search-notes"]
+        let valid: [CommandID] = [.quickAI, .searchEmoji]
+        let fixtures: [([String], [CommandID])] = retired.map { identifier in
+            ([valid[0].rawValue, identifier, valid[1].rawValue], valid)
+        } + [
+            ([retired[0], valid[1].rawValue, retired[1], retired[2]], [valid[1]]),
+            (retired, []),
+            ([], [])
+        ]
+        for (identifiers, expected) in fixtures {
+            check(
+                CommandID.compactBarCommands(from: identifiers) == expected,
+                "FORWARD: retiring Notes preserves valid entries and order in \(identifiers)")
+            preferences.set(identifiers, forKey: key)
+            let restored = preferences.stringArray(forKey: key)
+                .flatMap(CommandID.compactBarCommands(from:))
+                ?? CommandID.defaultCompactBarCommands
+            check(
+                restored == expected,
+                "FORWARD: legacy preference \(identifiers) does not restore defaults or Notes")
+        }
+    }
+
+    private static func retiredNotesSettings(_ binding: SettingsFileBinding, state: Commands) {
+        let retired = ["command:show-notes", "command:create-note", "command:search-notes"]
+        let survivors = [CommandID.searchEmoji.rawValue, CommandID.quickAI.rawValue]
+        for identifiers in [retired, [], [retired[0]] + survivors + retired] {
+            let expected = identifiers.isEmpty || identifiers == retired
+                ? [] : [CommandID.searchEmoji, .quickAI]
+            check(binding.write(identifiers.settingsJSON).isEmpty && state.value == expected,
+                "retired settings identifiers are filtered, preserving order and explicit empty")
+        }
+        for invalid in [
+            ["unknown"], [CommandID.quit.rawValue],
+            [CommandID.searchEmoji.rawValue, CommandID.searchEmoji.rawValue],
+            Array(CommandID.compactBarOptions.prefix(5)).map(\.rawValue)
+        ] {
+            let mixed = [retired[0]] + invalid + Array(retired.dropFirst())
+            check(CommandID.compactBarCommands(from: mixed) == nil,
+                "retired plus genuinely invalid identifiers reject the whole value")
+            let previous = state.value
+            check(!binding.write(mixed.settingsJSON).isEmpty && state.value == previous,
+                "retired plus invalid settings do not change the selection")
+        }
     }
 
     private final class Commands {

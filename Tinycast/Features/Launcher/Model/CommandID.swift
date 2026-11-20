@@ -55,7 +55,7 @@ enum CommandID: String, CaseIterable, Sendable {
 
     static let compactBarOptions: [CommandID] =
         defaultCompactBarCommands + [
-            .searchSnippets, .showNotes, .mySchedule, .quickAI
+            .searchSnippets, .mySchedule, .quickAI
         ]
 
     static let compactBarLimit = 4
@@ -66,6 +66,10 @@ enum CommandID: String, CaseIterable, Sendable {
     }
 
     static func compactBarCommands(from identifiers: [String]) -> [CommandID]? {
+        // Migration for notes removal
+        let identifiers = identifiers.filter {
+            !["command:show-notes", "command:create-note", "command:search-notes"].contains($0)
+        }
         let commands = identifiers.compactMap(CommandID.init(rawValue:))
         guard commands.count == identifiers.count, validCompactBarCommands(commands) else { return nil }
         return commands

@@ -27,7 +27,7 @@ in `Features/Settings/` (`Model/`, `Service/`, `SettingsFileSchema.swift`), the 
 - **Applying the file never writes it.** Only a change made in the app rewrites the file, so hand
   formatting stays until then.
 - **Content and machine state never enter it.** Notes, snippets, custom commands, quicklinks, MCP
-  servers and AI connections stay where they are — the file can say which folder notes and snippets
+  servers and AI connections stay where they are — the file can say which folder snippets
   live in, never what is in them — as do the palette's position, the extension toolchain,
   the shortcuts and aliases of content, extensions and Apple Shortcuts, and what a room learns by
   being entered.
@@ -36,9 +36,14 @@ in `Features/Settings/` (`Model/`, `Service/`, `SettingsFileSchema.swift`), the 
 
 `appearance.compactBarCommands` is an ordered array of zero to four unique command identifiers.
 For example, `["command:clipboard-history", "command:search-emoji", "command:ai-chat"]` shows
-Clipboard History, Emoji & Symbols and Quick AI in that order. Only the eight commands offered by
+Clipboard History, Emoji & Symbols and Quick AI in that order. Only the seven commands offered by
 Compact Shortcuts are accepted; unknown, duplicate, unsupported or excess entries reject the whole
-value. `[]` removes every shortcut, and omitting the key leaves the current selection unchanged.
+value. The retired IDs `command:show-notes`, `command:create-note` and `command:search-notes`
+are filtered before validation, including from old preferences and backup imports; remaining order is
+preserved. `[]` removes every shortcut, and omitting the key leaves the current selection unchanged.
+The one-release `NotesSettingsMigration` removes the obsolete top-level `notes` section and those
+compact-bar IDs before startup reads preferences or imports the settings file. Unknown settings are
+preserved and symlinks are followed, not replaced. Notes preferences and user files are untouched.
 
 | File | Role |
 | --- | --- |
@@ -133,7 +138,7 @@ Where a number has a special case, the case is a word:
 | `calendar.menuBarUpcomingEvents` | `"today"`, or 2, 5, 10, 30 minutes before |
 | `calendar.hideCurrentEventAfterMinutes` | `"never"`, 0 (as it starts), 5, 10, 30 |
 | `windowManagement.gap` | 0 to 64 |
-| `snippets.folder`, `notes.folder` | an absolute or `~/` path, or `null` for Application Support |
+| `snippets.folder` | an absolute or `~/` path, or `null` for Application Support |
 
 On first launch, `general.language` is set to the primary system language if supported, otherwise
 `"en"`. That explicit choice is saved; later system-language changes do not change it.

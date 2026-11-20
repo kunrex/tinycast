@@ -43,9 +43,15 @@ enum SettingsFileSchema {
         case .interfaceSize: return bind(settings, \.interfaceSize)
         case .compactMode: return bind(settings, \.compactMode)
         case .compactBarCommands:
-            return bind(settings, \.compactBarCommands) {
-                CommandID.validCompactBarCommands($0) ? $0 : nil
-            }
+            return SettingsFileBinding(
+                key, read: { settings.compactBarCommands.settingsJSON },
+                write: { json in
+                    guard let identifiers = [String](settingsJSON: json),
+                        let commands = CommandID.compactBarCommands(from: identifiers)
+                    else { return [.invalidValue(key)] }
+                    if settings.compactBarCommands != commands { settings.compactBarCommands = commands }
+                    return []
+                })
         case .openOnCursorScreen: return bind(settings, \.openOnCursorScreen)
         case .paletteDraggable: return bind(settings, \.paletteDraggable)
         case .hyperKey: return bind(settings, \.hyperKey)
@@ -94,12 +100,6 @@ enum SettingsFileSchema {
             return bind(settings, \.fileSearchRemovedDefaultPatterns)
         case .fileSearchShowInLauncher: return bind(settings, \.fileSearchShowInLauncher)
         case .fileSearchCommands: return launcher.commandsBinding(for: key, owner: .fileSearch)
-        case .notesEnabled: return bind(settings, \.notesEnabled)
-        case .notesRendersMarkdown: return bind(settings, \.notesRendersMarkdown)
-        case .notesShowsFormattingBar: return bind(settings, \.notesShowsFormattingBar)
-        case .notesShowsInMenuBar: return bind(settings, \.notesShowsInMenuBar)
-        case .notesFolder: return bind(settings, \.notesFolder, accept: folder)
-        case .notesCommands: return launcher.commandsBinding(for: key, owner: .notes)
         case .dictationMode: return bind(settings, \.dictationMode)
         case .dictationShortcut:
             return shortcuts.binding(for: key, action: .dictation, name: String(localized: "Dictation"))
