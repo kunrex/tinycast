@@ -151,7 +151,7 @@ shows anything that aligns.
 The first rule that separates two entries decides:
 
 1. An exact alias.
-2. A boosted term — `ai` and `chat` for AI Chat — unless the other entry is used more.
+2. A boosted term, if an entry declares one, unless the other entry is used more.
 3. Past three characters, an exact title or alternate title.
 4. An exact past search term.
 5. An exact subtitle, so typing an extension's title lists its commands.
@@ -177,8 +177,7 @@ the Zed app: rule 3 only protects an exact title past three characters.
 - **Apps win the ties.** `KindDescriptor.rankPriority` puts applications (4) above command-like kinds
   (3), quicklinks (2), and System Settings panes and meetings (1), so a first-party app is never
   shadowed by the Tinycast command named after it: Calculator over Calculator History.
-- **One boosted command.** Only AI Chat carries boosted terms (`CommandID.boostedTerms`); boosting Show
-  Notes would shadow Apple's Notes.
+- **No built-in command currently declares boosted terms.** Boosting Show Notes would shadow Apple's Notes.
 - **Two entries with the same alias** fall through to the next rule.
 
 `settings` is the case these were measured against. Apple declares `Settings` in System Settings'
@@ -335,13 +334,12 @@ row leads because it recognised the query; a fallback trails because nothing did
 
 `Fallback` (`Launcher/Model/`) is the whole vocabulary — `.builtin(Builtin)` for the four shipped
 destinations and `.quicklink(UUID)` for a user's own. `Builtin` exists rather than a bare `CommandID`
-so `FallbackCoordinator.run` is **exhaustive**: a fifth built-in cannot compile without saying where
+so `FallbackCoordinator.run` is **exhaustive**: a new built-in cannot compile without saying where
 its query goes. `Fallback.id` is deliberately the row's own `AppEntry.id`, which is what lets a stored
 order name a live row across a rename or a reinstall.
 
 | Fallback | Where the query goes | Offered when |
 | --- | --- | --- |
-| Quick AI | a fresh Quick AI chat, question already sent (`QuickAICoordinator.ask`) | `aiEnabled` |
 | Search Files | the file-search screen, already narrowed | `fileSearchEnabled` |
 | Run Shell Command | `/bin/zsh`, streamed into the Command Output window | always |
 | Define Word | the dictionary screen, already showing the entry (see [dictionary.md](dictionary.md)) | the Define Word command is visible in Settings › Commands |
@@ -374,7 +372,7 @@ pane as well as from the launcher, and reorders through ↑/↓ buttons like a f
 introducing this codebase's first drag-reorder.
 
 **A fallback row is not a result, and `LauncherScreen.Row` says so.** `.fallback` is its own case
-with a `fallback-` prefixed id, because Quick AI can be a ranked hit *and* a fallback in the same
+with a `fallback-` prefixed id, because a command can be a ranked hit *and* a fallback in the same
 list, and two rows sharing one id would collapse in `ForEach`. That is also why `LauncherList` takes
 a `selectedRowID` rather than an entry id. Nothing about a fallback row is learned, pinned or
 revealed: `activate` routes to `FallbackCoordinator.run` instead of `LauncherCoordinator.launch`, and
@@ -479,9 +477,8 @@ so the sectioned view stays 1:1 with the flat selection.
 
 ### Suggestions
 
-`LauncherSuggestions.select` chooses at most five from every visible entry that is not a favorite, a
-meeting, an AI command or Tinycast itself. AI is the lowest priority, so Quick AI and AI Chat are
-never suggested, however often they are opened:
+`LauncherSuggestions.select` chooses at most five from every visible entry that is not a favorite,
+a meeting, a lowest-priority entry or Tinycast itself:
 
 1. up to two apps or extensions installed in the last five minutes and never opened —
    `AppEntry.installedAt` is the bundle's added-to-directory date;

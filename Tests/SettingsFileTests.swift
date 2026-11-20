@@ -45,10 +45,19 @@ struct SettingsFileTests {
             "sections follow the Settings sidebar",
             SettingsFileKey.sections == [
                 "general", "appearance", "hyperKey", "calculator", "search", "applications",
-                "systemSettings", "systemActions", "commands", "quicklinks", "appleShortcuts", "ai",
+                "systemSettings", "systemActions", "commands", "quicklinks", "appleShortcuts",
                 "quickActions", "dictation", "fileSearch", "notes", "snippets", "navigation",
                 "windowManagement", "clipboard", "emoji", "calendar", "extensions"
             ])
+
+        let retiredConversationPaths = [
+            "ai.enabled", "ai.webSearch", "ai.choices", "ai.expandsReasoning", "ai.systemPrompt",
+            "ai.systemPromptEnabled", "ai.retentionDays", "ai.opensTo", "ai.newChatAfterMinutes",
+            "ai.toolRounds", "ai.commands"
+        ]
+        check(
+            "retired conversation settings have no settings.json binding",
+            retiredConversationPaths.allSatisfy { SettingsFileKey(rawValue: $0) == nil })
 
         // A file that could switch one of these on would grant what only the app may ask for.
         let grantPaths = [

@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// Apart from `AISettingsStore`: a peer of chat, with its own switch, route and settings pane.
+/// Quick Actions owns its route independently of provider connection settings.
 @MainActor
 @Observable
 final class QuickActionSettingsStore {
@@ -10,7 +10,7 @@ final class QuickActionSettingsStore {
     var settings: QuickActionSettings {
         didSet { persistSettings() }
     }
-    /// A grammar fix fires far oftener than a chat turn, so billing it per press is no default.
+    /// An unset route defaults only to enabled, available on-device inference.
     private(set) var model: AIModelSelection? {
         didSet { persistModel() }
     }
@@ -34,11 +34,8 @@ final class QuickActionSettingsStore {
         model = Self.decode(
             AIModelSelection.self,
             from: defaults.data(forKey: AppSettingsKey.quickActionModel.rawValue))
-        modelOverrides =
-            Self.decode(
-                [String: AIModelSelection].self,
-                from: defaults.data(forKey: AppSettingsKey.quickActionModelOverrides.rawValue))
-            ?? [:]
+        modelOverrides = Self.decodeOverrides(
+            from: defaults.data(forKey: AppSettingsKey.quickActionModelOverrides.rawValue))
     }
 
     func select(_ selection: AIModelSelection?) {
@@ -58,35 +55,24 @@ final class QuickActionSettingsStore {
         modelOverrides[action.id] = selection
     }
 
-    /// Nothing chosen takes the route that needs no account, the way chat's own default resolves.
-    func resolveModel(appleIntelligenceAvailable: Bool, fallback: AIModelSelection?) {
-        guard model == nil else { return }
-        model = appleIntelligenceAvailable ? .appleIntelligence : fallback
+    /// An unset route may default only to enabled, available on-device inference.
+    func resolveModel(appleIntelligenceEnabled: Bool, appleIntelligenceAvailable: Bool) {
+        guard model == nil, appleIntelligenceEnabled, appleIntelligenceAvailable else { return }
+        model = .appleIntelligence
     }
 
     /// A removed connection must not leave a route pointing where nothing can answer.
-    func repairModel(against connections: [AIConnection], fallback: AIModelSelection?) {
+    func repairModel(
+        against connections: [AIConnection], appleIntelligenceEnabled: Bool,
+        appleIntelligenceAvailable: Bool
+    ) {
         if let model, !Self.reaches(model, through: connections) {
-            self.model = fallback
+            self.model = nil
         }
         updateOverrides { Self.reaches($0, through: connections) ? $0 : nil }
-    }
-
-    /// A dead override is dropped rather than rerouted, so its action follows `model` again.
-    func repairInstalledModel(
-        available: [AIModelSelection], unavailableSources: Set<AIModelSource>,
-        fallback: AIModelSelection?
-    ) {
-        if let model {
-            let repaired = Self.repaired(
-                model, available: available, unavailableSources: unavailableSources,
-                fallback: fallback)
-            if repaired != model { self.model = repaired }
-        }
-        updateOverrides {
-            Self.repaired(
-                $0, available: available, unavailableSources: unavailableSources, fallback: nil)
-        }
+        resolveModel(
+            appleIntelligenceEnabled: appleIntelligenceEnabled,
+            appleIntelligenceAvailable: appleIntelligenceAvailable)
     }
 
     private func updateOverrides(_ transform: (AIModelSelection) -> AIModelSelection?) {
@@ -99,20 +85,6 @@ final class QuickActionSettingsStore {
     ) -> Bool {
         guard case .api(let id, let name, _) = selection else { return true }
         return connections.contains { $0.id == id && $0.models.contains(name) }
-    }
-
-    private static func repaired(
-        _ selection: AIModelSelection, available: [AIModelSelection],
-        unavailableSources: Set<AIModelSource>, fallback: AIModelSelection?
-    ) -> AIModelSelection? {
-        guard selection.source.installedKind != nil else { return selection }
-        let sourceModels = available.filter { $0.source == selection.source }
-        if sourceModels.contains(where: { $0.model == selection.model }) { return selection }
-        if let replacement = sourceModels.first { return replacement }
-        guard unavailableSources.contains(selection.source) else { return selection }
-        guard let fallback, !unavailableSources.contains(fallback.source), fallback != selection
-        else { return nil }
-        return fallback
     }
 
     private func persistSettings() {
@@ -138,6 +110,18 @@ final class QuickActionSettingsStore {
             return
         }
         defaults.set(data, forKey: key.rawValue)
+    }
+
+    private static func decodeOverrides(from data: Data?) -> [String: AIModelSelection] {
+        guard let data,
+            let entries = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return [:] }
+        return entries.compactMapValues { entry in
+            guard JSONSerialization.isValidJSONObject(entry),
+                let encoded = try? JSONSerialization.data(withJSONObject: entry)
+            else { return nil }
+            return decode(AIModelSelection.self, from: encoded)
+        }
     }
 
     private static func decode<Value: Decodable>(_ type: Value.Type, from data: Data?) -> Value? {

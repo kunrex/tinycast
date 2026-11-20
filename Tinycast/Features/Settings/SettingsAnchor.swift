@@ -46,19 +46,10 @@ extension SettingsAnchor {
 
     static let fallbacksFallbacks = Self(tab: .fallbacks, title: "Fallbacks")
 
-    static let aiAI = Self(tab: .ai, title: "AI")
-    static let aiProviders = Self(tab: .ai, title: "Providers")
-    static let aiDefault = Self(tab: .ai, title: "Default")
-    static let aiChat = Self(tab: .ai, title: "Chat")
-    static let aiConversations = Self(tab: .ai, title: "Conversations")
-    static let aiSystemPrompt = Self(tab: .ai, title: "System prompt")
-    static let aiChatPresets = Self(tab: .ai, title: "Chat Presets")
-    static let aiMCPServers = Self(tab: .ai, title: "MCP Servers")
-    static let aiCommands = Self(tab: .ai, title: "Commands")
-
     static let quickActionsQuickActions = Self(tab: .quickActions, title: "Quick Actions")
     static let quickActionsActions = Self(tab: .quickActions, title: "Actions")
     static let quickActionsModel = Self(tab: .quickActions, title: "Model")
+    static let quickActionsProviders = Self(tab: .quickActions, title: "Providers")
     static let quickActionsTranslate = Self(tab: .quickActions, title: "Translate")
 
     static let dictationDictation = Self(tab: .dictation, title: "Dictation")

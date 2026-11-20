@@ -5,8 +5,6 @@ struct AIThinkTagDecoder: Sendable {
 
     private var phase = Phase.undecided
     private var buffer = ""
-    private var reasoningWhitespace = ""
-    private var hasReasoning = false
     private var trimmingAnswer = false
     private let opening = "<think>"
     private let closing = "</think>"
@@ -29,20 +27,16 @@ struct AIThinkTagDecoder: Sendable {
             }
         }
         if let close = buffer.range(of: closing) {
-            let thought = String(buffer[..<close.lowerBound])
             let text = String(buffer[close.upperBound...])
             buffer = ""
-            let events = reasoning(thought)
-            reasoningWhitespace = ""
             phase = .answer
             trimmingAnswer = true
-            return events + answer(text)
+            return answer(text)
         }
         var tail = min(buffer.count, closing.count - 1)
         while tail > 0, !closing.hasPrefix(buffer.suffix(tail)) { tail -= 1 }
-        let thought = String(buffer.dropLast(tail))
         buffer = String(buffer.suffix(tail))
-        return reasoning(thought)
+        return []
     }
 
     mutating func finish() -> [AIStreamEvent] {
@@ -51,25 +45,10 @@ struct AIThinkTagDecoder: Sendable {
         let events: [AIStreamEvent]
         switch phase {
         case .undecided: events = pending.isEmpty ? [] : [.text(pending)]
-        case .reasoning: events = reasoning(pending)
-        case .answer: events = []
+        case .reasoning, .answer: events = []
         }
-        reasoningWhitespace = ""
         phase = .answer
         return events
-    }
-
-    private mutating func reasoning(_ text: String) -> [AIStreamEvent] {
-        guard !text.isEmpty else { return [] }
-        if !hasReasoning {
-            reasoningWhitespace += text
-            guard !reasoningWhitespace.allSatisfy(\.isWhitespace) else { return [] }
-            hasReasoning = true
-            let thought = reasoningWhitespace
-            reasoningWhitespace = ""
-            return [.thinking, .reasoning(thought)]
-        }
-        return [.thinking, .reasoning(text)]
     }
 
     private mutating func answer(_ text: String) -> [AIStreamEvent] {

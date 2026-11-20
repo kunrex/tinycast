@@ -125,55 +125,12 @@ enum SettingsBackupCoverage {
             "Arms the app to open meeting links unattended; an import must not switch that on.",
         AppSettingsKey.cameraPreview.rawValue:
             "Turns the camera on before a meeting; an import must not grant that.",
-        AppSettingsKey.aiEnabled.rawValue:
-            "No other AI setting travels in a backup, so an import would arm a feature it cannot "
-            + "configure.",
-        AppSettingsKey.aiInstalledProviders.rawValue:
-            "Installed commands and their accounts belong to this Mac; an import must not enable "
-            + "their discovery on another one.",
         AppSettingsKey.aiConnections.rawValue:
             "AI connection metadata stays on the Mac with the Keychain credentials it describes.",
-        AppSettingsKey.aiDefaultModel.rawValue:
-            "The default model names an external AI destination; importing must not choose one.",
-        AppSettingsKey.aiWebSearch.rawValue:
-            "Whether prompts may reach a search engine is a choice each Mac makes for itself.",
-        AppSettingsKey.aiChoices.rawValue:
-            "Changes the instructions every turn carries, and no other AI setting travels.",
-        AppSettingsKey.aiExpandsReasoning.rawValue:
-            "How much of a reply a reader sees unasked is this Mac's own choice, and no other AI "
-            + "setting travels.",
-        AppSettingsKey.aiSystemPrompt.rawValue:
-            "Standing instructions to a model are the one AI setting that changes every answer; an "
-            + "import must not carry them onto another Mac unseen.",
-        AppSettingsKey.aiSystemPromptEnabled.rawValue:
-            "Governs whether a turn carries standing instructions at all, so it changes every answer "
-            + "the same way the prompt it gates does.",
-        AppSettingsKey.aiRetention.rawValue:
-            "How long conversations survive is a decision about the chats on this Mac, and an import "
-            + "must never arrive carrying an instruction to delete them.",
-        AppSettingsKey.aiOpensTo.rawValue:
-            "Whether chat reopens on an existing conversation depends on the history this Mac holds, "
-            + "which no other Mac has.",
-        AppSettingsKey.aiNewChatAfter.rawValue:
-            "Paces the same decision as the setting it accompanies, against conversations that stay "
-            + "on the Mac that had them.",
-        AppSettingsKey.aiToolRounds.rawValue:
-            "Decides how much a tool-driven reply may spend on this Mac's own connections; no other "
-            + "AI setting travels, and an import must not raise a spending limit unasked.",
         AppSettingsKey.aiShownModels.rawValue:
-            "Names the models of this Mac's own installed tools and connections, which another Mac "
-            + "may not have.",
+            "Names the models of this Mac's own connections, which another Mac may not have.",
         AppSettingsKey.aiDisabledRoutes.rawValue:
             "Names this Mac's own API connections and on-device model, which travel in no backup.",
-        AppSettingsKey.aiInstalledOverrides.rawValue:
-            "Names a command to run and the variables to run it with; an import must never decide "
-            + "which program this Mac launches.",
-        AppSettingsKey.mcpEnabled.rawValue:
-            "Doubles as consent to run third-party MCP servers, one of which is a local process; a "
-            + "flag that grants a capability is never carried by a backup.",
-        AppSettingsKey.mcpServers.rawValue:
-            "An MCP server is a source of executable code and a destination for chat context, and "
-            + "it is meaningless without the machine-local Keychain secrets it describes.",
         AppSettingsKey.quickActionsEnabled.rawValue:
             "Grants keystroke delivery into other apps through the Accessibility permission, and a "
             + "flag that grants a capability is never carried by a backup.",

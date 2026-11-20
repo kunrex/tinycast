@@ -40,8 +40,6 @@ final class AppCore {
     /// The file's launcher items, kept to apply a waiting record once its app is installed.
     @ObservationIgnored private var launcherSettingsFile: LauncherSettingsFile?
     @ObservationIgnored private var appearanceObservation: NSKeyValueObservation?
-    /// The last verdict `trackChatRoute` acted on; nil until it has read one.
-    @ObservationIgnored private var chatsRunTheirOwnTools: Bool?
     @ObservationIgnored private let iconStyle = IconStyleMonitor()
     let favorites = FavoritesStore()
     let visibility = VisibilityStore()
@@ -68,20 +66,10 @@ final class AppCore {
     let uninstall = UninstallSession()
     let notesStore: NotesStore
     let extensions: ExtensionManager
-    let chatHistory: ChatHistoryStore
-    let aiChats: AIChatSurfacesState
     let aiSettings = AISettingsStore(
-        environmentStore: .keychain,
         isAppleIntelligenceAvailable: { AppleIntelligenceProvider.status().isAvailable })
-    let mcpSettings = MCPSettingsStore()
-    let mcpOAuth = MCPOAuthManager()
-    @ObservationIgnored private(set) lazy var mcp = MCPServerManager(oauth: mcpOAuth)
     let quickActionSettings = QuickActionSettingsStore()
     let customQuickActions = CustomQuickActionStore()
-    let chatPresets = ChatPresetStore()
-    let chatGPTSubscription = ChatGPTSubscriptionManager()
-    let installedAI = InstalledAIManager()
-    @ObservationIgnored private var appliedLaunchRevisions: [InstalledAIKind: Int] = [:]
 
     /// Set when a layout editor should open with Settings; the pane consumes it.
     var pendingWindowLayoutEdit: WindowLayoutEditRequest?
@@ -227,16 +215,6 @@ final class AppCore {
         injector: textInjector, appIndex: appIndex, hotKeys: hotKeys, favorites: favorites,
         visibility: visibility, ranking: launcherRanking, aliases: aliases,
         paletteCoordinator: paletteCoordinator, core: self)
-    @ObservationIgnored private(set) lazy var mcpCoordinator = MCPCoordinator(
-        settings: settings, store: mcpSettings, manager: mcp, core: self)
-    /// Its own window and lifecycle, like Settings; Quick AI is the palette's half of the feature.
-    @ObservationIgnored private(set) lazy var aiChatCoordinator = AIChatCoordinator(
-        chats: aiChats, settings: settings, appIndex: appIndex,
-        paletteCoordinator: paletteCoordinator, settingsCoordinator: settingsCoordinator,
-        core: self)
-    @ObservationIgnored private(set) lazy var quickAICoordinator = QuickAICoordinator(
-        chats: aiChats, settings: settings, palette: palette,
-        paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var deepLinkCoordinator = DeepLinkCoordinator(
         scheme: AppURLScheme.current, settings: settings, hotKeys: hotKeys,
         paletteCoordinator: paletteCoordinator, settingsCoordinator: settingsCoordinator,
@@ -262,12 +240,9 @@ final class AppCore {
     private init() {
         let launcherRanking = LauncherRankingStore()
         let settings = AppSettings()
-        let chatHistory = ChatHistoryStore(directory: AppPaths.applicationSupport())
         self.launcherRanking = launcherRanking
         self.settings = settings
-        self.chatHistory = chatHistory
         supportReminders = SupportReminderStore(settings: settings)
-        aiChats = AIChatSurfacesState(history: chatHistory)
         appIndex = AppIndex(ranking: launcherRanking, aliases: aliases)
         let clipboardManager = ClipboardManager(store: clipboardStore, settings: settings)
         self.clipboardManager = clipboardManager
@@ -287,6 +262,7 @@ final class AppCore {
 
     func start(launchedByUser: Bool) {
         Signposts.interval("AppCore.start") {
+            RetiredAISettingsMigration.run(fileURL: AppPaths.settingsFile())
             // Shorten AppKit's ~2–3s tooltip delay; registration domain, so a user default wins.
             UserDefaults.standard.register(defaults: ["NSInitialToolTipDelay": 250])
             NSApp.setActivationPolicy(.accessory)
@@ -307,10 +283,6 @@ final class AppCore {
             menuSearchCoordinator.applyEnabled()
             fileSearchCoordinator.applyPolicy()
             notesCoordinator.applyEnabled()
-            installedAI.launchSettings = { [aiSettings] in aiSettings.launch(for: $0) }
-            chatGPTSubscription.launchSettings = { [aiSettings] in aiSettings.launch(for: .codex) }
-            aiChatCoordinator.applyEnabled()
-            mcpCoordinator.applyEnabled()
             customQuickActions.onChange = { [weak self] _ in
                 self?.quickActionCoordinator.applyCustomQuickActionsPresence()
             }
@@ -493,7 +465,6 @@ final class AppCore {
 
     func handleReopen() {
         if settingsCoordinator.focusExisting() { return }
-        if aiChatCoordinator.focusExisting() { return }
         if onboardingCoordinator.focusExisting() { return }
         if supportCoordinator.focusExisting() { return }
         if customCommandCoordinator.focusOutputWindow() { return }
@@ -622,63 +593,23 @@ final class AppCore {
         textInjector.prepareForTermination()
         snippetListener.stop()
         snippetsStore.stop()
-        aiChats.reset()
-        chatGPTSubscription.stop()
-        mcpOAuth.stop()
-        mcp.stop()
-        installedAI.stop()
         updateCoordinator.installStagedUpdate()
         if relaunchRequested { RelaunchRunner.relaunchAfterExit(Bundle.main.bundleURL) }
-    }
-
-    /// Only the tool whose own path or variables changed is checked again; the rest keep running.
-    private func applyInstalledLaunches() {
-        let revisions = aiSettings.launchRevisions
-        let enabled =
-            settings.aiEnabled || settings.quickActionsEnabled
-            ? aiSettings.enabledInstalledProviders : []
-        for kind in InstalledAIKind.allCases where appliedLaunchRevisions[kind] != revisions[kind] {
-            guard enabled.contains(kind) else { continue }
-            if kind == .codex {
-                chatGPTSubscription.stop()
-                chatGPTSubscription.refresh()
-            } else {
-                installedAI.refresh(kind: kind)
-            }
-        }
-        appliedLaunchRevisions = revisions
-    }
-
-    @discardableResult
-    func applyInstalledAILifecycle() -> Task<Void, Never> {
-        let enabledKinds =
-            settings.aiEnabled || settings.quickActionsEnabled
-            ? aiSettings.enabledInstalledProviders : []
-        var tasks: [Task<Void, Never>] = []
-        if enabledKinds.contains(.codex) {
-            tasks.append(
-                chatGPTSubscription.phase == .idle
-                    ? chatGPTSubscription.refresh()
-                    : chatGPTSubscription.currentRefreshTask())
-        } else {
-            chatGPTSubscription.stop()
-        }
-        tasks.append(installedAI.ensure(enabledKinds: enabledKinds))
-        return Task { for task in tasks { await task.value } }
     }
 
     /// Permissive guardrails: the text transformed is the reader's own, which `.default` refuses.
     func quickActionProvider(for action: QuickAction) throws -> any AIProvider {
         quickActionSettings.repairModel(
-            against: aiSettings.connections, fallback: aiSettings.defaultModel)
-        guard let selection = quickActionSettings.model(for: action) ?? aiSettings.defaultModel
+            against: aiSettings.connections,
+            appleIntelligenceEnabled: aiSettings.isRouteEnabled(.appleIntelligence),
+            appleIntelligenceAvailable: aiSettings.isAppleIntelligenceAvailable())
+        guard let selection = quickActionSettings.model(for: action)
         else {
             throw AIProviderError.unavailable(
                 String(localized: "Choose a model in Settings \u{2192} Quick Actions."))
         }
         return try AIProviderFactory.make(
-            selection: selection, settings: aiSettings, subscription: chatGPTSubscription,
-            installedAI: installedAI,
+            selection: selection, settings: aiSettings,
             guardrails: .permissiveContentTransformations)
     }
 
@@ -738,7 +669,6 @@ final class AppCore {
         track({ _ = $0.notesEnabled }, reproject: { $0.notesCoordinator.applyEnabled() })
         track(
             { _ = $0.notesShowsInMenuBar }, reproject: { $0.notesCoordinator.applyMenuBarItem() })
-        track({ _ = $0.aiEnabled }, reproject: { $0.aiChatCoordinator.applyEnabled() })
         track(
             { _ = $0.dictationIdleRelease },
             reproject: {
@@ -753,11 +683,6 @@ final class AppCore {
                 $0.hotKeys.dictationHoldToTalk = $0.settings.dictationMode == .pushToTalk
                 $0.hotKeys.dictationEnabled = $0.settings.dictationEnabled
             })
-        track(
-            {
-                _ = $0.aiEnabled
-                _ = $0.mcpEnabled
-            }, reproject: { $0.mcpCoordinator.applyEnabled() })
         track(
             { _ = $0.quickActionsEnabled },
             reproject: { $0.quickActionCoordinator.applyEnabled() })
@@ -798,14 +723,11 @@ final class AppCore {
         track(
             { _ = $0.clipboardRetention },
             reproject: { $0.clipboardCoordinator.applyRetention($0.settings.clipboardRetention) })
-        track(aiSettings, { _ = $0.retention }, reproject: { $0.aiChatCoordinator.applyRetention() })
-        track(aiSettings, { _ = $0.launchRevisions }, reproject: { $0.applyInstalledLaunches() })
         track(
             { _ = $0.extensionsShowInLauncher },
             reproject: { $0.extensionCoordinator.applyExtensionsLauncherPresence() })
         track({ _ = $0.snippetsFolder }, reproject: { $0.applySnippetsFolder() })
         track({ _ = $0.notesFolder }, reproject: { $0.applyNotesFolder() })
-        trackChatRoute()
     }
 
     /// `.system` resolves to `nil`, so AppKit follows macOS with nothing polling.
@@ -870,19 +792,6 @@ final class AppCore {
         }
     }
 
-    /// A chat route that runs its own MCP client decides which servers Tinycast runs itself.
-    private func trackChatRoute() {
-        let runsOwnTools = withObservationTracking {
-            aiChatCoordinator.everyChatRunsItsOwnTools
-        } onChange: { [weak self] in
-            Task { @MainActor in self?.trackChatRoute() }
-        }
-        // Re-read on every streaming flush, so only a changed verdict reaches the servers.
-        defer { chatsRunTheirOwnTools = runsOwnTools }
-        guard let previous = chatsRunTheirOwnTools, previous != runsOwnTools else { return }
-        mcpCoordinator.applyEnabled()
-    }
-
     /// Without a Hyper key the chord means nothing, so a literal ⌃⌥⌘ combo is left as recorded.
     private func applyHyperChord() {
         guard settings.hyperKey != .none else { return }
@@ -924,7 +833,7 @@ final class AppCore {
         let file = SettingsFileRepository(
             fileURL: AppPaths.settingsFile(),
             bindings: SettingsFileSchema.bindings(
-                settings: settings, ai: aiSettings, quickActions: quickActionSettings,
+                settings: settings, quickActions: quickActionSettings,
                 shortcuts: shortcuts, launcher: launcher,
                 windowManagement: WindowManagementSettingsFile(
                     sizes: customWindowSizes, layouts: windowLayouts, rooms: rooms, aliases: aliases,

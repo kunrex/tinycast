@@ -79,14 +79,15 @@ Settings shortcut field; only the Settings window sets it.
 | `tinycast://apple-shortcut/<uuid>`          | Runs an Apple Shortcut                                          |
 | `tinycast://snippet/<percent-encoded path>` | Expands a snippet                                               |
 | `tinycast://note/<file name>`               | Opens that note                                                 |
-| `tinycast://chat/<uuid>`                    | Opens that saved chat in the AI Chat window                     |
 | `tinycast://settings/<tab>`                 | Opens Settings on a tab (`SettingsTab.slug`)                    |
 | `tinycast://extensions/<owner>/<ext>/<cmd>` | Extension command, see [extensions.md](extensions.md#deeplinks) |
 
 A row's path is its `AppEntry.id` with the first `:` turned into `/`: `command:clipboard-history`
-becomes `tinycast://command/clipboard-history`. Built-in commands use their `CommandID` slug. Quick
-AI keeps the slug it shipped with, `ai-chat`, and the AI Chat window is `ai-chat-window`. Rows you
-create are keyed by UUID, which survives a rename. A note is known only by its file name, so
+becomes `tinycast://command/clipboard-history`. Built-in commands use their `CommandID` slug.
+Retired `chat/<uuid>`, `command/ai-chat` and `command/ai-chat-window` links are invalid; they never
+fall back to another action. The removed `settings/ai` tab likewise reports an unknown link, using the
+existing unknown-tab handling rather than a redirect or persisted migration. Provider management is
+now reached through `settings/quick-actions`. Rows you create are keyed by UUID, which survives a rename. A note is known only by its file name, so
 renaming a note breaks its link; the store then reports the missing file.
 
 Applications and System Settings panes have no link: `open -a` and `x-apple.systempreferences:`
@@ -109,8 +110,6 @@ ignored, because each built-in already knows whether it shows a screen.
 | ---------------------------- | -------------------------------------------------------------------------------------------- |
 | `search`                     | `fallbackText` is typed into the launcher                                                    |
 | A search screen (list below) | `fallbackText` opens it searching; a seeded screen never toggles shut                        |
-| `command/ai-chat`            | `fallbackText` is typed into Quick AI, never sent                                            |
-| `command/ai-chat-window`     | `fallbackText` joins the window's unsent line, never sent                                    |
 | `command/create-quicklink`   | `context` `{name, link, openWith}`, or a list of them; `fallbackText` is the link            |
 | `command/create-snippet`     | `context` `{name, text, keyword}`, or a list of them; `fallbackText` is the text             |
 | `command/create-note`        | `context` `{text}` or `fallbackText` becomes the new note's text                             |
@@ -141,7 +140,7 @@ carries input, or when its target acts outside Tinycast.** The second half is an
 so a new command fails to build until it is classed:
 
 - **Never asks without input**: anything that only opens a Tinycast screen or editor — search
-  screens, Settings, notes, chats, the create commands, Quick AI.
+  screens, Settings, notes and the create commands.
 - **Always asks**: window commands and sizes, layouts, rooms, system actions, quicklinks, snippets,
   custom commands, Apple Shortcuts, custom Quick Actions, the AI text actions, Paste Sequentially,
   Open Camera, the meeting commands and Capture Window Layout.
@@ -173,7 +172,6 @@ through LaunchServices either.
   by name for a quicklink or an extension, in order for a custom command. Empty fields are dropped.
 - **Settings**: right-click any shortcut field. The link is the row's, with no fields typed.
 - **Notes**: the link button on a note switcher row.
-- **AI Chat**: the sidebar's menu on a saved chat, and the window's menu.
 
 ## Focus
 

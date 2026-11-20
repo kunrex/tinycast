@@ -44,7 +44,6 @@ struct AppleIntelligenceProvider: AIProvider {
                         let text = delta.delta(from: snapshot.content)
                         if !text.isEmpty { continuation.yield(.text(text)) }
                     }
-                    continuation.yield(.finished)
                     continuation.finish()
                 } catch is CancellationError {
                     continuation.finish()
@@ -58,7 +57,7 @@ struct AppleIntelligenceProvider: AIProvider {
         }
     }
 
-    /// Split the way a session takes it: the newest user turn is the prompt, the rest a transcript.
+    /// The session starts with instructions only; each action supplies one text prompt.
     static func turn(for request: AIRequest) -> (prompt: String?, transcript: Transcript) {
         var entries: [Transcript.Entry] = []
         if let instructions = request.instructions, !instructions.isEmpty {
@@ -68,24 +67,8 @@ struct AppleIntelligenceProvider: AIProvider {
                         segments: [.text(Transcript.TextSegment(content: instructions))],
                         toolDefinitions: [])))
         }
-        let promptIndex = request.messages.lastIndex { $0.role == .user }
-        for message in request.messages[..<(promptIndex ?? request.messages.endIndex)]
-        where !message.text.isEmpty {
-            let segment = Transcript.Segment.text(Transcript.TextSegment(content: message.text))
-            switch message.role {
-            case .user:
-                entries.append(.prompt(Transcript.Prompt(segments: [segment])))
-            case .assistant:
-                entries.append(.response(Transcript.Response(assetIDs: [], segments: [segment])))
-            // The on-device route offers no tools, so a tool turn can only be foreign history.
-            case .system, .tool:
-                continue
-            }
-        }
-        let prompt = promptIndex.map {
-            request.messages[$0].text.trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        return (prompt?.isEmpty == true ? nil : prompt, Transcript(entries: entries))
+        let prompt = request.prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (prompt.isEmpty ? nil : prompt, Transcript(entries: entries))
     }
 
     /// Plain sentences: the only detail these carry is a `debugDescription` written for a log.
@@ -93,10 +76,7 @@ struct AppleIntelligenceProvider: AIProvider {
         switch error {
         case .exceededContextWindowSize:
             return .responseFailed(
-                String(
-                    localized: """
-                        This conversation is longer than the on-device model can hold. Start a new chat.
-                        """))
+                String(localized: "That selection is too long to work on."))
         case .guardrailViolation, .refusal:
             return .responseFailed(String(localized: "Apple Intelligence declined to answer that."))
         case .unsupportedLanguageOrLocale:

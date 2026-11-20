@@ -206,29 +206,8 @@ enum Theme {
         static let settingsRowButton: CGFloat = 24
         /// Inside its tinted tile, whose inset brings it to the row icon's size.
         static let settingsSidebarGlyph: CGFloat = 14
-        /// AI Chat's opening size; the user owns it from there, autosaved.
-        static let aiChatWindow = CGSize(width: 960, height: 660)
-        static let aiChatWindowMinimum = CGSize(width: 680, height: 440)
-        static let aiChatSidebarMinimum: CGFloat = 240
-        static let aiChatSidebarMaximum: CGFloat = 340
-        /// The sidebar's search capsule, a row's height so it lines up with the list below it.
-        static let aiChatSearchField: CGFloat = 28
-        static let aiChatDetailMinimum: CGFloat = 440
-        /// The transcript and composer column; past this a line of prose stops being readable.
-        static let aiChatReadingWidth: CGFloat = 960
-        static let aiChatComposerMaxLines: CGFloat = 15
-        static let aiChatComposerHeightFraction: CGFloat = 0.30
-        /// Every control on the composer's row, Send included, so the row reads as one line.
-        static let aiChatComposerControl: CGFloat = 28
-        /// One slot for every glyph on that row, so a plus and a brand mark weigh the same.
-        static let aiChatComposerGlyph: CGFloat = 16
-        static let chatContextGauge: CGFloat = 14
-        /// A source chip's title before it middle-truncates, so three chips share a row.
-        static let chatSourceTitle: CGFloat = 200
         static let chatSourceBadge: CGFloat = 18
         static let chatJumpToLatest: CGFloat = 30
-        /// The context card's width: a label column and a value one, with room for a model name.
-        static let chatContextCard: CGFloat = 300
         static let settingsControlHeight: CGFloat = 28
         static let emojiSkinToneGlyph: CGFloat = 13
         /// One density preview; five fit across the Emoji settings detail pane.
@@ -326,7 +305,6 @@ enum Theme {
         static let hover: TimeInterval = 0.12
         static let menuChevron: TimeInterval = 0.34
         static let copyFeedback: TimeInterval = 1.2
-        static let chatFooter: TimeInterval = 0.12
         static let settingsReveal: TimeInterval = 0.28
         static let settingsFlash: TimeInterval = 2.0
         static let settingsFlashOut: TimeInterval = 0.6
@@ -406,9 +384,6 @@ enum Theme {
         static let menuSymbolSize: CGFloat = 14
         static let menuSymbolWeight = Font.Weight.medium
         static let noteTitle = Font.headline
-        static let composerSymbol = Font.system(size: 13, weight: .medium)
-        static let composerSend = Font.system(size: 13, weight: .bold)
-        static let composerStop = Font.system(size: 10, weight: .bold)
     }
 
     enum Colors {
@@ -425,16 +400,6 @@ enum Theme {
         static let panelScrim = adaptive(dark: .srgbInk(0, alpha: 0.40), light: .srgbInk(1, alpha: 0.55))
         static let dialogDimming = adaptive(
             dark: .srgbInk(0, alpha: 0.34), light: .srgbInk(0, alpha: 0.34))
-        /// Find's marks, the Mac's own yellow: every match faint, the current one solid.
-        static let findMatch = adaptive(
-            dark: NSColor.systemYellow.withAlphaComponent(0.32),
-            light: NSColor.systemYellow.withAlphaComponent(0.4))
-        static let findCurrent = adaptive(
-            dark: NSColor.systemYellow.withAlphaComponent(0.9),
-            light: NSColor.systemYellow.withAlphaComponent(0.95))
-        /// Black on the solid mark in both appearances, as a highlighter's ink stays readable.
-        static let findCurrentInk = adaptive(
-            dark: .srgbInk(0, alpha: 1), light: .srgbInk(0, alpha: 1))
         static let tooltipShadow = adaptive(
             dark: .srgbInk(0, alpha: 0.18), light: .srgbInk(0, alpha: 0.18))
 
@@ -502,10 +467,6 @@ enum Theme {
         static let destructive = Color.red
         static let success = Color.green
         static let warning = Color.orange
-        static let composerSend = ramp(dark: 0.92, light: 0.92)
-        static let composerSendInk = adaptive(dark: .srgbInk(0, alpha: 0.85), light: .srgbInk(1, alpha: 1))
-        /// The window's own page, for a card that must hide the transcript it floats over.
-        static let windowSurface = Color(nsColor: .windowBackgroundColor)
         static let dropTarget = Color.accentColor
         /// Progress tint: the message pill's spinner while the work behind it is still running.
         static let progress = Color.blue

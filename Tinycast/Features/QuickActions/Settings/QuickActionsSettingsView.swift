@@ -1,7 +1,6 @@
 import Combine
 import SwiftUI
 
-/// A peer of the AI pane, not a section in it: it only borrows the provider layer.
 struct QuickActionsSettingsView: View {
     @Environment(AppCore.self) private var core
     @Environment(AppSettings.self) private var appSettings
@@ -12,6 +11,7 @@ struct QuickActionsSettingsView: View {
 
     /// Polled like the Permissions pane: the grant lands in System Settings, which sends nothing.
     @State private var isTrusted = Permissions.isAccessibilityTrusted()
+    @State private var providersPresented = false
     @State private var editingAction: BuiltInQuickAction?
     @State private var customEditing: CustomQuickActionEditRequest?
     private let refreshTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -45,16 +45,23 @@ struct QuickActionsSettingsView: View {
                 SettingsSectionHeader(.quickActionsQuickActions)
             }
 
-            Group {
-                actionsSection
-                modelSection
-                languageSection
-            }
-            .settingsEnabled(appSettings.quickActionsEnabled)
+            actionsSection
+                .settingsEnabled(appSettings.quickActionsEnabled)
+            modelSection
+                .settingsEnabled(appSettings.quickActionsEnabled)
+            providersSection
+            languageSection
+                .settingsEnabled(appSettings.quickActionsEnabled)
         }
         .formStyle(.grouped)
         .settingsScrollTarget(.quickActions)
         .onReceive(refreshTimer) { _ in isTrusted = Permissions.isAccessibilityTrusted() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            isTrusted = Permissions.isAccessibilityTrusted()
+        }
+        .settingsEditorPanel(isPresented: $providersPresented) {
+            AIProvidersPanel(onDone: { providersPresented = false })
+        }
         .settingsEditorPanel(item: $editingAction) { action in
             InstructionsEditorPanel(
                 action: action,
@@ -71,21 +78,13 @@ struct QuickActionsSettingsView: View {
                 model: request.action.flatMap { store.modelOverride(for: .custom($0)) })
         }
         .onAppear {
+            isTrusted = Permissions.isAccessibilityTrusted()
             core.quickActionCoordinator.loadLanguages()
-            store.repairModel(against: aiSettings.connections, fallback: aiSettings.defaultModel)
-            store.resolveModel(
-                appleIntelligenceAvailable: aiSettings.isAppleIntelligenceAvailable(),
-                fallback: aiSettings.defaultModel)
-            core.applyInstalledAILifecycle()
+            store.repairModel(
+                against: aiSettings.connections,
+                appleIntelligenceEnabled: aiSettings.isRouteEnabled(.appleIntelligence),
+                appleIntelligenceAvailable: aiSettings.isAppleIntelligenceAvailable())
         }
-        .onChange(of: appSettings.aiEnabled) { repairInstalledModel() }
-        .onChange(of: aiSettings.enabledInstalledProviders) {
-            core.applyInstalledAILifecycle()
-            repairInstalledModel()
-        }
-        .onChange(of: core.chatGPTSubscription.models) { repairInstalledModel() }
-        .onChange(of: core.chatGPTSubscription.phase) { repairInstalledModel() }
-        .onChange(of: core.installedAI.statuses) { repairInstalledModel() }
     }
 
     private var actionsSection: some View {
@@ -179,10 +178,32 @@ struct QuickActionsSettingsView: View {
         } header: {
             SettingsSectionHeader(.quickActionsModel)
         } footer: {
-            Text("Separate from AI Chat's, so frequent use needn't bill an API.")
+            Text("Only the selected provider is contacted.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private var providersSection: some View {
+        Section {
+            SettingsRow(
+                title: "Providers", subtitle: providerSummary, anchor: .quickActionsProviders
+            ) {
+                Button("Manage…") { providersPresented = true }
+            }
+        } header: {
+            SettingsSectionHeader(.quickActionsProviders)
+        }
+    }
+
+    private var providerSummary: String {
+        var providers: [String] = []
+        if !aiSettings.connections.isEmpty {
+            let count = aiSettings.connections.count
+            providers.append(String(localized: "\(count) API connections"))
+        }
+        return providers.isEmpty
+            ? String(localized: "No external providers ready") : providers.joined(separator: ", ")
     }
 
     private var languageSection: some View {
@@ -215,7 +236,7 @@ struct QuickActionsSettingsView: View {
     private func routeTitle(_ selection: AIModelSelection) -> String {
         let model = modelChoices.first { $0.matches(selection) }?.title ?? selection.model
         guard let effort = selection.effort else { return model }
-        return "\(model) (\(ChatGPTSubscription.Effort(id: effort, detail: nil).title))"
+        return "\(model) (\(AIEffort(id: effort, detail: nil).title))"
     }
 
     private var enabledBinding: Binding<Bool> {
@@ -249,38 +270,8 @@ struct QuickActionsSettingsView: View {
     }
 
     private var modelChoices: [AIModelOption] {
-        AIModelOption.availableGroups(
-            settings: aiSettings, subscription: core.chatGPTSubscription,
-            installedAI: core.installedAI
-        )
+        AIModelOption.availableGroups(settings: aiSettings)
         .flatMap(\.options)
-    }
-
-    private func repairInstalledModel() {
-        // Catalog rows name a route without an effort; a repaired selection must carry the default.
-        let options = modelChoices.map {
-            AIModelOption.withDefaultEffort(
-                $0.selection, settings: aiSettings, subscription: core.chatGPTSubscription,
-                installedAI: core.installedAI)
-        }
-        var unavailable = Set<AIModelSource>()
-        if !aiSettings.enabledInstalledProviders.contains(.codex)
-            || core.chatGPTSubscription.phase == .signedOut
-            || core.chatGPTSubscription.phase.isUnavailable
-        {
-            unavailable.insert(.codex)
-        }
-        for kind in InstalledAIKind.managedCLIKinds {
-            let phase = core.installedAI.status(for: kind).phase
-            guard
-                !aiSettings.enabledInstalledProviders.contains(kind)
-                    || phase == .signInRequired || phase == .notInstalled
-            else { continue }
-            unavailable.insert(kind.source)
-        }
-        store.repairInstalledModel(
-            available: options, unavailableSources: unavailable,
-            fallback: aiSettings.defaultModel)
     }
 
     private struct InstructionsEditorPanel: View {

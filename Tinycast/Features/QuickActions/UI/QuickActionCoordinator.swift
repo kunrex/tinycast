@@ -66,13 +66,11 @@ final class QuickActionCoordinator {
         applyCustomQuickActionsPresence()
         guard settings.quickActionsEnabled else {
             cancel()
-            core.applyInstalledAILifecycle()
             return
         }
-        core.applyInstalledAILifecycle()
         store.resolveModel(
-            appleIntelligenceAvailable: core.aiSettings.isAppleIntelligenceAvailable(),
-            fallback: core.aiSettings.defaultModel)
+            appleIntelligenceEnabled: core.aiSettings.isRouteEnabled(.appleIntelligence),
+            appleIntelligenceAvailable: core.aiSettings.isAppleIntelligenceAvailable())
         loadLanguages()
     }
 

@@ -26,8 +26,8 @@ in `Features/Settings/` (`Model/`, `Service/`, `SettingsFileSchema.swift`), the 
   record's field left out or of the wrong type keeps its value, and `null` clears it.
 - **Applying the file never writes it.** Only a change made in the app rewrites the file, so hand
   formatting stays until then.
-- **Content and machine state never enter it.** Notes, snippets, custom commands, quicklinks, MCP
-  servers and AI connections stay where they are — the file can say which folder notes and snippets
+- **Content and machine state never enter it.** Notes, snippets, custom commands, quicklinks and AI
+  connections stay where they are — the file can say which folder notes and snippets
   live in, never what is in them — as do the palette's position, the extension toolchain,
   the shortcuts and aliases of content, extensions and Apple Shortcuts, and what a room learns by
   being entered.
@@ -35,10 +35,17 @@ in `Features/Settings/` (`Model/`, `Service/`, `SettingsFileSchema.swift`), the 
 ## Layout
 
 `appearance.compactBarCommands` is an ordered array of zero to four unique command identifiers.
-For example, `["command:clipboard-history", "command:search-emoji", "command:ai-chat"]` shows
-Clipboard History, Emoji & Symbols and Quick AI in that order. Only the eight commands offered by
+For example, `["command:clipboard-history", "command:search-emoji", "command:search-files"]` shows
+Clipboard History, Emoji & Symbols and Search Files in that order. Only the seven commands offered by
 Compact Shortcuts are accepted; unknown, duplicate, unsupported or excess entries reject the whole
-value. `[]` removes every shortcut, and omitting the key leaves the current selection unchanged.
+value. The two known retired conversation IDs (`command:ai-chat` and `command:ai-chat-window`)
+are filtered before validation, preserving surviving order in both preferences and file imports.
+`[]` removes every shortcut, and omitting the key leaves the current selection unchanged.
+
+For one release, `RetiredAISettingsMigration` silently removes the retired conversation `ai.*` keys
+and command records from this mirror at launch, including compact-bar references. It is idempotent,
+follows symlinks, leaves malformed JSON alone, and preserves unknown keys and provider settings.
+Preferences, saved conversations, presets and credentials are not migrated or deleted.
 
 | File | Role |
 | --- | --- |
@@ -123,10 +130,6 @@ Where a number has a special case, the case is a word:
 | --- | --- |
 | `general.language` | `"en"`, `"de"`, `"es"`, `"fr"`, `"ja"`, `"ko"`, `"pt"`, `"ru"`, `"zh-Hans"` |
 | `clipboard.retentionDays` | 1, 7, 30, 90, 180, 365, `"forever"` |
-| `ai.retentionDays` | 7, 30, 90, `"forever"` |
-| `ai.newChatAfterMinutes` | 2, 5, 10, 30, `"never"` |
-| `ai.toolRounds` | 10, 25, 50, 100, `"unlimited"` |
-| `ai.opensTo` | `"recent"`, `"newConversation"` |
 | `calendar.launcherLimit` | 1, 3, 5, `"all"` |
 | `calendar.span` | `"today"`, `"todayAndTomorrow"`, `"nextSevenDays"` |
 | `calendar.menuBar` | `"disabled"`, `"meetingIcon"`, `"meetingTitle"` |

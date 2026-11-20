@@ -112,17 +112,11 @@ struct LanguageTests {
             ("notes-use-default-folder", "Use Default", ["fr": "Utiliser le dossier par défaut"]),
             ("dictation-model-installed", "Installed", ["fr": "Installé"]),
             ("dictation-language-auto", "Auto", ["fr": "Détection automatique"]),
-            ("ai-installed-tools", "Installed", ["fr": "Outils installés"]),
             ("extensions-installed-section", "Installed", ["fr": "Extensions installées"]),
             ("extensions-install-section", "Install", ["fr": "Installation"]),
             ("unit-category-time", "Time", ["fr": "Durée"]),
             ("window-position-center", "Center", ["fr": "Centre"]),
             ("onboarding-open-launcher", "App Launcher", ["fr": "Ouvrir le lanceur"]),
-            ("ai-pinned-conversations", "Pinned", ["fr": "Épinglées"]),
-            ("ai-system-prompt-on", "On", ["fr": "Activées"]),
-            ("ai-system-prompt-off", "Off", ["fr": "Désactivées"]),
-            ("ai-web-search-on", "On", ["fr": "Activée"]),
-            ("ai-web-search-off", "Off", ["fr": "Désactivée"]),
             ("reasoning-effort-low", "Low", ["es": "Bajo", "pt": "Baixo"]),
             ("reasoning-effort-medium", "Medium", ["es": "Medio", "fr": "Moyen", "pt": "Médio"]),
             ("reasoning-effort-high", "High", ["es": "Alto", "fr": "Élevé", "pt": "Alto"]),
@@ -206,14 +200,6 @@ struct LanguageTests {
                     check(
                         "French label \(key) resolves in its context",
                         bundle.localizedString(forKey: key, value: nil, table: nil) == expected)
-                }
-                let fill = "50 %"
-                for count in [0, 1, 2] {
-                    let announcement = String(
-                        localized: "Context \(fill), \(count) of \(count) messages sent",
-                        bundle: bundle, locale: locale)
-                    let suffix = count > 1 ? "messages envoyés" : "message envoyé"
-                    check("French context announcement agrees for \(count)", announcement.hasSuffix(suffix))
                 }
             }
 

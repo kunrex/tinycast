@@ -136,7 +136,8 @@ If a change touches anything in the right column, the harness on the left is man
 | `EmojiSearchTests` | `Emoji/Service/EmojiIndex.swift`, `FrequentEmojiStore.swift`, `Scripts/gen-emoji.js`'s keyword format, multilingual search |
 | `CommandEscapeTapTests` | `Palette/CommandEscapeTap.swift` — dedicated run-loop dispatch while main is blocked, timeout recovery, stale actions, installation cancellation and teardown; private ports and unposted events only |
 | `PaletteNavigationTests` | `Palette/PaletteState.swift`'s screen motions — `prepare`, `replace`, `push`, `pop` — and hover arming, pointer drift, scroll disarming and highlight tokens |
-| `CompactBarTests` | Compact shortcut order, selection boundaries, zero-to-four slots, identifiers, isolated preferences and invalid settings-file rejection |
+| `CompactBarTests` | Compact shortcut order, selection boundaries, zero-to-four slots, identifiers, retired-ID filtering after preferences restart and in settings.json, and invalid settings-file rejection |
+| `RetiredAISettingsMigrationTests` | Mirror-only retired-key cleanup, survivor order, unknown/provider settings preservation, malformed/missing files, symlinks and byte-idempotence |
 | `PaletteSelectionTests` | `Features/PaletteRowIndex.swift` |
 | `InterfaceSizeTests` | `DesignSystem/InterfaceMetrics.swift`, `Features/Settings/InterfaceSize.swift`, `Extensions/Model/ExtensionFormMetrics.swift` |
 | `FormInputTests` | Native field/textarea sizing, editing alignment, placeholders, Tab, Unicode selection, undo and code fonts |
@@ -146,7 +147,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `HotKeyTests` | `HotKeys/Model/DoubleTapModifier.swift`, `DoubleTapDetector.swift`, `ModifierKey.swift`, `ModifierKeyDetector.swift`, `HotKeyBinding.swift`, `HotKeySpelling.swift`, `HyperKey.swift`, `HIDKeyMapping.swift`, `HotKeyAction.swift`, `Service/KeyShortcut.swift`, and the command→action mapping in `Launcher/Model/CommandID.swift` |
 | `HyperKeyTests` | `HotKeys/Model/HIDKeyMapping.swift`, `HyperKeyConflictPolicy.swift`, `Service/KeyboardRemapper.swift`, `RemapInstanceLock.swift` — mapping ownership, refused writes, crash recovery, device reconnection, Caps Lock and 🎤 remaps sharing a keyboard, conflict severities, Modifier Keys and Karabiner parsing, another app taking over Caps Lock, one process per Hyper Key |
 | `HotKeyDispatchTests` | `HotKeys/Service/HotKeyManager.swift` — Secure Input side isolation, shared Control registrations, press/release routing, recording and cancellation; isolated preferences and simulated Carbon registration |
-| `DeepLinkTests` | `DeepLinks/Model/`, `HotKeys/Model/HotKeyAction+EntryID.swift`, `Settings/SettingsTab.swift` — every bindable command, window command and system action round-trips through its link and its entry ID, stored rows by UUID, snippet paths through percent-encoding, case folding, the channel's scheme, the links that must not resolve (Raycast schemes, the `extensions` host), input decoding, encoding and its refusals (bytes, not characters), batches, field filling, consent classes and keys, the quicklink loop rule, note, chat and window-size links, and every Settings tab slug |
+| `DeepLinkTests` | `DeepLinks/Model/`, `HotKeys/Model/HotKeyAction+EntryID.swift`, `Settings/SettingsTab.swift` — every bindable command, window command and system action round-trips through its link and its entry ID, stored rows by UUID, snippet paths through percent-encoding, case folding, the channel's scheme, the links that must not resolve (Raycast schemes, the `extensions` host), input decoding, encoding and its refusals (bytes, not characters), batches, field filling, consent classes and keys, the quicklink loop rule, note and window-size links, rejected retired chat routes, and every Settings tab slug |
 | `DictationKeyTests` | `HotKeys/Service/DictationKeyManager.swift` — shared and separate preference domains, ownership handoff through the real health ticker, and retry cancellation on unbind or termination; isolated preferences, lock files and simulated keyboards |
 | `DictationTests` | `Dictation/Model/DictationModel.swift`, `DictationTextFormatter.swift` — model paths and text formatting |
 | `DictationFieldTests` | Composer rebinding and teardown, field-scoped dictation cancellation, and queued insertion validity; synthetic capture and real AppKit editors |
@@ -194,24 +195,13 @@ If a change touches anything in the right column, the harness on the left is man
 | `BundleIdentifierMigrationTests` | `Migrations/BundleIdentifierMigration.swift` — the id mapping, moving without overwriting, every spelling of a saved path into the old folders, preferences, the login-item flag, the backup and its expiry, the repair of an earlier move |
 | `UpdateCheckTests` | `UpdateCheckStore` — stopping, in-flight cancellation, cached offer suppression, restart and independent manual checking |
 | `SupportTests` | `Support/Model/` — when the support reminder comes due, and a clock moved backwards |
-| `AIProviderTests` | `AI/Model/` and `AISettingsStore` — instruction composition, provider requests and streams, route settings, protocol framing, CLI launch encodings and queued Codex writes across cancellation, timeout and Stop |
-| `OpenCodeMCPTests` | OpenCode's per-turn MCP bridge and installed CLI launch, authentication, scoped catalog, consent dispatch, serial calls, result budgets and cancellation |
-| `AppleIntelligenceTests` | On-device status, snapshot deltas, transcript assembly and error mapping; real generation is opt-in |
+| `AIProviderTests` | `AI/Model/` and `AISettingsStore` — provider requests and streams, route settings, protocol framing and HTTP reasoning efforts |
+| `AppleIntelligenceTests` | On-device status, snapshot deltas, instruction-only session setup and error mapping; real generation is opt-in |
 | `SyntaxHighlightTests` | `AI/Model/SyntaxGrammar.swift`, `SyntaxHighlighter.swift`, `SyntaxStructuredLexers.swift` — every grammar's tokens, language aliases, the size limit and streaming prefixes |
-| `MCPTests` | `MCP/Model/` and `MCPSettingsStore` — JSON-RPC framing, handles, tool names, output flattening, trust, `@server` addressing, the shape a vendor CLI is handed, and which servers Tinycast leaves to that CLI |
-| `MCPStdioTests` | `MCP/Service/` against a stub server — handshake, listing, calling, and every way one can go away |
-| `MCPOAuthTests` | OAuth parsing, RFC 7636 PKCE, discovery and resource binding, loopback callback validation/cancellation, dynamic registration, supplied client credentials and their token-endpoint authentication, Keychain token rotation, concurrent refresh, the wider margin for a token lent to a CLI, redirects and one-retry 401 handling |
+| `ChatMarkdownTests` | Selectable Quick Action Markdown, safe links, code-copy blocks and math without transcript/find/failed-tail models |
 
-`MCPStdioTests` copies `Tests/ai-fixtures/mcp-stub.js` into a scratch directory. The stub
-reads fd 0 synchronously and writes replies with `fs.writeSync`, so a reply reaches the pipe before
-an exit mode finishes.
-
-Completion checks use bounded state waits; exclusion windows and intentional timeout cases keep their
-observation delays.
-
-`MCPOAuthTests` starts `Tests/ai-fixtures/mcp-oauth-stub.js` on `127.0.0.1:4963` and tests the
-single-use callback on `127.0.0.1:4962`. Both ports must be free; the harness never chooses another
-port. Its Keychain scope is unique to each run and removed on completion.
+Conversation, MCP and installed-CLI provider harnesses were retired with those runtimes. Completion checks use
+bounded state waits; exclusion windows and intentional timeout cases keep their observation delays.
 
 A harness that passed before a change passes after it. There is no "I'll fix it next commit" and no
 commenting out a case. If a change genuinely invalidates an assertion, the assertion is rewritten in the
@@ -433,7 +423,7 @@ prefs, caches, TCC grants and login item, so this cannot disturb an installed co
 
 - Palette hotkey opens the launcher; pressing it again closes it; Escape clears a non-empty query,
   then hides on a second press; clicking away closes it
-- Search a mode command (Clipboard History, Search Emoji, Search Quicklinks, Search Files, Quick AI)
+- Search a mode command (Clipboard History, Search Emoji, Search Quicklinks, Search Files)
   and run it: Escape returns to the launcher **with the query still typed and the row still
   selected**, and the next press clears it. The same screen from its own global hotkey hides the
   palette instead, and shows its own header icon rather than a back chevron
@@ -916,8 +906,8 @@ Debug answers `tinycast-dev://`; use that scheme for every link below.
   values, and opening it fills the same fields
 - Right-click a shortcut field in Settings (a command, a quicklink, an extension command): Copy
   Deeplink copies its link. Onboarding's and General's App Launcher field offer no menu
-- The note switcher's link button, and Copy Deeplink in the AI Chat sidebar and window menu, copy a
-  link that reopens that note or chat; a renamed note's old link reports the missing file
+- The note switcher's link button copies a link that reopens that note; a renamed note's old link
+  reports the missing file. Retired chat/Quick AI/window command links must be rejected
 - `open -g` each copied link with the palette closed: it runs what the row's shortcut runs
 - Quit Tinycast, then `open -g` a command link: the app starts and runs it
 - Open a window command's link with a plain `open` (no `-g`): after the question, it moves the
@@ -935,8 +925,8 @@ Debug answers `tinycast-dev://`; use that scheme for every link below.
 - Open two asking links back to back: only the first asks; the second runs nothing
 - `command/search-files?fallbackText=~/Downloads/`, `command/clipboard-history?fallbackText=a`,
   `command/switch-windows?fallbackText=a` and `search?fallbackText=2%2B2` (after allowing) open their
-  screen already searching. `command/ai-chat?fallbackText=hi` types into Quick AI and
-  `command/ai-chat-window?fallbackText=hi` into the window, and neither sends
+  screen already searching. `command/ai-chat?fallbackText=hi` and
+  `command/ai-chat-window?fallbackText=hi` must be invalid and perform no action
 - A quicklink `https://example.com/?q={argument}`: `?arguments=%7B%22Argument%22%3A%22x%22%7D` and
   `?fallbackText=x` both open `?q=x`; with no input it asks for the argument. A custom command with
   one argument and `?arguments=%5B%22x%22%5D` runs with `$1` = `x`

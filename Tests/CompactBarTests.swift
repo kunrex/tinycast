@@ -19,7 +19,9 @@ struct CompactBarTests {
         check(
             defaults == [.clipboardHistory, .searchEmoji, .searchFiles, .searchQuicklinks],
             "the always-on commands lead the default")
-        check(CommandID.compactBarOptions.count == 8, "eight supported destinations")
+        check(CommandID.compactBarOptions.count == 7, "seven surviving destinations")
+        check(CommandID(rawValue: "command:ai-chat") == nil, "retired Quick AI command is ignored")
+        check(CommandID(rawValue: "command:ai-chat-window") == nil, "retired AI Chat command is ignored")
         for count in 0...CommandID.compactBarLimit {
             let commands = Array(defaults.prefix(count))
             var selection = CompactBarSelection()
@@ -45,7 +47,7 @@ struct CompactBarTests {
         check(selection.command == defaults.first, "an obsolete selection starts from Search")
 
         check(CommandID.compactBarCommands(from: []) == [], "empty means no shortcuts")
-        let chosen: [CommandID] = [.quickAI, .searchEmoji, .mySchedule, .showNotes]
+        let chosen: [CommandID] = [.searchSnippets, .searchEmoji, .mySchedule, .showNotes]
         check(
             CommandID.compactBarCommands(from: chosen.map(\.rawValue)) == chosen,
             "all additional destinations retain their order")
@@ -70,15 +72,37 @@ struct CompactBarTests {
         check(
             preferences.stringArray(forKey: key).flatMap(CommandID.compactBarCommands(from:)) == chosen,
             "stable identifiers round trip through isolated preferences")
+        let retired = ["command:ai-chat", "command:ai-chat-window"]
+        let legacy = [chosen[0].rawValue, retired[0], chosen[1].rawValue, retired[1]]
+        preferences.set(legacy, forKey: key)
+        preferences.synchronize()
+        let restarted = UserDefaults(suiteName: suite)!
+        check(
+            restarted.stringArray(forKey: key).flatMap(CommandID.compactBarCommands(from:))
+                == Array(chosen.prefix(2)),
+            "restart removes only retired commands and retains the surviving custom order")
+        check(
+            CommandID.compactBarCommands(from: retired) == [],
+            "an entirely retired selection stays empty rather than restoring defaults")
+        check(
+            CommandID.compactBarCommands(from: legacy + ["command:ai-chat-typo"]) == nil,
+            "a retired entry does not conceal an unknown identifier")
+        check(
+            CommandID.compactBarCommands(from: legacy + [chosen[0].rawValue]) == nil,
+            "a retired entry does not conceal duplicate survivors")
         preferences.set([], forKey: key)
         check(
             preferences.stringArray(forKey: key).flatMap(CommandID.compactBarCommands(from:)) == [],
             "an explicitly empty preference stays empty")
 
         let state = Commands()
-        let binding = SettingsFileBinding(.compactBarCommands, state, \.value) {
-            CommandID.validCompactBarCommands($0) ? $0 : nil
-        }
+        let binding = SettingsFileBinding.compactBarCommands(state, \.value)
+        let legacyFile = SettingsFileFormat.render([.compactBarCommands: legacy.settingsJSON])
+        let legacyParsed = try SettingsFileFormat.parse(legacyFile)
+        check(
+            binding.write(legacyParsed.values[.compactBarCommands]!).isEmpty
+                && state.value == Array(chosen.prefix(2)),
+            "settings.json filters exactly retired identifiers with the shared parser")
         check(
             binding.write(chosen.settingsJSON).isEmpty && state.value == chosen,
             "settings binding accepts the configured order")
@@ -89,8 +113,11 @@ struct CompactBarTests {
             "settings JSON round trip retains identifiers")
         for invalid: SettingsFileJSON in [
             .array([.string("unknown")]), .array([.string(CommandID.quit.rawValue)]),
-            .array([.string(CommandID.quickAI.rawValue), .string(CommandID.quickAI.rawValue)]),
-            Array(CommandID.compactBarOptions.prefix(5)).settingsJSON, .bool(false)
+            .array([.string(CommandID.searchSnippets.rawValue), .string(CommandID.searchSnippets.rawValue)]),
+            Array(CommandID.compactBarOptions.prefix(5)).settingsJSON, .bool(false),
+            (legacy + ["unknown"]).settingsJSON,
+            (legacy + [chosen[0].rawValue]).settingsJSON,
+            .array([.string("command:ai-chat"), .number(42)])
         ] {
             check(
                 !binding.write(invalid).isEmpty && state.value == chosen,

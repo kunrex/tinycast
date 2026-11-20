@@ -1,9 +1,6 @@
 import Foundation
 
 enum CommandID: String, CaseIterable, Sendable {
-    /// The palette's chat keeps the id it shipped with, so its hotkeys and fallback still reach it.
-    case quickAI = "command:ai-chat"
-    case aiChat = "command:ai-chat-window"
     case fixGrammar = "command:fix-grammar"
     case rewrite = "command:rewrite"
     case translate = "command:translate"
@@ -55,7 +52,7 @@ enum CommandID: String, CaseIterable, Sendable {
 
     static let compactBarOptions: [CommandID] =
         defaultCompactBarCommands + [
-            .searchSnippets, .showNotes, .mySchedule, .quickAI
+            .searchSnippets, .showNotes, .mySchedule
         ]
 
     static let compactBarLimit = 4
@@ -66,8 +63,12 @@ enum CommandID: String, CaseIterable, Sendable {
     }
 
     static func compactBarCommands(from identifiers: [String]) -> [CommandID]? {
-        let commands = identifiers.compactMap(CommandID.init(rawValue:))
-        guard commands.count == identifiers.count, validCompactBarCommands(commands) else { return nil }
+        // Strictly a compatibility check to avoid crashing older records
+        let surviving = identifiers.filter {
+            $0 != "command:ai-chat" && $0 != "command:ai-chat-window"
+        }
+        let commands = surviving.compactMap(CommandID.init(rawValue:))
+        guard commands.count == surviving.count, validCompactBarCommands(commands) else { return nil }
         return commands
     }
 
@@ -77,8 +78,6 @@ enum CommandID: String, CaseIterable, Sendable {
 
     private var nameResource: LocalizedStringResource {
         switch self {
-        case .quickAI: return "Quick AI"
-        case .aiChat: return "AI Chat"
         case .fixGrammar: return BuiltInQuickAction.fixGrammar.titleResource
         case .rewrite: return BuiltInQuickAction.rewrite.titleResource
         case .translate: return BuiltInQuickAction.translate.titleResource
@@ -128,8 +127,6 @@ enum CommandID: String, CaseIterable, Sendable {
 
     var sfSymbol: String {
         switch self {
-        case .quickAI: return "sparkles"
-        case .aiChat: return "bubble.left.and.bubble.right"
         case .fixGrammar: return BuiltInQuickAction.fixGrammar.symbol
         case .rewrite: return BuiltInQuickAction.rewrite.symbol
         case .translate: return BuiltInQuickAction.translate.symbol
@@ -198,11 +195,7 @@ enum CommandID: String, CaseIterable, Sendable {
 
     /// Queries this command wins until the user opens a rival more.
     var boostedTerms: Set<String> {
-        switch self {
-        case .quickAI: ["ai"]
-        case .aiChat: ["chat"]
-        default: []
-        }
+        []
     }
 
     /// Suggested, highest first, until the user's own habits fill the section.

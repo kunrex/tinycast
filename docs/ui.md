@@ -188,15 +188,6 @@ Notes adds `noteWindow 440×180` (opening size on a first run, and the floor), `
 `noteTitlebar 44`, `noteTitleInset 120`, `noteEditorInset 16`, `noteSearchHeight 34`,
 `noteFooterHeight 28`, `noteGlyph 16`, `noteEmptyGlyph 28`, and `noteHeadingMenu 220×159`.
 
-AI Chat adds `aiChatWindow 960×660` (opening size), `aiChatWindowMinimum 680×440`, a sidebar of
-`aiChatSidebarMinimum 240`–`aiChatSidebarMaximum 340`, `aiChatDetailMinimum 440`,
-`aiChatReadingWidth 960` for the transcript and composer column, a composer of at most
-`aiChatComposerMaxLines 15` lines or `aiChatComposerHeightFraction 0.30` of the pane,
-`aiChatComposerControl 28` for every control on its row and `aiChatComposerGlyph 16` for their glyph
-slot, `chatContextGauge 14` for the composer's context ring, and `chatContextCard 300` for the card it
-raises on hover. The row's glyphs are `Typography.composerSymbol`; Send's arrow is `composerSend` and
-Stop's square `composerStop`.
-
 The AI Providers panel adds `aiProvidersPanel 840×520` (the height is its two columns', stated so
 that selecting a longer provider never resizes the panel), `aiProvidersList 262`, `aiUsageBar 110`
 and `aiVariableName 170`. `segmentLabelInset 13` is what the system leaves either side of a
@@ -241,14 +232,12 @@ shipped. Light is the same stop with the ink inverted, and is the only column op
 | `cardStroke`      | white 0.10     | black 0.10     | settings/calc card border + inset dividers        |
 | `noteText`        | white 0.90     | black 0.85     | Notes body text                                   |
 | `dropGuide`       | white 0.35     | black 0.35     | the palette's drop guides while dragging          |
-| `composerSend`    | white 0.92     | black 0.92     | AI Chat's Send disc                               |
 
 `panelScrim` is the ramp's inverse — it darkens the dark surface and lightens the light one — so it
-is an `adaptive` pair, not a `ramp`. So is `composerSendInk`, black 0.85 on the dark disc and white
-on the light one.
+is an `adaptive` pair, not a `ramp`.
 `brand`, `primaryAction`, `destructive`, `success` and `dropGuideArmed` are fixed hues and adapt on
 their own.
-`Theme.Colors.Syntax` holds the code-colouring palette AI Chat paints into a fenced block — `keyword`,
+`Theme.Colors.Syntax` holds the code-colouring palette shared Markdown paints into a fenced block — `keyword`,
 `string`, `number`, `comment`, `type`, `function`, `constant`, `attribute`, `property`, `inserted`
 and `deleted`. Each is an `adaptive` pair, a bright hue on the dark surface and a deeper one on the
 light, and it is the only place a syntax colour is chosen.
@@ -354,35 +343,6 @@ than adding another toolbar or window.
 The switcher exposes activation, Rename, and Move to Trash as VoiceOver actions with the actual note
 title. Its hover buttons are hidden from accessibility so those actions are announced once. See
 [features/notes.md](features/notes.md).
-
----
-
-## AI Chat window
-
-Source: `Features/AI/UI/AIChatSplitViewController.swift`, `AIChatDetailView.swift`.
-
-AI Chat is a titled window built the way Settings is, not a palette sibling like Notes: a real
-`NSSplitViewController` whose sidebar item takes the system sidebar material, a unified toolbar with
-an inline title, and native `List`, `Menu` and context menus. Nothing about it scales with Interface
-Size. The composer is untinted Liquid Glass at `Radius.dialog`, stacked under the transcript so nothing
-scrolls behind it, with its controls on one row inside the glass, and its glass on a background layer
-rather than the box. The row's controls are stock `Menu`s and buttons wearing one face: bare at rest,
-a `controlSurface` fill at `Radius.barControl` under the pointer. Send is a solid disc in
-`Colors.composerSend` with a `composerSendInk` arrow, the row's one strong mark.
-The title bar keeps the system's own toolbar band, as any document window's does. The context card
-the gauge raises on hover is glass over a solid `windowBackgroundColor`, because it rises over
-transcript text, and sits in the transcript's own frame at its bottom edge, so no window size can
-push it off screen. A reply's choices are frosted capsules, centred, that rise out of the composer's
-top edge. Find marks words in `Colors.findMatch` / `findCurrent`, the system yellow, with
-`findCurrentInk` black on the solid one in both appearances. Transcript lines sit
-`spacing.chatLine 4` apart on both surfaces. A source chip is a frosted capsule like a choice, led
-by a `chatSourceBadge 18` number disc. Jump to Latest is a `chatJumpToLatest 30` arrow disc at the
-transcript's bottom edge. The transcript itself is the palette's `ChatTranscriptView`
-with `surface: .window`, which leaves out `edgeDissolve` and `thinScrollbar` — both are measured
-against the palette's bars — and caps the column at `aiChatReadingWidth`, centred. Its gutter sits
-outside that cap, as the composer's does, so a reply, its code blocks and the composer share both
-edges; a window reply takes no inset of its own, while the palette keeps `spacing.sm` to line up
-with its header's chevron.
 
 ---
 
@@ -736,14 +696,12 @@ system-drawn and a pane reads exactly as macOS System Settings does.
   Back/Forward chevrons. `SettingsWindowChrome` installs _before_ the content mounts: the bridged toolbar
   restores the title flags it mounted over, so a later `titleVisibility = .visible` is undone on the
   first navigation.
-- **Settings and AI Chat are the windows that keep the system titlebar.** `AppWindowController` builds
-  every window with `titlebarAppearsTransparent = true`, which opts the titlebar out of the system's
-  glass band; `SettingsWindowChrome.install(in:)` and `AIChatWindowChrome.install(in:)` set it back to
-  `false`, so the band and its scroll edge effect are drawn by AppKit as a pane's `Form` or the
-  transcript scrolls under it. `.fullSizeContentView` and `titlebarSeparatorStyle = .none` stay — the
-  content still runs under the bar, and a hairline would split the surface the band unifies. Both also
-  clear `isMovableByWindowBackground`: stock Settings isn't dragged by its content, and a drag across a
-  transcript selects text. Onboarding, Updates, Support and Command Output keep the transparent
+- **Settings keeps the system titlebar.** `AppWindowController` builds every window with
+  `titlebarAppearsTransparent = true`, which opts it out of the system's glass band;
+  `SettingsWindowChrome.install(in:)` sets it back to `false`, so AppKit draws the band as a pane's
+  `Form` scrolls under it. `.fullSizeContentView` and `titlebarSeparatorStyle = .none` stay — the
+  content still runs under the bar, and a hairline would split the surface the band unifies.
+  Settings also clears `isMovableByWindowBackground`: stock Settings isn't dragged by its content. Onboarding, Updates, Support and Command Output keep the transparent
   titlebar they were tuned for. Never hand-draw a header band; a main surface takes the system's
   material, not `glassEffect`.
 - `SettingsComponents.swift` holds only what more than one pane or editor needs: **`SettingsRow`**,

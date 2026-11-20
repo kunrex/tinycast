@@ -28,7 +28,7 @@ final class MathAttachmentCell: NSTextAttachmentCell {
 
     override func cellBaselineOffset() -> NSPoint { NSPoint(x: 0, y: -descent) }
 
-    /// Wider than its line, as a long equation in Quick AI is, it shrinks rather than overflows.
+    /// An equation wider than its line shrinks rather than overflows.
     override func cellFrame(
         for textContainer: NSTextContainer, proposedLineFragment lineFrag: NSRect,
         glyphPosition position: NSPoint, characterIndex charIndex: Int

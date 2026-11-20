@@ -108,7 +108,7 @@ enum SettingsSearchCatalog {
     static let entries: [SettingsSearchEntry] =
         general + applications + systemSettings + systemActions + commands + quicklinks
         + appleShortcuts + fallbacks + clipboard + snippets + fileSearch + windowManagement
-        + navigation + notes + calendar + emoji + ai + quickActions + dictation + extensions + permissions
+        + navigation + notes + calendar + emoji + quickActions + dictation + extensions + permissions
         + backup + about
 
     private static let general: [SettingsSearchEntry] = [
@@ -280,52 +280,6 @@ enum SettingsSearchCatalog {
             keywords: ["no results", "empty", "search web", "order"])
     ]
 
-    private static let ai: [SettingsSearchEntry] = [
-        .init(
-            pane: .ai, keywords: ["chat", "quick ai", "llm", "model", "openai", "anthropic"]),
-        .init(.aiAI, "Enable AI", keywords: ["chat", "llm"]),
-        .init(
-            .aiProviders, "Providers",
-            keywords: [
-                "sign in", "connect", "codex", "claude", "grok", "xai", "opencode", "cursor", "agent",
-                "api key", "connection", "base url", "openai", "anthropic", "ollama", "models",
-                "hide models"
-            ]),
-        .init(.aiDefault, "Default model", keywords: ["llm", "gpt", "claude", "grok"]),
-        .init(.aiDefault, "Reasoning effort", keywords: ["thinking", "effort", "deepseek"]),
-        .init(.aiChat, "Web search", keywords: ["browse", "internet"]),
-        .init(.aiChat, "Suggested replies", keywords: ["choices", "chips", "follow-up", "buttons"]),
-        .init(.aiChat, "Expand thinking", keywords: ["reasoning", "thoughts", "collapse", "fold", "unfold"]),
-        .init(.aiChat, "Tool call rounds", keywords: ["mcp", "tools", "limit", "loop", "agent", "unlimited"]),
-        .init(
-            .aiConversations, "Opens to",
-            keywords: ["new chat", "last", "summon", "resume", "window", "quick ai"]),
-        .init(
-            .aiConversations, "Start a new conversation after",
-            keywords: ["idle", "timeout", "fresh"]),
-        .init(
-            .aiConversations, "Keep conversations",
-            keywords: ["retention", "delete", "history", "privacy"]),
-        .init(
-            .aiSystemPrompt, "Send a system prompt",
-            keywords: ["instructions", "persona"]),
-        .init(
-            group: .aiChatPresets, "Chat Presets",
-            keywords: ["persona", "instructions", "system prompt"]),
-        .init(
-            .aiChatPresets, "Add Chat Preset",
-            keywords: ["new", "persona", "instructions", "system prompt"]),
-        .init(
-            .aiMCPServers, "Enable MCP servers",
-            keywords: ["tools", "model context protocol"]),
-        .init(
-            .aiMCPServers, "Add MCP Server",
-            keywords: ["tools", "model context protocol", "stdio"]),
-        .init(
-            group: .aiCommands, "AI commands",
-            keywords: ["shortcut", "launcher", "chat"])
-    ]
-
     private static let quickActions: [SettingsSearchEntry] = [
         .init(
             pane: .quickActions,
@@ -342,6 +296,12 @@ enum SettingsSearchCatalog {
         .init(
             .quickActionsModel, "Model",
             keywords: ["llm", "ai", "default"]),
+        .init(
+            .quickActionsProviders, "Providers",
+            keywords: [
+                "connect", "api key", "connection", "base url", "openai", "anthropic", "ollama",
+                "gemini", "openrouter", "apple intelligence", "models", "hide models"
+            ]),
         .init(
             .quickActionsTranslate, "Translate to",
             keywords: ["language", "locale"])

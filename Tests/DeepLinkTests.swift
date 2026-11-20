@@ -252,6 +252,10 @@ struct DeepLinkTests {
             expect(SettingsTab(slug: tab.slug) == tab, "settings/\(tab.slug) opens its own tab")
         }
         expect(SettingsTab(slug: "nope") == nil, "an unknown tab opens nothing")
+        expect(SettingsTab(slug: "ai") == nil, "the retired AI settings link opens nothing")
+        expect(
+            parse("tinycast://settings/quick-actions") == .settings(slug: "quick-actions"),
+            "provider settings remains reachable through the Quick Actions link")
     }
 
     static func encodingChecks() {
@@ -291,10 +295,9 @@ struct DeepLinkTests {
             expect(parse("tinycast://note/\(name)") == nil, "\(name) is never a note")
         }
         let chat = UUID()
-        expect(
-            DeepLink.url(forChat: chat, scheme: scheme).flatMap { DeepLink(url: $0, scheme: scheme) }
-                == .chat(id: chat),
-            "a chat's link reads back as its ID")
+        expect(parse("tinycast://chat/\(chat)") == nil, "retired chat links never resolve")
+        expect(parse("tinycast://command/ai-chat") == nil, "Quick AI command links never resolve")
+        expect(parse("tinycast://command/ai-chat-window") == nil, "AI Chat command links never resolve")
         expect(parse("tinycast://chat/nope") == nil, "a chat link needs a UUID")
         expect(
             parse("tinycast://system-action/set-volume?fallbackText=40")
