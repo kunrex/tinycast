@@ -1,7 +1,8 @@
 import AppKit
+import Carbon.HIToolbox
 
 @MainActor
-final class WindowSwitchCoordinator {
+final class WindowSwitchCoordinator: HealthCheckable {
     private let settings: AppSettings
     private let appIndex: AppIndex
     private let session: WindowSwitchSession
@@ -10,6 +11,15 @@ final class WindowSwitchCoordinator {
     private unowned let core: AppCore
     /// Armed by a repeat press with its modifiers held: letting go switches, as ⌘Tab does.
     private var releaseMonitor: Any?
+    private let nativeTap = CommandTabTap()
+    private var nativeSession: UUID?
+    private var committingNative = false
+    private var nativeSearchMonitor: Any?
+    private var observers: [NotificationToken] = []
+    private var darwinObservers: [DarwinNotificationToken] = []
+    private var pauseReasons: Set<String> = []
+    private var nativeProblem: String?
+    weak var healthTicker: HealthTicker?
     private static let chordModifiers: NSEvent.ModifierFlags = [.command, .option, .control, .shift]
 
     init(
@@ -24,9 +34,180 @@ final class WindowSwitchCoordinator {
         self.core = core
     }
 
+    func start() {
+        session.onReset = { [weak self] in
+            guard let self, !self.committingNative else { return }
+            self.cancelNativeGesture()
+        }
+        let workspace = NSWorkspace.shared.notificationCenter
+        let distributed = DistributedNotificationCenter.default()
+        for (center, name, reason, paused) in [
+            (workspace, NSWorkspace.willSleepNotification, "sleep", true),
+            (workspace, NSWorkspace.didWakeNotification, "sleep", false),
+            (workspace, NSWorkspace.sessionDidResignActiveNotification, "session", true),
+            (workspace, NSWorkspace.sessionDidBecomeActiveNotification, "session", false),
+            (distributed, Notification.Name("com.apple.screenIsLocked"), "lock", true),
+            (distributed, Notification.Name("com.apple.screenIsUnlocked"), "lock", false)
+        ] {
+            observers.append(NotificationToken(
+                center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                    Task { @MainActor in
+                        guard let self else { return }
+                        if paused { self.pauseReasons.insert(reason) }
+                        else { self.pauseReasons.remove(reason) }
+                        self.applyNativeSwitching()
+                    }
+                }, center: center))
+        }
+        darwinObservers = [
+            DarwinNotificationToken("com.apple.coregraphics.eventTapRemoved") { [weak self] in
+                self?.recoverNativeTap()
+            },
+            DarwinNotificationToken("com.apple.tcc.access.changed") { [weak self] in
+                guard let self else { return }
+                self.stopNativeSwitching()
+                self.healthTicker?.subscribe(self)
+            }
+        ]
+        applyNativeSwitching()
+    }
+
+    func setMimicsMacOS(_ enabled: Bool) {
+        if enabled { _ = Permissions.ensureAccessibility() }
+        settings.navigationMimicsMacOS = enabled
+        applyNativeSwitching()
+    }
+
+    func healthCheck() { applyNativeSwitching() }
+
+    private func recoverNativeTap() {
+        guard settings.navigationEnabled, settings.navigationMimicsMacOS,
+            core.hotKeys.recordingAction == nil, pauseReasons.isEmpty,
+            !core.secureInput.isActive, !nativeTap.isInstalled else { return }
+        stopNativeSwitching()
+        applyNativeSwitching()
+    }
+
+    func applyNativeSwitching() {
+        let wanted = settings.navigationEnabled && settings.navigationMimicsMacOS
+        core.hotKeys.navigationMimicsMacOS = wanted
+        guard wanted, core.hotKeys.recordingAction == nil, pauseReasons.isEmpty,
+            !core.secureInput.isActive else {
+            stopNativeSwitching()
+            healthTicker?.unsubscribe(self)
+            return
+        }
+        guard Permissions.isAccessibilityTrusted() else {
+            stopNativeSwitching()
+            reportNativeProblem(String(localized: "Mimic macOS needs Accessibility access"))
+            healthTicker?.subscribe(self)
+            return
+        }
+        guard nativeTap.install(onIntent: { [weak self] in self?.handleNative($0) }) else {
+            reportNativeProblem(String(localized: "Couldn’t replace Command-Tab. macOS switching is still available."))
+            healthTicker?.subscribe(self)
+            return
+        }
+        nativeProblem = nil
+        healthTicker?.unsubscribe(self)
+    }
+
+    private func reportNativeProblem(_ message: String) {
+        guard nativeProblem != message else { return }
+        nativeProblem = message
+        core.showMessage(message, tone: .danger)
+    }
+
+    private func cancelNativeGesture() {
+        disarmNativeSearch()
+        nativeSession = nil
+        nativeTap.cancelGesture()
+    }
+
+    func prepareForTermination() {
+        stopNativeSwitching()
+        nativeTap.stop(drain: false)
+        healthTicker?.unsubscribe(self)
+        observers = []
+        darwinObservers = []
+    }
+
+    private func stopNativeSwitching() {
+        cancelNativeGesture()
+        nativeTap.stop()
+        disarmSwitchOnRelease()
+    }
+
+    private func handleNative(_ intent: CommandTabEngine.Intent) {
+        if intent == .cancel {
+            nativeSession = nil
+            disarmNativeSearch()
+            return
+        }
+        guard settings.navigationEnabled, settings.navigationMimicsMacOS,
+            core.hotKeys.recordingAction == nil, Permissions.isAccessibilityTrusted(),
+            !core.secureInput.isActive, !IsSecureEventInputEnabled() else { return }
+        switch intent {
+        case .cancel: break
+        case .step(let backwards, let first):
+            if first {
+                disarmSwitchOnRelease()
+                if !paletteCoordinator.isShowing(.switchWindows) {
+                    paletteCoordinator.showPalette(mode: .switchWindows, seeding: "")
+                    palette.selection = 0
+                }
+                nativeSession = session.identity
+                armNativeSearch()
+            }
+            guard nativeSession == session.identity,
+                paletteCoordinator.isShowing(.switchWindows) else { return }
+            filterQuery()
+            step(by: backwards ? -1 : 1, native: true)
+        case .commit:
+            guard nativeSession == session.identity else { return }
+            filterQuery()
+            nativeSession = nil
+            disarmNativeSearch()
+            committingNative = true
+            defer { committingNative = false }
+            switchOnRelease()
+        }
+    }
+
+    func filterQuery() {
+        // Release can arrive before SwiftUI has forwarded the latest typed query to the session.
+        if session.filter(palette.query) { palette.selection = 0 }
+    }
+
+    private func armNativeSearch() {
+        guard nativeSearchMonitor == nil else { return }
+        nativeSearchMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self, self.nativeSession == self.session.identity,
+                self.paletteCoordinator.isShowing(.switchWindows),
+                self.paletteCoordinator.anchorView?.window?.isKeyWindow == true,
+                event.modifierFlags.intersection([.command, .control, .option, .function]) == .command,
+                let text = event.charactersIgnoringModifiers,
+                text.unicodeScalars.allSatisfy({ !CharacterSet.controlCharacters.contains($0) }),
+                !text.isEmpty
+            else { return event }
+            return NSEvent.keyEvent(
+                with: .keyDown, location: event.locationInWindow,
+                modifierFlags: event.modifierFlags.subtracting(.command), timestamp: event.timestamp,
+                windowNumber: event.windowNumber, context: nil, characters: text,
+                charactersIgnoringModifiers: text, isARepeat: event.isARepeat, keyCode: event.keyCode)
+                ?? event
+        }
+    }
+
+    private func disarmNativeSearch() {
+        if let nativeSearchMonitor { NSEvent.removeMonitor(nativeSearchMonitor) }
+        nativeSearchMonitor = nil
+    }
+
     func applyEnabled() {
         appIndex.setCommandsVisible(
             [.switchWindows, .switchWindowsBackwards], settings.navigationEnabled)
+        applyNativeSwitching()
         guard !settings.navigationEnabled else { return }
         session.reset()
         if palette.mode == .switchWindows { palette.prepare(mode: .launcher) }
@@ -34,6 +215,7 @@ final class WindowSwitchCoordinator {
 
     func show(backwards: Bool = false) {
         guard settings.navigationEnabled, hasAccessibility() else { return }
+        cancelNativeGesture()
         if paletteCoordinator.isShowing(.switchWindows) { return step(by: backwards ? -1 : 1) }
         disarmSwitchOnRelease()
         paletteCoordinator.togglePalette(mode: .switchWindows)
@@ -42,17 +224,19 @@ final class WindowSwitchCoordinator {
     /// A link's text filters the list it opens; there is no held chord to switch on release.
     func show(query: String) {
         guard settings.navigationEnabled, hasAccessibility() else { return }
+        cancelNativeGesture()
         disarmSwitchOnRelease()
         paletteCoordinator.togglePalette(mode: .switchWindows, seeding: query)
     }
 
     /// The first step lands on the window behind the current one, which the list opens on.
-    private func step(by offset: Int) {
+    private func step(by offset: Int, native: Bool = false) {
         let count = session.filtered.count
         guard count > 0 else { return }
         palette.selection = (palette.selection + offset + count) % count
         palette.followToken = UUID()
-        armSwitchOnRelease()
+        if native { session.nativeLandingSelection = palette.selection }
+        else { armSwitchOnRelease() }
     }
 
     /// A single press still searches: only a held chord, stepped again, switches on release.

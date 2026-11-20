@@ -24,7 +24,7 @@ enum WindowSwitchSweep {
         var entries: [WindowSwitchEntry] = []
         var elements: [Int: Element] = [:]
 
-        for app in WindowInventory.candidates() {
+        for app in AXWindowAccess.candidates() {
             guard let bundleID = app.bundleIdentifier else { continue }
             let pid = app.processIdentifier
             let application = AXWindowAccess.application(for: pid, timeout: sweepTimeout)

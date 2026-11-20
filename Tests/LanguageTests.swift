@@ -95,12 +95,12 @@ struct LanguageTests {
             }
         }
 
-        let windows: [String: (String, String)] = [
-            "en": ("1 window", "2 windows"), "de": ("1 Fenster", "2 Fenster"),
-            "es": ("1 ventana", "2 ventanas"), "fr": ("1 fenêtre", "2 fenêtres"),
-            "ja": ("1個のウインドウ", "2個のウインドウ"), "ko": ("윈도우 1개", "윈도우 2개"),
-            "pt": ("1 janela", "2 janelas"), "ru": ("1 окно", "2 окна"),
-            "zh-Hans": ("1 个窗口", "2 个窗口")
+        let notes: [String: (String, String)] = [
+            "en": ("1 note", "2 notes"), "de": ("1 Notiz", "2 Notizen"),
+            "es": ("1 nota", "2 notas"), "fr": ("1 note", "2 notes"),
+            "ja": ("1件のメモ", "2件のメモ"), "ko": ("메모 1개", "메모 2개"),
+            "pt": ("1 nota", "2 notas"), "ru": ("1 заметка", "2 заметки"),
+            "zh-Hans": ("1 条笔记", "2 条笔记")
         ]
         let contextualLabels: [(key: String, source: String, overrides: [String: String])] = [
             ("applications-empty", "Nothing here yet.", ["fr": "Aucune application à afficher."]),
@@ -115,7 +115,6 @@ struct LanguageTests {
             ("extensions-installed-section", "Installed", ["fr": "Extensions installées"]),
             ("extensions-install-section", "Install", ["fr": "Installation"]),
             ("unit-category-time", "Time", ["fr": "Durée"]),
-            ("window-position-center", "Center", ["fr": "Centre"]),
             ("onboarding-open-launcher", "App Launcher", ["fr": "Ouvrir le lanceur"]),
             ("reasoning-effort-low", "Low", ["es": "Bajo", "pt": "Baixo"]),
             ("reasoning-effort-medium", "Medium", ["es": "Medio", "fr": "Moyen", "pt": "Médio"]),
@@ -143,7 +142,7 @@ struct LanguageTests {
         for language in AppLanguage.allCases {
             let code = language.rawValue
             guard let bundle = Bundle(url: root.appendingPathComponent("\(code).lproj")),
-                let expected = windows[code]
+                let expected = notes[code]
             else {
                 check("\(code) resources exist", false)
                 continue
@@ -153,10 +152,10 @@ struct LanguageTests {
             let two = 2
             check(
                 "\(code) singular is selected at runtime",
-                String(localized: "\(one) windows", bundle: bundle, locale: locale) == expected.0)
+                String(localized: "\(one) notes", bundle: bundle, locale: locale) == expected.0)
             check(
                 "\(code) plural is selected at runtime",
-                String(localized: "\(two) windows", bundle: bundle, locale: locale) == expected.1)
+                String(localized: "\(two) notes", bundle: bundle, locale: locale) == expected.1)
             let size = "5 MB"
             let reordered = String(
                 localized: "Reclaims \(size) from \(two) items.", bundle: bundle, locale: locale)
@@ -194,7 +193,7 @@ struct LanguageTests {
             if code == "fr" {
                 for (key, expected) in [
                     "Medium": "Moyenne", "High": "Élevée", "Light": "Clair", "Dark": "Sombre",
-                    "Time": "Heure", "Center": "Centrer", "Pinned": "Épinglés",
+                    "Time": "Heure", "Pinned": "Épinglés",
                     "On": "Activé", "Off": "Désactivé", "Untitled": "Sans titre"
                 ] {
                     check(
@@ -203,29 +202,15 @@ struct LanguageTests {
                 }
             }
 
-            if code == "en" || code == "ru" {
-                let expectedPair = code == "en" ? "1 window · 2 displays" : "1 окно · 2 дисплея"
-                check(
-                    "\(code) plural substitutions select each argument independently",
-                    String(
-                        localized: "\(one) windows · \(two) displays", bundle: bundle, locale: locale)
-                        == expectedPair)
-                let expectedReverse = code == "en" ? "2 windows · 1 display" : "2 окна · 1 дисплей"
-                check(
-                    "\(code) the second count can be singular independently",
-                    String(
-                        localized: "\(two) windows · \(one) displays", bundle: bundle, locale: locale)
-                        == expectedReverse)
-            }
             if code == "ru" {
                 let five = 5
                 let twentyOne = 21
                 check(
                     "Russian many is selected at runtime",
-                    String(localized: "\(five) windows", bundle: bundle, locale: locale) == "5 окон")
+                    String(localized: "\(five) notes", bundle: bundle, locale: locale) == "5 заметок")
                 check(
                     "Russian 21 selects one rather than other",
-                    String(localized: "\(twentyOne) windows", bundle: bundle, locale: locale) == "21 окно")
+                    String(localized: "\(twentyOne) notes", bundle: bundle, locale: locale) == "21 заметка")
             }
         }
     }

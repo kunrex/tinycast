@@ -47,7 +47,7 @@ struct SettingsFileTests {
                 "general", "appearance", "hyperKey", "calculator", "search", "applications",
                 "systemSettings", "systemActions", "commands", "quicklinks", "appleShortcuts",
                 "quickActions", "dictation", "fileSearch", "notes", "snippets", "navigation",
-                "windowManagement", "clipboard", "emoji", "calendar", "extensions"
+                "clipboard", "emoji", "calendar", "extensions"
             ])
 
         let retiredConversationPaths = [
@@ -58,6 +58,16 @@ struct SettingsFileTests {
         check(
             "retired conversation settings have no settings.json binding",
             retiredConversationPaths.allSatisfy { SettingsFileKey(rawValue: $0) == nil })
+        check(
+            "Mimic macOS is a UI preference in the navigation section",
+            SettingsFileKey.navigationMimicsMacOS.rawValue == "navigation.mimicsMacOS")
+        for enabled in [true, false] {
+            let rendered = SettingsFileFormat.render([.navigationMimicsMacOS: .bool(enabled)])
+            let parsed = try? SettingsFileFormat.parse(rendered)
+            check(
+                "Mimic macOS round trips through settings.json",
+                parsed?.values[.navigationMimicsMacOS] == .bool(enabled))
+        }
 
         // A file that could switch one of these on would grant what only the app may ask for.
         let grantPaths = [
@@ -119,7 +129,7 @@ struct SettingsFileTests {
 
     private static func testFormat() {
         let values: [SettingsFileKey: SettingsFileJSON] = [
-            .windowShortcuts: .object([]),
+            .navigationCommands: .object([]),
             .autoSwitchInputSource: .null,
             .searchScopes: .array(["/Applications", "~/Applications"]),
             .showInMenuBar: true,
@@ -127,7 +137,7 @@ struct SettingsFileTests {
             .escapeKeyBehavior: "say \"hi\"\\ / é\n\t\u{01}",
             .fileSearchIgnorePatterns: .array([]),
             .popToRootTimeout: 5,
-            .windowGap: .number(-1.5)
+            .calendarSpan: .number(-1.5)
         ]
         let golden = """
             {
@@ -147,9 +157,11 @@ struct SettingsFileTests {
               "fileSearch": {
                 "ignorePatterns": []
               },
-              "windowManagement": {
-                "gap": -1.5,
-                "shortcuts": {}
+              "navigation": {
+                "commands": {}
+              },
+              "calendar": {
+                "span": -1.5
               }
             }
 

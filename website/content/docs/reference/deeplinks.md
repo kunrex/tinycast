@@ -4,7 +4,7 @@ description: Run any command, note or chat from a tinycast:// link, with text an
 ---
 
 **Anything you can give a shortcut, you can also run from a link.** So can a note, a saved AI chat
-and a window size. Use links from Karabiner-Elements, Shortcuts, a Stream Deck, a script or a web
+as well. Use links from Karabiner-Elements, Shortcuts, a Stream Deck, a script or a web
 page:
 
 ```sh
@@ -33,7 +33,6 @@ for them.
 | `tinycast://`                          | Opens the launcher                                    |
 | `tinycast://search?fallbackText=2%2B2` | Opens the launcher with `2+2` typed                   |
 | `tinycast://command/clipboard-history` | Runs a built-in command                               |
-| `tinycast://window-command/left-half`  | Moves the front window                                |
 | `tinycast://system-action/lock-screen` | Runs a [system action](/docs/launcher/system-actions) |
 | `tinycast://note/Groceries.md`         | Opens that note                                       |
 | `tinycast://chat/<id>`                 | Opens that saved chat                                 |
@@ -65,17 +64,13 @@ A few more things links can carry:
   before it adds them, and skips any you already have.
 - **A volume level.** `tinycast://system-action/set-volume?fallbackText=40` sets the volume to 40%
   without the picker.
-- **A window size.**
-  `tinycast://window-size?arguments={"width":"1200","height":"60%","anchor":"top-left"}` sizes the
-  front window. A plain number is points, a number with `%` is a share of the screen. `anchor` is
-  where it sits, like `center` or `bottom-right`, and `x` and `y` move it by points.
 
 If a link's input is broken or too long, Tinycast says it can't open the link and runs nothing.
 
 ## Links that ask first
 
 **A link from another app or a web page asks before it runs, if it carries text or arguments, or if
-it acts outside Tinycast.** Acting outside Tinycast includes window commands, system actions,
+it acts outside Tinycast.** Acting outside Tinycast includes system actions,
 quicklinks, snippets, custom commands and Apple Shortcuts. The question shows the text or
 arguments, so you can see what will run. You can choose:
 
@@ -112,7 +107,7 @@ Use `open -g`, so the link runs without bringing Tinycast forward:
 }
 ```
 
-Window commands also work with a plain `open`. Snippets and Paste Sequentially need `open -g`, so
+Snippets and Paste Sequentially need `open -g`, so
 the text goes to the app you're in.
 
 ## Extension links

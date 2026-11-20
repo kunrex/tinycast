@@ -11,7 +11,7 @@ your snippets.
 
 | Category             | What's included                                                                                                     |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Settings & Shortcuts | Shortcuts, custom commands, quicklinks, window layouts, rooms, custom window sizes, favorites, aliases, preferences |
+| Settings & Shortcuts | Shortcuts, custom commands, quicklinks, favorites, aliases, preferences |
 | Clipboard History    | Text and image clips with their images, and references to copied files                                              |
 | Snippets             | Your snippet Markdown files                                                                                         |
 | Notes                | Your note Markdown files                                                                                            |
@@ -96,8 +96,7 @@ file applies in Tinycast right away. If the file is a symlink, it stays one, so 
 dotfiles repository.
 
 The file holds your preferences, the shortcuts and aliases of apps, System Settings panes, system
-actions and built-in commands, and all of window management, including custom sizes, layouts and
-rooms. It never holds your snippets, notes, quicklinks, custom commands, MCP servers or AI
+actions and built-in commands. It never holds your snippets, notes, quicklinks, custom commands, MCP servers or AI
 connections.
 
 If the file already exists when you turn sync on, Tinycast asks whether to **Import** it or

@@ -14,8 +14,61 @@ struct HotKeyDispatchTests {
 
     static func main() {
         for includesShift in [false, true] { dispatch(includesShift: includesShift) }
+        navigationSuppression()
         print("\(checks) dispatch checks; \(failures) failures")
         if failures > 0 { exit(1) }
+    }
+
+    static func navigationSuppression() {
+        let domain = "tinycast.navigation-hotkeys-test.\(UUID())"
+        let defaults = UserDefaults(suiteName: domain)!
+        defer { defaults.removePersistentDomain(forName: domain) }
+        let manager = HotKeyManager(defaults: defaults)
+        manager.start(customCommandIDs: [], quicklinkIDs: [], quickActionIDs: [])
+        let center = HotKeyCenter.current!
+        let forward = HotKeyAction.command(.switchWindows)
+        let backward = HotKeyAction.command(.switchWindowsBackwards)
+        let menu = HotKeyAction.command(.searchMenuItems)
+        let hyper = HotKeyBinding.combo(KeyShortcut(
+            carbonKeyCode: kVK_ANSI_G,
+            carbonModifiers: KeyShortcut.carbonModifiers(from: KeyShortcut.hyperChord(includesShift: true))))
+        let modifier = HotKeyBinding.doubleTap(.command)
+        manager.setBinding(hyper, for: forward)
+        manager.setBinding(modifier, for: backward)
+        manager.setBinding(.combo(KeyShortcut(carbonKeyCode: kVK_ANSI_M, carbonModifiers: cmdKey)), for: menu)
+        let stored = defaults.string(forKey: forward.defaultsKey)
+        var commands: [CommandID] = []
+        manager.onRunCommand = { commands.append($0) }
+        let oldCallback = center.entries[forward.defaultsKey]!
+        manager.setSecureInputEquivalents(includesShift: true)
+        let equivalent = "secureInputEquivalent." + forward.defaultsKey
+        check("equivalent exists before mimic", center.entries[equivalent] != nil)
+        manager.navigationMimicsMacOS = true
+        check("Carbon window binding unregistered", center.entries[forward.defaultsKey] == nil)
+        check("Secure Input equivalent suppressed", center.entries[equivalent] == nil)
+        check("modifier route removed", !manager.modifierTapMonitor.bound.contains(modifier))
+        manager.perform(forward)
+        manager.perform(backward)
+        oldCallback.onKeyDown(0)
+        check("dispatch guard catches stale callbacks", commands.isEmpty)
+        manager.perform(menu)
+        check("Menu Search unaffected", commands == [.searchMenuItems] && center.entries[menu.defaultsKey] != nil)
+        check(
+            "binding stays persisted",
+            defaults.string(forKey: forward.defaultsKey) == stored && manager.binding(for: forward) == hyper)
+        check("suppressed binding reserves conflicts", manager.conflictOwner(of: hyper, excluding: menu) != nil)
+        manager.setSecureInputEquivalents(includesShift: nil)
+        check("clearing equivalents cannot restore suppressed action", center.entries[forward.defaultsKey] == nil)
+        manager.navigationMimicsMacOS = false
+        check("Carbon binding restored", center.entries[forward.defaultsKey] != nil)
+        check("modifier binding restored", manager.modifierTapMonitor.bound.contains(modifier))
+        manager.setSecureInputEquivalents(includesShift: true)
+        check("equivalent restored", center.entries[equivalent] != nil)
+        manager.perform(forward)
+        manager.perform(backward)
+        check(
+            "execution restored regardless of visibility",
+            commands == [.searchMenuItems, .switchWindows, .switchWindowsBackwards])
     }
 
     static func dispatch(includesShift: Bool) {

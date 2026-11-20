@@ -60,6 +60,24 @@ struct SettingsBackupTests {
             "compact shortcuts ride the settings backup",
             mirrored["compactBarCommands"] == .compactBarCommands)
         check(
+            "Mimic macOS rides the settings backup",
+            mirrored["navigationMimicsMacOS"] == .navigationMimicsMacOS)
+
+        let suite = "SettingsBackupTests.\(UUID().uuidString)"
+        let preferences = UserDefaults(suiteName: suite)!
+        defer { preferences.removePersistentDomain(forName: suite) }
+        let mimicKey = AppSettingsKey.navigationMimicsMacOS.rawValue
+        check("Mimic macOS defaults off", !preferences.bool(forKey: mimicKey))
+        preferences.set(true, forKey: mimicKey)
+        check(
+            "Mimic macOS persists on",
+            UserDefaults(suiteName: suite)!.bool(forKey: mimicKey))
+        preferences.set(false, forKey: mimicKey)
+        check(
+            "Mimic macOS persists off",
+            !UserDefaults(suiteName: suite)!.bool(forKey: mimicKey))
+
+        check(
             "Markdown rendering rides the settings backup",
             mirrored["notesRendersMarkdown"] == .notesRendersMarkdown)
         check(

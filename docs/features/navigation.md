@@ -9,12 +9,31 @@ switcher and the pane the two share.
 Ships **off**. Settings › Navigation is the switch, and while it is off none of them is in the
 launcher and a still-recorded shortcut for any does nothing.
 
+Settings also offers **Mimic macOS**, off by default, above the window command shortcuts. With
+Navigation enabled it replaces ⌘Tab / ⌘⇧Tab with the searchable window switcher. The first press
+opens, loads and steps immediately; repeats cycle, and releasing Command commits even with Shift
+still held. Typing printable characters into the key switcher searches while Command is held.
+Launcher invocation still opens search without arming a release commit.
+
+The two saved window shortcuts remain persisted and conflict-reserved, but are temporarily
+**unregistered** (Carbon, modifier-only and Secure Input equivalents) and guarded at dispatch.
+Their recorders remain disabled. Turning Mimic macOS off restores the same bindings. Menu Search,
+aliases and launcher visibility are unchanged: the per-command checkboxes only control visibility,
+never execution. Navigation's master switch is the capability gate.
+
+Accessibility is required. Explicitly checking Mimic macOS uses the existing permission gate;
+startup and settings-file/backup application never prompt. Missing permission or a failed tap install
+reports in the existing HUD and leaves native macOS switching available. Saved shortcuts remain
+suppressed while the toggle is on, including during failure or Secure Input; uncheck it to restore
+them. Secure Input is **not supported**. The preference persists locally and travels in settings
+backups and `navigation.mimicsMacOS` in the settings file.
+
 ## Invariants
 
 - **The sweep is synchronous, and that is deliberate.** `WindowSwitchSweep.snapshot` visits apps and
   their windows — one level, two AX reads each — where the menu walk descends a tree. A
   `Task.detached` here would buy a "Reading windows…" state nobody would ever see, and cost a
-  revision counter to keep superseded sweeps from publishing. `WindowInventory` made the same call.
+  revision counter to keep superseded sweeps from publishing.
 - **A live `AXUIElement` never leaves the main actor, and never outlives the show.** The pure entry
   carries a `handle`; `WindowSwitchSession` holds the `handle → Element` table `@ObservationIgnored`
   and drops it in `reset()`, which `hidePalette` and every mode change call. So every open sweeps
@@ -30,10 +49,10 @@ launcher and a still-recorded shortcut for any does nothing.
   is open must not reach `AXUIElementPerformAction`. The open gate sits in both `show()` and
   `load()`, because a restore reaches `load()` alone.
 - **Activation hides with `restoreFocus: false`.** Restoring focus reactivates the displaced app,
-  which races the raise and can land on the wrong window — the same reason a Space command does it.
-- **`AXWindowAccess` stays the one AX window layer.** `minimize`, `unminimize` and `focus` live
-  there rather than in a second AX shim, and Window Layouts brings its frontmost window forward
-  through `focus`.
+  which races the raise and can land on the wrong window.
+- **`Platform/AXWindowAccess` is the one shared AX window layer.** `minimize`, `unminimize`,
+  `focus` and app candidate enumeration live there, shared with durable recovery.
+  The switcher's sweep and live element table remain owned by WindowSwitcher.
 
 ## How it is put together
 
@@ -60,8 +79,8 @@ call needs no Screen Recording grant.
 
 The rank is therefore **per app, not per window**: mapping a `CGWindowID` onto an `AXUIElement` needs
 the private `_AXUIElementGetWindow`, and the app's own `kAXWindowsAttribute` order already gives the
-windows inside one app front-to-back. [Rooms](window-rooms.md#invariants) do resolve that symbol, in
-`AXWindowAccess.windowID(of:)`, because a parked window's way back must outlive its element; the
+windows inside one app front-to-back. [Recovery](window-recovery.md#restore-policy) resolves that
+symbol in `AXWindowAccess.windowID(of:)` because a saved home must outlive its element; the
 switcher keeps its per-app rank, which needs nothing private. An app with nothing on screen — everything minimized, or every
 window on another Space — gets no rank at all and sorts after the ranked ones by name.
 
@@ -71,12 +90,10 @@ rather than after the user has switched apps once.
 
 ## The sweep
 
-`WindowSwitchSweep` walks `WindowInventory.candidates()` — regular-policy, non-terminated, not us —
+`WindowSwitchSweep` walks `AXWindowAccess.candidates()` — regular-policy, non-terminated, not us —
 and takes every window `WindowSwitchPolicy` accepts: a standard-subrole one, or a minimized one that
-still has a minimize button. That is looser than
-`WindowInventory.eligibleFrame` in two ways that both matter here: a **minimized** window is exactly
-what a switcher is for, and a window on another Space reports no frame until it is raised, so
-requiring one would hide it.
+still has a minimize button. A **minimized** window is exactly what a switcher is for, and a window
+on another Space reports no frame until it is raised, so requiring one would hide it.
 
 **A minimized window changes subrole.** Finder and Transmission report their minimized windows as
 `AXDialog`, not `AXStandardWindow`, and back to `AXStandardWindow` when restored, so a subrole test
@@ -84,7 +101,7 @@ alone drops exactly the rows a switcher exists for. A sheet cannot minimize, so 
 is what still tells a minimized window from a real dialog. The policy is Foundation-only, so the
 harness covers the rule rather than the attribute reads.
 
-Each element gets a 0.2 s messaging timeout, the same as the layout inventory and the menu walk, so
+Each element gets a 0.2 s messaging timeout, the same as the recovery sweep and the menu walk, so
 one hung app cannot stall the summon.
 
 The app icon rides on the entry as a `FileIconStamp` and its bundle URL, and the row draws it through
@@ -101,6 +118,33 @@ local monitor, and letting go switches to the selection, as ⌘Tab does. The fir
 modifiers are the ones that count, so letting go of ⇧ alone mid-walk switches nothing. A single press never arms it, so pressing once and typing still
 searches; Escape hides the palette, and the next modifier change finds it gone and switches
 nothing.
+
+## Native capture lifetime
+
+`WindowSwitchCoordinator` owns `CommandTabTap`; AppCore starts and stops the coordinator and shares
+its single `SecureInputMonitor` with Hyper Key. Sleep, lock, inactive sessions and shortcut recording
+cancel the gesture and stop new capture. A swallowed physical Tab press keeps a drain-only tap until
+its matching release (including repeats across modifier changes); resuming reuses that same ownership.
+The drain expires after five seconds if macOS never delivers the release. Termination and deinit force
+teardown rather than retaining a worker. Wake/unlock/session return and recording completion reapply the
+settings. Missing Accessibility and installation failure retry through the existing health ticker;
+TCC changes recheck permissions. Global tap-removal notifications recover only an unhealthy owned tap
+while capture is wanted; unrelated removals leave healthy capture and policy-paused drains untouched.
+System timeout/user-input disable cancels the old
+gesture and reenables the tap without forgetting physical press ownership. Secure Input, revoked
+grants or an OS-removed tap can hide releases: pairing cannot be guaranteed on those OS-controlled
+edges, after the bounded drain deadline, or at process exit. No synthetic release is posted.
+No new global service owner or persisted command-enabled flags exist.
+
+The modifying HID tap has its own run-loop thread. `CommandTabEngine` is Foundation-only and accepts
+only Command+Tab with optional Shift, not Control, Option or fn. Initial downs fix ownership for the
+whole press: passed downs keep passing their repeats and up; swallowed downs suppress their repeats
+and up even when modifiers change. Autorepeat without an initial down cannot acquire ownership. Tagged Hyper Key and paste/text-injection synthetics
+pass through. No AX window reads, main-actor waits or UI effects run in the callback. One AsyncStream
+consumer delivers ordered step/repeat/commit intents on main. Cancellation increments a generation,
+so queued actions from a stopped, disabled or superseded tap cannot open or activate stale selections;
+the coordinator also checks the current presentation identity before committing. Local printable-key
+translation is scoped to the key switcher during a native gesture, never global typing.
 
 ## Raising
 
@@ -160,8 +204,7 @@ window's app quit between the sweep and the ↵.
   `DisabledApplicationsList` is the shared half — the rows and the picker — that Settings ›
   Clipboard still wraps in a `DisabledApplicationsSection` of its own.
 - Both settings ride in backups. Neither grants a permission class of its own — Accessibility is
-  already required for paste — which is the call `windowManagementEnabled` made, and the opposite of
-  `snippetsEnabled`.
+  already required for paste — unlike `snippetsEnabled`.
 - **There is deliberately no "Show in launcher" switch.** The per-command checkboxes in
   `FeatureCommandsSection` already are one, and a second would be a switch over rows the pane lists.
 
@@ -172,8 +215,41 @@ fallback, the name/owner split in the search fields, the MRU order and its total
 sweep, the minimized run at the end, which windows the sweep offers, ranking, and the 200-row cap
 under both an empty and a matching query.
 
-`WindowZOrder` and `WindowSwitchSweep` are not compiled into the harness and have no automated
-coverage — the AX and `CGWindowList` paths need manual verification, particularly:
+The harness also compiles `WindowSwitchSweep` and the shared `Platform/AXWindowAccess` without
+any recovery sources, guarding their independence. It does not exercise live AX calls.
+`WindowZOrder` is not compiled into the harness; AX and `CGWindowList` need manual verification,
+particularly:
+
+`CommandTabTests` covers pure recognition, repeat direction, Shift-held release, release fallback,
+paired ups, unrelated modifier passthrough, synthetic filtering, generation cancellation and private
+unposted tap callbacks. It exercises ordered delivery while main is blocked, timeout/user-input
+recovery, revoked grants, Secure Input, failed installation, retry and teardown. The coordinator
+harness uses concrete fixtures (no live AX window actions) to verify native first-press stepping,
+query landing before filtering (including a reverse stale index), one release commit, stale
+presentation cancellation, custom first-press search, recording and
+feature gates. Global removal injection verifies two commits without healthy-tap churn, genuine loss
+recovery without prompting, replacement feedback suppression and policy-paused drains. The real-tap
+harness also repeats independent gestures and palette-reset cancellation on one private installation;
+the coordinator harness still uses a tap fixture rather than a real tap. `HotKeyDispatchTests` checks suppression/restoration without changing stored bindings.
+
+Real-machine verification is still required:
+
+- Check Mimic macOS with Navigation on: ⌘Tab selects the second window immediately, ⌘⇧Tab selects
+  the last, repeats interleave, and releasing Command with Shift held switches once. Try a very
+  quick chord while an AX app is slow, and type a search while Command remains held.
+- Uncheck either window command's visibility box: native switching still works. Menu Search's
+  visibility checkbox also never disables its hotkey. No per-command capability toggles exist.
+- The saved window hotkeys do nothing while Mimic macOS is on; aliases, visibility and Menu Search
+  stay editable. Uncheck Mimic macOS: exactly the same saved hotkeys and recorders return. Relaunch
+  and backup/settings-file round trips preserve the preference and bindings.
+- With no Accessibility grant, native switching passes through and startup never prompts. Explicit
+  enable may prompt; grant/revoke while running and verify recovery. Failed install reports once per
+  problem. In Secure Input native macOS switching remains available, not Tinycast switching.
+- Sleep/wake, lock/unlock, switch user sessions, and record an unrelated shortcut: Tinycast must not
+  capture Cmd-Tab while paused, and must resume afterwards. Escape/click away or changing the setting
+  mid-gesture must never activate an old selection. Control/Option/fn+Command+Tab pass through.
+- Enable takeover in only one running Tinycast build; competing third-party taps and the actual
+  WindowServer/native switcher cannot be validated by the private-port harness.
 
 1. A minimized window is listed last and ↵ un-minimizes it rather than doing nothing — for Finder
    and Transmission too, whose minimized windows read `AXDialog`.

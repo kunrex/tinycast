@@ -274,23 +274,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## Rooms — window rooms, their layouts and the gliding layout preview
+## Rooms — durable parked-window recovery and shared AX access
 
-Window Management's rooms adapt code from **Rooms** by Sara Gordić,
+Tinycast retains recovery and AX code adapted from **Rooms** by Sara Gordić,
 <https://github.com/saragordic/rooms>, used with the author's permission and under its MIT
-licence. The room model, the layout and grid engines, arrangement reading, window matching,
-parking and its ledger, the pass that walks into a room, and the animated layout preview all
-follow that project. Every adapted file says so on its first line, with a link to the licence:
+licence. The parked-window ledger, return policy, recovery sweep and restore pass follow that
+project. Every adapted file says so on its first line, with a link to the licence:
 
-- `Tinycast/Features/WindowManagement/Model/`: `Room.swift`, `RoomWindow.swift`,
-  `RoomLayoutKind.swift`, `RoomLayoutEngine.swift`, `RoomGrid.swift`, `RoomArrangement.swift`,
-  `RoomWindowMatcher.swift`, `RoomParking.swift`, `RoomParkingLedger.swift`, `RoomPlan.swift` and
-  `RoomMinimumSizeStore.swift`
-- `Tinycast/Features/WindowManagement/Service/`: `RoomRunner.swift`, `RoomWindowSweep.swift`, and
-  the window-number lookup in `AXWindowAccess.swift`
-- `Tinycast/Features/WindowManagement/UI/`: `RoomCoordinator.swift`, `RoomsScreen.swift`,
-  `RoomPickerScreen.swift`, `RoomPreviewController.swift` and `RoomPreviewView.swift`
-- `Tests/WindowRoomTests.swift`, whose cases follow Rooms' own tests
+- `Tinycast/Features/WindowRecovery/Model/`: `RoomParkingLedger.swift`, `WindowRecoveryPolicy.swift`
+- `Tinycast/Features/WindowRecovery/Service/`: `WindowRecoverySweep.swift`, `WindowRecoveryRunner.swift`
+- `Tinycast/Platform/AXWindowAccess.swift`: the window-number lookup
 
 Its licence requires this notice to travel with the work:
 

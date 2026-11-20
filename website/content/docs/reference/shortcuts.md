@@ -181,19 +181,6 @@ activate the selected item.
 | <kbd>esc</kbd>                | Close the switcher, then hide   |
 | <kbd>⌘</kbd><kbd>delete</kbd> | Move the selected note to Trash |
 
-## Switch Room
-
-| Shortcut                                    | Action                                 |
-| ------------------------------------------- | -------------------------------------- |
-| <kbd>return</kbd>                           | Enter the room                         |
-| <kbd>tab</kbd> / <kbd>⇧</kbd><kbd>tab</kbd> | Next or previous layout that fits      |
-| <kbd>⌘</kbd><kbd>K</kbd>                    | Room actions                           |
-| <kbd>⌘</kbd><kbd>N</kbd>                    | Create a room                          |
-| <kbd>⌃</kbd><kbd>X</kbd>                    | Delete the room; its windows stay open |
-
-In the window picker, <kbd>return</kbd> adds or removes a window and <kbd>⌘</kbd><kbd>return</kbd>
-saves the room.
-
 ## Custom commands
 
 | Key                           | Does                       |
@@ -205,12 +192,6 @@ saves the room.
 
 For a command with arguments, <kbd>tab</kbd> moves through its inline fields and <kbd>return</kbd>
 focuses the first missing required value before running. See [Commands](/docs/launcher/commands#arguments).
-
-## Window layout editor
-
-| Key                           | Does |
-| ----------------------------- | ---- |
-| <kbd>⌘</kbd><kbd>return</kbd> | Save |
 
 ## Dialogs
 

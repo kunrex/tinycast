@@ -34,8 +34,8 @@ enum DeepLinkConsentPolicy {
             requiresConsent(id)
         case .togglePalette, .settingsPane:
             false
-        case .dictation, .app, .customCommand, .systemAction, .windowCommand, .windowLayout,
-            .windowRoom, .customWindowSize, .quicklink, .quickAction, .appleShortcut, .snippet,
+        case .dictation, .app, .customCommand, .systemAction,
+            .quicklink, .quickAction, .appleShortcut, .snippet,
             .extensionCommand:
             true
         }
@@ -45,13 +45,13 @@ enum DeepLinkConsentPolicy {
     private static func requiresConsent(_ id: CommandID) -> Bool {
         switch id {
         case .fixGrammar, .rewrite, .translate, .summarize, .pasteSequentially, .openCamera,
-            .joinNextMeeting, .copyMeetingLink, .openInCalendar, .captureWindowLayout, .openInBrowser,
+            .joinNextMeeting, .copyMeetingLink, .openInCalendar, .openInBrowser,
             .runShellCommand, .quit:
             true
         case .calculatorHistory, .clipboardHistory, .searchEmoji, .searchFiles,
             .searchMenuItems, .switchWindows, .switchWindowsBackwards, .createCustomCommand,
             .searchCustomCommands, .define, .mySchedule, .createEvent, .showNotes, .createNote,
-            .searchNotes, .createWindowLayout, .switchRoom, .createRoom, .createQuicklink,
+            .searchNotes, .createQuicklink,
             .searchQuicklinks, .importQuicklinks, .exportQuicklinks, .searchSnippets, .createSnippet,
             .exportSettings, .importSettings, .importFromRaycast, .checkForUpdates, .settings, .about,
             .support:

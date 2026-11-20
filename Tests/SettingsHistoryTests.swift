@@ -154,7 +154,7 @@ struct SettingsHistoryTests {
             ("automatically check for updates", .general),
             ("popup", .general),
             ("paste history", .clipboard),
-            ("window manage", .windowManagement),
+            ("switch windows", .navigation),
             ("skin tone", .emoji),
             ("providers", .quickActions),
             ("openrouter", .quickActions)

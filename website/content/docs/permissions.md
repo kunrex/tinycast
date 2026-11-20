@@ -26,7 +26,6 @@ Grant it in **System Settings → Privacy & Security → Accessibility**, or fro
 | [Quick Actions](/docs/ai/quick-actions)                                       | Reads your selected text and replaces it               |
 | [Quicklinks](/docs/launcher/quicklinks) that use your selected text           | Reads the selection from the app you were using        |
 | [Dictation](/docs/features/dictation), when it pastes                         | Puts what you said into the app you were using         |
-| [Window management](/docs/features/window-management) and layouts             | Reads and sets other apps' window frames               |
 | [Navigation](/docs/features/navigation)                                       | Lists open windows and clicks menu bar items           |
 | Play / Pause, Next Track, Previous Track and Dismiss Notifications            | Sends media keys and closes notifications              |
 | [Hyper key](/docs/reference/hotkeys#hyper-key)                                | Turns one physical key into a modifier chord           |

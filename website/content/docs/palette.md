@@ -68,8 +68,8 @@ Quick AI is skipped while [AI](/docs/ai) is off, and the clipboard is skipped wh
 [clipboard history](/docs/features/clipboard) is off.
 
 Other screens, like Calculator History or Search Quicklinks, aren't part of the cycle. On screens
-that don't use <kbd>tab</kbd> themselves, it returns to the launcher with your search text. Rooms
-uses it to try layouts, and forms use it to move between fields.
+that don't use <kbd>tab</kbd> themselves, it returns to the launcher with your search text. Forms
+use it to move between fields.
 
 There's one exception: when the selected row takes arguments, like a
 [quicklink](/docs/launcher/quicklinks), a [custom command](/docs/launcher/commands#arguments) or an

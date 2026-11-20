@@ -8,9 +8,6 @@ enum PaletteMode: String, CaseIterable, Identifiable {
     case fileSearch
     case menuSearch
     case switchWindows
-    case rooms
-    /// Choosing a room's windows and apps; the room was named on the Rooms screen.
-    case roomWindows
     case schedule
     case eventEditor
     case customCommandEditor
@@ -41,8 +38,6 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .fileSearch: return "doc.text.magnifyingglass"
         case .menuSearch: return "menubar.rectangle"
         case .switchWindows: return "macwindow.on.rectangle"
-        case .rooms: return "door.left.hand.open"
-        case .roomWindows: return "macwindow.badge.plus"
         case .schedule: return "calendar"
         case .eventEditor: return "calendar.badge.plus"
         case .customCommandEditor, .customCommands: return CustomCommand.sfSymbol
@@ -64,8 +59,6 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .fileSearch: return String(localized: "Search files and folders…")
         case .menuSearch: return String(localized: "Search menu bar items…")
         case .switchWindows: return String(localized: "Search open windows…")
-        case .rooms: return String(localized: "Search rooms, or name a new one…")
-        case .roomWindows: return String(localized: "Search windows, or type an app to add…")
         case .schedule: return String(localized: "Search your schedule…")
         case .eventEditor: return String(localized: "Event editor")
         case .customCommandEditor: return String(localized: "Command editor")

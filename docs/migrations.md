@@ -37,7 +37,36 @@ When the check fails, delete everything the row lists, then the row. Then run `x
 | Migration | Repairs | Delete with it |
 | --- | --- | --- |
 | `RetiredAISettingsMigration` | Removes only retired conversation settings and command references from `settings.json`; leaves provider configuration, preferences, history, presets and credentials untouched | `Tinycast/Migrations/RetiredAISettingsMigration.swift`, its `AppCore.start()` call, `Tests/RetiredAISettingsMigrationTests.swift`, its `run-tests.sh` entry and `testing.md` row |
+| `WindowManagementRemovalMigration` | Removes retired WindowManagement preferences, hotkeys/indexes, the `windowManagement` settings-file section, and exact feature references from shared launcher data and deeplink grants. Cleanup only; skipped releases remain safe. Never touches WindowRecovery files. | `Tinycast/Migrations/WindowManagementRemovalMigration.swift`, its `TinycastLaunch.main` call, `Tests/WindowManagementRemovalMigrationTests.swift`, its runner entry and testing.md row |
 | `BundleIdentifierMigration` | Moves `com.tinycast.app[.beta\|.dev]`'s preferences, Application Support and Caches folders and login item to `com.abueammar.tinycast[.beta\|.dev]`, and repoints every saved path into the old folders: in preferences (JSON-encoded ones too), JSON files, clipboard and quicklink rows, and `settings.json`. A `paths-repointed` marker in its backup makes it repair, once, a copy 0.12.14-beta.141 moved without repointing. Keychain secrets stay behind: moving them asks once per item, so users enter them again. Kept until **2027-05-13** | Everything in [Removing the bundle id move](#removing-the-bundle-id-move) |
+
+### Window management removal scope
+
+Runs in `TinycastLaunch.main` after the bundle-ID move, before `AppCore` exists: its stored
+properties initialize favorites, aliases, visibility and ranking before `start()` can run. Paths
+come from active-bundle `AppPaths`; tests inject scratch paths and a private defaults suite.
+
+The exact defaults removed are `windowManagementEnabled`, `windowManagementShowInLauncher`,
+`windowManagementGap`, `windowManagementCycleMode`, `windowManagementWrapDisplays`,
+`windowManagementKeepProportions`, `windowLayoutsShowInLauncher`, `windowRoomsShowInLauncher`,
+`customWindowSizes`, `windowLayouts`, `windowRooms`, `roomMinimumWindowSizes`,
+`boundWindowLayoutIDs`, `boundWindowRoomIDs`, and `boundCustomWindowSizeIDs`.
+
+Hotkeys remove only the 39 former catalog IDs under `hotkey.windowCommand.`, UUID-suffixed keys
+under `hotkey.customWindowSize.`, `hotkey.windowLayout.`, `hotkey.windowRoom.`, and the four exact
+`hotkey.command:` keys for `create-window-layout`, `capture-window-layout`, `switch-room`,
+`create-room`. Shared references use those four exact `command:` IDs, known `window-command:` IDs,
+and UUID-suffixed `window-size:`, `window-layout:`, `window-room:` IDs. Other suffixes, nested strings
+and similarly named namespaces survive. Deeplink grants match only their percent-decoded row before
+`?`, with or without input. Hidden kinds remove only `windowCommand`, `windowLayout`, `windowRoom`.
+
+Only `windowManagement` is removed from the settings-file root; unrelated JSON values (including
+unknown sections) survive. Ranking removes matching root keys without decoding or normalizing visits.
+Invalid/unreadable JSON and non-object roots are left byte-for-byte alone. Writes resolve symlinks
+before atomic replacement, preserving a dotfile link. A no-op never rewrites a file. No recovery file,
+including `room-parking.json` or any `room-parking.unreadable-*.json`, is opened or enumerated.
+The migration does not change backup schemas or filter imports permanently; old unknown fields are
+ignored by Codable, and old command hotkeys are rejected by the current `CommandID` lookup.
 
 ### Removing the bundle id move
 

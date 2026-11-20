@@ -65,8 +65,7 @@ have their own importer, described in
 ## Layout
 
 `RaycastDecoder` unwraps the container and returns Raycast's own values; `RaycastImportReader` turns
-those into Tinycast's domain types. That is the same pure-layer / platform-layer split
-`Features/WindowManagement/` uses — the reader needs AppKit, so it lives in `Service/` and is covered by
+those into Tinycast's domain types. The reader needs AppKit, so it lives in `Service/` and is covered by
 the app build. `RaycastClipboardImport` holds the clipboard mapping with an injected clock and file
 existence check; `RaycastTests` compiles it alongside the real `ClipboardStore` to cover pin metadata
 and import-time retention.

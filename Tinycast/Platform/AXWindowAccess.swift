@@ -1,0 +1,200 @@
+// Portions adapted from Rooms (MIT): https://github.com/saragordic/rooms/blob/main/LICENSE
+import AppKit
+// `@preconcurrency` downgrades AX diagnostics: `kAX…` are mutable C globals, but constant.
+@preconcurrency import ApplicationServices
+
+/// Shared AX window access, independent of feature placement models.
+@MainActor
+enum AXWindowAccess {
+    /// A hung target must not stall main for the AX default. Per element, never inherited.
+    static let messagingTimeout: Float = 1
+
+    static let fullScreenAttribute = "AXFullScreen" as CFString
+
+    // MARK: - Finding windows
+
+    /// Every app with a user-facing window, bar us. By pid, since About flips us to `.regular`.
+    static func candidates() -> [NSRunningApplication] {
+        let ownPID = NSRunningApplication.current.processIdentifier
+        return NSWorkspace.shared.runningApplications.filter {
+            $0.activationPolicy == .regular && !$0.isTerminated
+                && $0.processIdentifier != ownPID
+        }
+    }
+
+    static func application(for pid: pid_t, timeout: Float = messagingTimeout) -> AXUIElement {
+        let application = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(application, timeout)
+        return application
+    }
+
+    /// Every window the app reports, unfiltered and in its own order.
+    static func windows(in application: AXUIElement) -> [AXUIElement] {
+        var value: CFTypeRef?
+        guard
+            AXUIElementCopyAttributeValue(application, kAXWindowsAttribute as CFString, &value)
+                == .success,
+            let windows = value as? [AXUIElement]
+        else { return [] }
+        return windows
+    }
+
+    static func isFullScreen(_ window: AXUIElement) -> Bool { fullScreenState(window) == true }
+
+    /// Nil when the window does not answer, as a busy app mid-transition often does not.
+    static func fullScreenState(_ window: AXUIElement) -> Bool? {
+        var value: CFTypeRef?
+        guard
+            AXUIElementCopyAttributeValue(window, fullScreenAttribute, &value) == .success
+        else { return nil }
+        return (value as? Bool) ?? false
+    }
+
+    // MARK: - Bringing one forward
+
+    static func unminimize(_ window: AXUIElement) -> Bool {
+        AXUIElementSetAttributeValue(window, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
+            == .success
+    }
+
+    static func minimize(_ window: AXUIElement) -> Bool {
+        AXUIElementSetAttributeValue(window, kAXMinimizedAttribute as CFString, kCFBooleanTrue)
+            == .success
+    }
+
+    static func focus(
+        _ window: AXUIElement, in application: AXUIElement, of app: NSRunningApplication
+    ) {
+        AXUIElementPerformAction(window, kAXRaiseAction as CFString)
+        // Belt and braces with `activate()`: an agent-policy app's request can be ignored.
+        AXUIElementSetAttributeValue(
+            application, kAXFrontmostAttribute as CFString, kCFBooleanTrue)
+        app.activate()
+    }
+
+    /// The fallback for an app that refuses `NSRunningApplication.hide()` or `unhide()`.
+    static func setHidden(_ hidden: Bool, application: AXUIElement) {
+        AXUIElementSetAttributeValue(
+            application, kAXHiddenAttribute as CFString, hidden ? kCFBooleanTrue : kCFBooleanFalse)
+    }
+
+    /// Web-based apps list no windows until this is on, and draw focus rings while it stays on.
+    static func setManualAccessibility(_ enabled: Bool, application: AXUIElement) {
+        AXUIElementSetAttributeValue(
+            application, "AXManualAccessibility" as CFString,
+            enabled ? kCFBooleanTrue : kCFBooleanFalse)
+    }
+
+    // MARK: - Window identity
+
+    /// The window server's number, which outlives any `AXUIElement`. See window-recovery.md.
+    static func windowID(of window: AXUIElement) -> UInt32? {
+        guard let copyWindowID else { return nil }
+        var id: CGWindowID = 0
+        return copyWindowID(window, &id) == .success && id != 0 ? id : nil
+    }
+
+    private typealias CopyWindowID =
+        @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
+
+    /// Private, so resolved at run time: without it, recovery retains unmatched ledger entries.
+    private static let copyWindowID: CopyWindowID? = {
+        guard let symbol = dlsym(dlopen(nil, RTLD_NOW), "_AXUIElementGetWindow") else { return nil }
+        return unsafeBitCast(symbol, to: CopyWindowID.self)
+    }()
+
+    /// Cleared for the writes, never while VoiceOver runs. See docs/features/window-recovery.md.
+    static func suppressEnhancedUserInterface(on application: AXUIElement) -> () -> Void {
+        let attribute = "AXEnhancedUserInterface" as CFString
+        guard !NSWorkspace.shared.isVoiceOverEnabled else { return {} }
+        var value: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(application, attribute, &value) == .success,
+            (value as? Bool) == true
+        else { return {} }
+        AXUIElementSetAttributeValue(application, attribute, kCFBooleanFalse)
+        return { AXUIElementSetAttributeValue(application, attribute, kCFBooleanTrue) }
+    }
+
+    // MARK: - Primitives
+
+    static func frame(of window: AXUIElement) -> CGRect? {
+        guard let origin = point(window, kAXPositionAttribute),
+            let size = size(window, kAXSizeAttribute)
+        else { return nil }
+        return CGRect(origin: origin, size: size)
+    }
+
+    static func setPosition(_ origin: CGPoint, on window: AXUIElement) -> Bool {
+        var origin = origin
+        guard let value = AXValueCreate(.cgPoint, &origin) else { return false }
+        return AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, value)
+            == .success
+    }
+
+    static func setSize(_ size: CGSize, on window: AXUIElement) -> Bool {
+        var size = size
+        guard let value = AXValueCreate(.cgSize, &size) else { return false }
+        return AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, value) == .success
+    }
+
+    static func point(_ element: AXUIElement, _ attribute: String) -> CGPoint? {
+        guard let value = axValue(element, attribute, type: .cgPoint) else { return nil }
+        var point = CGPoint.zero
+        guard AXValueGetValue(value, .cgPoint, &point) else { return nil }
+        return point
+    }
+
+    static func size(_ element: AXUIElement, _ attribute: String) -> CGSize? {
+        guard let value = axValue(element, attribute, type: .cgSize) else { return nil }
+        var size = CGSize.zero
+        guard AXValueGetValue(value, .cgSize, &size) else { return nil }
+        return size
+    }
+
+    static func axValue(
+        _ element: AXUIElement, _ attribute: String, type: AXValueType
+    ) -> AXValue? {
+        var value: CFTypeRef?
+        guard
+            AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success,
+            let value, CFGetTypeID(value) == AXValueGetTypeID()
+        else { return nil }
+        // Type checked by CFGetTypeID above; `as?` on a CF type is a compile error.
+
+        let axValue = value as! AXValue
+        return AXValueGetType(axValue) == type ? axValue : nil
+    }
+
+    static func element(_ element: AXUIElement, _ attribute: String) -> AXUIElement? {
+        var value: CFTypeRef?
+        guard
+            AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success,
+            let value, CFGetTypeID(value) == AXUIElementGetTypeID()
+        else { return nil }
+        // Type checked by CFGetTypeID above; `as?` on a CF type is a compile error.
+
+        return (value as! AXUIElement)
+    }
+
+    static func string(_ element: AXUIElement, _ attribute: String) -> String? {
+        var value: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success
+        else { return nil }
+        return value as? String
+    }
+
+    static func bool(_ element: AXUIElement, _ attribute: String) -> Bool? {
+        var value: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success
+        else { return nil }
+        return value as? Bool
+    }
+
+    static func isSettable(_ attribute: String, on element: AXUIElement) -> Bool {
+        var settable = DarwinBoolean(false)
+        guard
+            AXUIElementIsAttributeSettable(element, attribute as CFString, &settable) == .success
+        else { return false }
+        return settable.boolValue
+    }
+}

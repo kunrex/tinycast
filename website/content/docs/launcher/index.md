@@ -4,7 +4,7 @@ description: One search across everything Tinycast knows about, and how it order
 ---
 
 The launcher is the root screen. One search covers your apps, System Settings panes, commands,
-quicklinks, Apple Shortcuts, snippets, system actions, window commands, layouts and rooms, custom
+quicklinks, Apple Shortcuts, snippets, system actions, custom
 commands, Quick Actions, extension commands and upcoming meetings.
 
 <kbd>return</kbd> opens the selection. <kbd>⌘</kbd><kbd>K</kbd> shows everything else you can do
@@ -16,7 +16,7 @@ with it.
 [Suggestions](#suggestions), followed by each section in this order:
 
 Applications → System Settings → Extensions → Quicklinks → Apple Shortcuts → Snippets → System
-Actions → Window Layouts → Rooms → Window Management → Custom Commands → Quick Actions → Commands
+Actions → Custom Commands → Quick Actions → Commands
 
 Within a section, the entries you open most come first, then entries with an alias. The rest are
 sorted alphabetically. Meetings stay in the order they start.
@@ -52,12 +52,12 @@ appear around it:
 
 ### Listing a whole category
 
-Type a section's name, like `Snippets`, `Snippet` or `Window Management`, to list that whole
+Type a section's name, like `Snippets`, `Snippet` or `System Actions`, to list that whole
 category under its own heading. An app with exactly that name still appears too, which is why typing
 `System Settings` lists both the app and its panes.
 
-From three characters, the start of a section's name, or of a word in it, also works: `win` includes
-Window Management and Window Layouts. Your best matches still come first under **Results**, so
+From three characters, the start of a section's name, or of a word in it, also works: `sys` includes
+System Settings and System Actions. Your best matches still come first under **Results**, so
 <kbd>return</kbd> opens the top match, and the rest of the category follows under its own heading.
 
 ## How matching works
@@ -185,8 +185,8 @@ You can also drag an app result into Finder or another app that accepts files.
 <kbd>⇧</kbd><kbd>⌘</kbd><kbd>H</kbd> (**Hide from Search**) removes the selected entry from search
 results. The palette stays open on the same search.
 
-It works for apps, System Settings panes, commands, Quick Actions, Apple Shortcuts, system actions,
-window commands, window layouts, rooms and extension commands. To show an entry again, select its
+It works for apps, System Settings panes, commands, Quick Actions, Apple Shortcuts, system actions
+and extension commands. To show an entry again, select its
 checkbox in the matching Settings pane.
 On a quicklink or custom command it's **Hide from Root Search**, and you turn **Show in root search**
 back on in its editor.

@@ -7,6 +7,9 @@ final class WindowSwitchSession {
     /// The rows the list reads: ranked once per query change, so one keystroke ranks once.
     private(set) var filtered: [WindowSwitchEntry] = []
 
+    private(set) var identity = UUID()
+    var nativeLandingSelection = 0
+    @ObservationIgnored var onReset: (() -> Void)?
     private var query = ""
     /// Live AX handles, so they are never observed and never outlive the show.
     @ObservationIgnored private var elements: [Int: WindowSwitchSweep.Element] = [:]
@@ -23,6 +26,9 @@ final class WindowSwitchSession {
     func element(for handle: Int) -> WindowSwitchSweep.Element? { elements[handle] }
 
     func reset() {
+        onReset?()
+        identity = UUID()
+        nativeLandingSelection = 0
         if let terminationToken {
             NSWorkspace.shared.notificationCenter.removeObserver(terminationToken)
         }
@@ -33,9 +39,13 @@ final class WindowSwitchSession {
         query = ""
     }
 
-    func filter(_ query: String) {
+    @discardableResult
+    func filter(_ query: String) -> Bool {
+        let changed = self.query != query
+        if changed { nativeLandingSelection = 0 }
         self.query = query
         applyQuery()
+        return changed
     }
 
     func markMinimized(_ handle: Int) {

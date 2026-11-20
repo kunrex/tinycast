@@ -67,12 +67,7 @@ Settings shortcut field; only the Settings window sets it.
 | `tinycast://`                               | Opens the launcher                                              |
 | `tinycast://search?fallbackText=2%2B2`      | Opens the launcher with the text typed                          |
 | `tinycast://command/<slug>`                 | Runs a built-in command                                         |
-| `tinycast://window-command/left-half`       | Runs a window command                                           |
 | `tinycast://system-action/lock-screen`      | Runs a system action                                            |
-| `tinycast://window-size/<uuid>`             | Applies a saved window size                                     |
-| `tinycast://window-size?arguments={…}`      | Applies a size spelled out in the link                          |
-| `tinycast://window-layout/<uuid>`           | Applies a window layout                                         |
-| `tinycast://window-room/<uuid>`             | Enters a room                                                   |
 | `tinycast://quick-action/<uuid>`            | Runs a custom Quick Action                                      |
 | `tinycast://custom-command/<uuid>`          | Runs a custom command                                           |
 | `tinycast://quicklink/<uuid>`               | Opens a quicklink                                               |
@@ -116,7 +111,6 @@ ignored, because each built-in already knows whether it shows a screen.
 | `quicklink/<uuid>`           | `arguments` by argument name; `fallbackText` fills the first required one                    |
 | `custom-command/<uuid>`      | `arguments` as `["a", "b"]`, or by argument name; `fallbackText` is `$1`                     |
 | `system-action/set-volume`   | `arguments` `{volume}`, `["50"]` or `fallbackText`: `0`–`100`, `%` allowed; skips the picker |
-| `window-size`                | `arguments` `{width, height, anchor, x, y}`: `1200` is points, `60%` a share of the screen   |
 
 The search screens are `clipboard-history`, `search-emoji`, `calculator-history`,
 `search-quicklinks`, `search-files`, `define`, `search-snippets`, `search-custom-commands`,
@@ -127,8 +121,6 @@ row's fields, as a hotkey with no selection does. Any other target ignores its i
   does, and reports the count in a HUD. A quicklink list's question shows each name and link.
 - A volume outside `0`–`100`, or a note named `.` or `..`, refuses the link before anything asks.
 - `openWith` is kept only when it names an installed app's bundle ID.
-- A window size refuses, rather than clamps, a value outside what a saved size allows. `anchor` is a
-  `WindowLayoutAnchor` raw value (`top-left`, `center`, …) and `x`/`y` shift it in points.
 - Create Snippet with no input — from a link, a hotkey or the launcher — starts from the text
   selected in the app in front, read through Accessibility (`AccessibilityText.selection(in:)`),
   never by sending ⌘C.
@@ -141,9 +133,8 @@ so a new command fails to build until it is classed:
 
 - **Never asks without input**: anything that only opens a Tinycast screen or editor — search
   screens, Settings, notes and the create commands.
-- **Always asks**: window commands and sizes, layouts, rooms, system actions, quicklinks, snippets,
-  custom commands, Apple Shortcuts, custom Quick Actions, the AI text actions, Paste Sequentially,
-  Open Camera, the meeting commands and Capture Window Layout.
+- **Always asks**: system actions, quicklinks, snippets, custom commands, Apple Shortcuts,
+  custom Quick Actions, the AI text actions, Paste Sequentially, Open Camera and the meeting commands.
 
 Input always asks because a page chose it: typed into the launcher it is one Return from a fallback
 row, and as arguments it reaches a script.
@@ -178,9 +169,8 @@ through LaunchServices either.
 A plain `open` (without `-g`) activates Tinycast before the link arrives. Tinycast is an accessory
 app, so it does not take the menu bar, and the menu-bar owner is still the app the reader was in.
 `FrontmostApp.current` returns that app when Tinycast itself is frontmost with no window of its own
-in key. `PaletteCoordinator.targetApp`, `WindowTarget.current()` and the palette's record of the app
-it covered all use it, so a window command, or a paste from a palette a link opened, reaches the
-right app. Pasting with the palette closed still needs the target app active, so snippets and Paste
+in key. `PaletteCoordinator.targetApp` and the palette's record of the app it covered use it, so a
+paste from a palette a link opened reaches the right app. Pasting with the palette closed still needs the target app active, so snippets and Paste
 Sequentially want `open -g`.
 
 ## Karabiner-Elements

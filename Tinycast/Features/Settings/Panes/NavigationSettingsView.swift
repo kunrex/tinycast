@@ -4,6 +4,7 @@ import SwiftUI
 /// one switch, so the pane lives here rather than inside either of them.
 struct NavigationSettingsView: View {
     @Environment(AppSettings.self) private var settings
+    @Environment(AppCore.self) private var core
 
     var body: some View {
         @Bindable var settings = settings
@@ -17,10 +18,28 @@ struct NavigationSettingsView: View {
             }
             .settingsAnchor(.navigationNavigation)
 
+            Section {
+                Toggle(isOn: Binding(
+                    get: { settings.navigationMimicsMacOS },
+                    set: { core.windowSwitchCoordinator.setMimicsMacOS($0) }
+                )) {
+                    SettingsRowTitle(.navigationCommands, "Mimic macOS")
+                    Text("""
+                        Replace Command-Tab and Command-Shift-Tab. Release Command to switch. \
+                        Saved window shortcuts pause until this is off. \
+                        Requires Accessibility; unavailable during Secure Input.
+                        """)
+                }
+                .toggleStyle(.checkbox)
+            }
+            .settingsEnabled(settings.navigationEnabled)
+
             // No "show in launcher" switch: the per-command checkboxes below already are one.
             FeatureCommandsSection(
                 owner: .navigation, anchor: .navigationCommands,
-                excluding: [.searchMenuItems]
+                excluding: [.searchMenuItems],
+                disabledShortcuts: settings.navigationMimicsMacOS
+                    ? [.switchWindows, .switchWindowsBackwards] : []
             )
             .settingsEnabled(settings.navigationEnabled)
 
