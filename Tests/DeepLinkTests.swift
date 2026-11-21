@@ -287,7 +287,11 @@ struct DeepLinkTests {
     }
 
     static func routeInputChecks() {
-        for slug in ["show-notes", "create-note", "search-notes"] {
+        for slug in [
+            "show-notes", "create-note", "search-notes", "ai-chat", "ai-chat-window",
+            "open-camera", "join-next-meeting", "my-schedule", "create-event",
+            "copy-meeting-link", "open-in-calendar"
+        ] {
             let entryID = "command:" + slug
             expect(CommandID(rawValue: entryID) == nil, "\(slug) is no longer a command")
             expect(HotKeyAction(entryID: entryID) == nil, "\(slug) has no action fallback")
@@ -298,7 +302,9 @@ struct DeepLinkTests {
                     "retired \(slug) refuses input without running another action")
             }
         }
-        expect(SettingsTab(slug: "notes") == nil, "the retired settings tab cannot resolve")
+        for slug in ["notes", "calendar", "window-management"] {
+            expect(SettingsTab(slug: slug) == nil, "the retired \(slug) settings tab cannot resolve")
+        }
         expect(parse("tinycast://note/Groceries%20%26%20plans%3F.md") == nil,
             "retired note links do not resolve")
         expect(parse("tinycast://note/a/b.md") == nil, "a note name is one segment")
@@ -360,9 +366,6 @@ struct DeepLinkTests {
         expect(
             DeepLinkConsentPolicy.requiresConsent(.command(.pasteSequentially)),
             "pasting into another app asks first")
-        expect(
-            DeepLinkConsentPolicy.requiresConsent(.command(.openCamera)),
-            "turning the camera on asks first")
         expect(
             DeepLinkConsentPolicy.requiresConsent(.customCommand(id: UUID())),
             "running a script asks first")

@@ -59,10 +59,8 @@ struct PaletteShortcutTests {
             "an extra Option still reads ⇧⌘T")
         expect(resolve("y", command: true), .quickLook, "⌘Y is the Quick Look chord")
         expect(resolve("y", command: true, shift: true), .quickLook, "an extra Shift still reads ⌘Y")
-        expect(resolve("o", command: true), .openInApp, "⌘O opens the row in its own app")
-        expect(resolve("o", command: true, shift: true), nil, "⇧⌘O is not the open chord")
-        expect(resolve("i", command: true), .showDetails, "⌘I shows the row's details")
-        expect(resolve("i", command: true, shift: true), nil, "⇧⌘I is not the details chord")
+        expect(resolve("o", command: true), nil, "retired meeting open chord is not intercepted")
+        expect(resolve("i", command: true), nil, "retired meeting details chord is not intercepted")
 
         expect(resolve("x", control: true), .delete, "⌃X deletes the row")
         expect(resolve("x", shift: true, control: true), .deleteAll, "⌃⇧X deletes everything")
@@ -105,8 +103,8 @@ struct PaletteShortcutTests {
         expect(resolve("a"), nil, "typing is never a chord")
 
         let expanded: [PaletteShortcut] = [
-            .copyFile, .copyName, .copyPath, .copyText, .pasteFile, .quickLook, .openInApp,
-            .showDetails, .toggleFavorite, .hideFromSearch, .quit, .forceQuit, .minimizeWindow,
+            .copyFile, .copyName, .copyPath, .copyText, .pasteFile, .quickLook,
+            .toggleFavorite, .hideFromSearch, .quit, .forceQuit, .minimizeWindow,
             .hideApp, .restart, .edit, .duplicate, .showInFinder
         ]
         let anywhere: [PaletteShortcut] = [
@@ -122,7 +120,7 @@ struct PaletteShortcutTests {
 
         let closing: [PaletteShortcut] = [
             .delete, .deleteAll, .copyFile, .copyName, .copyPath, .copyText, .copyCalculation,
-            .quickLook, .openInApp, .showDetails, .toggleFavorite, .hideFromSearch, .minimizeWindow,
+            .quickLook, .toggleFavorite, .hideFromSearch, .minimizeWindow,
             .newItem, .settings, .edit, .duplicate, .showInFinder
         ]
         let leaving: [PaletteShortcut] = [

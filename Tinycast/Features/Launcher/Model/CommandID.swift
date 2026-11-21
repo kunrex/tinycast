@@ -13,17 +13,11 @@ enum CommandID: String, CaseIterable, Sendable {
     case searchMenuItems = "command:search-menu-items"
     case switchWindows = "command:switch-windows"
     case switchWindowsBackwards = "command:switch-windows-backwards"
-    case openCamera = "command:open-camera"
     case openInBrowser = "command:open-in-browser"
     case runShellCommand = "command:run-shell-command"
     case createCustomCommand = "command:create-custom-command"
     case searchCustomCommands = "command:search-custom-commands"
     case define = "command:define"
-    case joinNextMeeting = "command:join-next-meeting"
-    case mySchedule = "command:my-schedule"
-    case createEvent = "command:create-event"
-    case copyMeetingLink = "command:copy-meeting-link"
-    case openInCalendar = "command:open-in-calendar"
     case createQuicklink = "command:create-quicklink"
     case searchQuicklinks = "command:search-quicklinks"
     case importQuicklinks = "command:import-quicklinks"
@@ -45,10 +39,20 @@ enum CommandID: String, CaseIterable, Sendable {
 
     static let compactBarOptions: [CommandID] =
         defaultCompactBarCommands + [
-            .searchSnippets, .mySchedule
+            .searchSnippets
         ]
 
     static let compactBarLimit = 4
+
+    /// Old imports may still carry removed command rows; unknown rows keep their usual validation.
+    static let retiredIdentifiers: Set<String> = [
+        "command:open-camera", "command:join-next-meeting", "command:my-schedule",
+        "command:create-event", "command:copy-meeting-link", "command:open-in-calendar"
+    ]
+
+    static func isRetiredEntry(_ identifier: String) -> Bool {
+        identifier.hasPrefix("meeting:") || retiredIdentifiers.contains(identifier)
+    }
 
     static func validCompactBarCommands(_ commands: [CommandID]) -> Bool {
         commands.count <= compactBarLimit && Set(commands).count == commands.count
@@ -58,7 +62,7 @@ enum CommandID: String, CaseIterable, Sendable {
     static func compactBarCommands(from identifiers: [String]) -> [CommandID]? {
         let surviving = identifiers.filter {
             !["command:ai-chat", "command:ai-chat-window", "command:show-notes",
-                "command:create-note", "command:search-notes"].contains($0)
+                "command:create-note", "command:search-notes", "command:my-schedule"].contains($0)
         }
         let commands = surviving.compactMap(CommandID.init(rawValue:))
         guard commands.count == surviving.count, validCompactBarCommands(commands) else { return nil }
@@ -83,17 +87,11 @@ enum CommandID: String, CaseIterable, Sendable {
         case .searchMenuItems: return "Search Menu Bar Items"
         case .switchWindows: return "Switch Windows"
         case .switchWindowsBackwards: return "Switch Windows Backwards"
-        case .openCamera: return "Open Camera"
         case .openInBrowser: return "Open in Browser"
         case .runShellCommand: return "Run Shell Command"
         case .createCustomCommand: return "Create Custom Command"
         case .searchCustomCommands: return "Search Custom Commands"
         case .define: return "Define Word"
-        case .joinNextMeeting: return "Join Next Meeting"
-        case .mySchedule: return "My Schedule"
-        case .createEvent: return "Create Event"
-        case .copyMeetingLink: return "Copy Meeting Link"
-        case .openInCalendar: return "Open in Calendar"
         case .createQuicklink: return "Create Quicklink"
         case .searchQuicklinks: return "Search Quicklinks"
         case .importQuicklinks: return "Import Quicklinks"
@@ -124,17 +122,11 @@ enum CommandID: String, CaseIterable, Sendable {
         case .searchFiles: return "doc.text.magnifyingglass"
         case .searchMenuItems: return "menubar.rectangle"
         case .switchWindows, .switchWindowsBackwards: return "macwindow.on.rectangle"
-        case .openCamera: return "camera"
         case .openInBrowser: return "globe"
         case .runShellCommand: return "terminal"
         case .createCustomCommand: return "terminal"
         case .searchCustomCommands: return "terminal"
         case .define: return "book.closed"
-        case .joinNextMeeting: return "video.fill"
-        case .mySchedule: return "calendar"
-        case .createEvent: return "calendar.badge.plus"
-        case .copyMeetingLink: return "link"
-        case .openInCalendar: return "calendar.badge.clock"
         case .createQuicklink: return "link.badge.plus"
         case .searchQuicklinks: return Quicklink.sfSymbol
         case .importQuicklinks: return "square.and.arrow.down"
@@ -182,7 +174,6 @@ enum CommandID: String, CaseIterable, Sendable {
         switch self {
         case .clipboardHistory: 80
         case .searchFiles: 70
-        case .mySchedule: 60
         case .searchEmoji: 50
         case .createQuicklink, .createSnippet: 30
         default: nil

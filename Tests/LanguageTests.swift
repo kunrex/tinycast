@@ -162,8 +162,8 @@ struct LanguageTests {
                 "\(code) mixed string and count arguments survive translation",
                 reordered.contains(title) && reordered.contains("2") && !reordered.contains("%@"))
             let privacy = bundle.localizedString(
-                forKey: "NSCameraUsageDescription", value: nil, table: "InfoPlist")
-            check("\(code) camera privacy prompt loads", privacy.contains("Tinycast"))
+                forKey: "NSMicrophoneUsageDescription", value: nil, table: "InfoPlist")
+            check("\(code) microphone privacy prompt loads", privacy.contains("Tinycast"))
 
             if code == "en" || code == "fr" {
                 for (key, french) in [

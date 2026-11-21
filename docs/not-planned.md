@@ -180,7 +180,6 @@ part of [Navigation](features/navigation.md).
 - **Interface Size for the Settings window.** It sizes the palette only. ([#931](https://github.com/abue-ammar/tinycast/issues/931))
 - **A switch to hide every item.** You can already turn almost every feature off. ([#791](https://github.com/abue-ammar/tinycast/issues/791))
 - **Filter apps by shortcut, a "?" jump to settings, or no sidebar headings.** ([#978](https://github.com/abue-ammar/tinycast/issues/978), [#1391](https://github.com/abue-ammar/tinycast/issues/1391), [#1142](https://github.com/abue-ammar/tinycast/issues/1142))
-- **Hide the calendar colour dot, or more meeting filters.** ([#1063](https://github.com/abue-ammar/tinycast/issues/1063), [#1576](https://github.com/abue-ammar/tinycast/issues/1576))
 
 ## Hotkeys
 
@@ -196,7 +195,6 @@ part of [Navigation](features/navigation.md).
 - **Brightness and volume for external monitors.** ([#1193](https://github.com/abue-ammar/tinycast/issues/1193))
 - **Fix accidental capitals as you type.** ([#1387](https://github.com/abue-ammar/tinycast/issues/1387))
 - **Type into Translate with auto direction.** ([#1032](https://github.com/abue-ammar/tinycast/issues/1032))
-- **The camera inside the palette.** It stays in its own window. ([#1578](https://github.com/abue-ammar/tinycast/issues/1578))
 - **Spelling suggestions in Define Word.** ([#1551](https://github.com/abue-ammar/tinycast/issues/1551))
 - **File Search extras:** Finder tags, folder search inside Finder or Open dialogs, Tab into a
   folder, play controls for audio and video, and two Quick Look shortcuts. File Search finds files,

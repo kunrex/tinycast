@@ -8,12 +8,8 @@ enum PaletteMode: String, CaseIterable, Identifiable {
     case fileSearch
     case menuSearch
     case switchWindows
-    case schedule
-    case eventEditor
     case customCommandEditor
     case customCommands
-    /// One meeting's read-only page, pushed from that meeting's own actions.
-    case meetingDetails
     case quicklinks
     case quicklinkEditor
     case snippets
@@ -24,7 +20,7 @@ enum PaletteMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 
     var isNativeEditor: Bool {
-        self == .snippetEditor || self == .quicklinkEditor || self == .eventEditor
+        self == .snippetEditor || self == .quicklinkEditor
             || self == .customCommandEditor
     }
 
@@ -37,10 +33,7 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .fileSearch: return "doc.text.magnifyingglass"
         case .menuSearch: return "menubar.rectangle"
         case .switchWindows: return "macwindow.on.rectangle"
-        case .schedule: return "calendar"
-        case .eventEditor: return "calendar.badge.plus"
         case .customCommandEditor, .customCommands: return CustomCommand.sfSymbol
-        case .meetingDetails: return "calendar"
         case .quicklinks, .quicklinkEditor: return Quicklink.sfSymbol
         case .snippets, .snippetEditor: return "curlybraces"
         case .dictionary: return "book.closed"
@@ -57,11 +50,8 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .fileSearch: return String(localized: "Search files and folders…")
         case .menuSearch: return String(localized: "Search menu bar items…")
         case .switchWindows: return String(localized: "Search open windows…")
-        case .schedule: return String(localized: "Search your schedule…")
-        case .eventEditor: return String(localized: "Event editor")
         case .customCommandEditor: return String(localized: "Command editor")
         case .customCommands: return String(localized: "Search custom commands…")
-        case .meetingDetails: return String(localized: "Meeting details")
         case .quicklinks: return String(localized: "Search quicklinks…")
         case .quicklinkEditor: return String(localized: "Quicklink editor")
         case .snippets: return String(localized: "Search snippets…")

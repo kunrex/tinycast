@@ -401,7 +401,6 @@ extension View {
             .environment(core.snippetCoordinator)
             .environment(core.quicklinks)
             .environment(core.quicklinkCoordinator)
-            .environment(core.calendarStore)
             .environment(core.aiSettings)
             .environment(core.quickActionSettings)
             .environment(core.customQuickActions)

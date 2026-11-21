@@ -6,7 +6,7 @@ description: What Tinycast asks for, why it needs it, and when it asks.
 Tinycast asks for a permission **only when you use a feature that needs it**, never at launch. The
 launcher, calculator, emoji picker and search all work without any permissions.
 
-**Settings → Permissions** shows the status of Accessibility, Full Disk Access, Calendars and
+**Settings → Permissions** shows the status of Accessibility, Full Disk Access and
 Microphone, and opens the right System Settings pane for you.
 
 ## Accessibility
@@ -47,21 +47,6 @@ follows:
   Monitoring.
 - **Restoring a settings backup can't turn snippets on**, so importing a file someone sent you can
   never enable keystroke listening.
-
-## Calendars
-
-The [Calendar](/docs/features/calendar) feature reads your events to find meeting links.
-
-When you turn it on, Tinycast shows its own explanation first, then the macOS prompt. The feature is
-only on once macOS grants access. If you declined earlier, **Settings → Permissions** opens the
-System Settings pane where you can change it.
-
-Events are read on your Mac and never leave it.
-
-## Camera
-
-**Open Camera** and the optional camera preview before a meeting ask for camera access the first
-time you use them. The camera isn't used before then, and it turns off as soon as the preview closes.
 
 ## Microphone
 

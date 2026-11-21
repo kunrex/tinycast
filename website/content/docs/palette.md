@@ -3,8 +3,8 @@ title: The palette
 description: Move around Tinycast's floating palette and adjust its appearance and behavior.
 ---
 
-The launcher and search tools share one floating panel. Camera and command output also have
-their own windows. The launcher is the palette's root screen. <kbd>esc</kbd> takes
+The launcher and search tools share one floating panel. Command output has
+its own window. The launcher is the palette's root screen. <kbd>esc</kbd> takes
 you back one screen at a time.
 
 ## Moving around
@@ -134,8 +134,8 @@ search. **Expanded** always shows the full list.
 
 **Settings → General → Compact Shortcuts** appears when Compact is selected. Add, change, remove
 and reorder up to four shortcuts, or remove them all for a search-only bar. The defaults are Clipboard
-History, Emoji & Symbols, Search Files and Search Quicklinks. You can also choose Search Snippets,
-and My Schedule. A disabled feature's shortcut
+History, Emoji & Symbols, Search Files and Search Quicklinks. You can also choose Search Snippets.
+A disabled feature's shortcut
 stays configured and marked Off in Settings, then reappears in its place when enabled again.
 
 The [Toggle System Appearance](/docs/launcher/system-actions) action changes the appearance of

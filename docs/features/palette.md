@@ -92,11 +92,8 @@ every screen but two: the clipboard lands past its pins
 | `.calculatorHistory`   | `CalculatorHistoryScreen`   | `CalculatorHistoryList`                                                                                  |
 | `.emoji`               | `EmojiScreen`               | `EmojiGridView`                                                                                          |
 | `.fileSearch`          | `FileSearchScreen`          | `FileSearchList` (see [file-search.md](file-search.md))                                                  |
-| `.schedule`            | `ScheduleScreen`            | `ScheduleList` (see [calendar.md](calendar.md))                                                          |
-| `.eventEditor`         | `EventEditorScreen`         | `EventEditorView` (see [calendar.md](calendar.md#create-event))                                          |
 | `.customCommandEditor` | `CustomCommandEditorScreen` | `CustomCommandEditorView` (see [custom-commands.md](custom-commands.md#launcher-editor))                 |
 | `.customCommands`      | `CustomCommandListScreen`   | `CustomCommandList` + script preview (see [custom-commands.md](custom-commands.md#launcher-integration)) |
-| `.meetingDetails`      | `MeetingDetailsScreen`      | `MeetingDetailsView` (see [calendar.md](calendar.md#the-details-page))                                   |
 | `.quicklinks`          | `QuicklinkListScreen`       | `QuicklinkList` + preview (see [quicklinks.md](quicklinks.md#search-quicklinks))                         |
 | `.quicklinkEditor`     | `QuicklinkEditorScreen`     | `QuicklinkEditorView` (see [quicklinks.md](quicklinks.md#launcher-editor))                               |
 | `.snippets`            | `SnippetsScreen`            | `SnippetsList` + preview (see [snippets.md](snippets.md#search-snippets))                                |
@@ -218,8 +215,8 @@ its own, so it also sets `argumentEntryID`, which lists that row alone in root s
 is its name. Both are set **after** `showPalette`, since `prepare` clears them.
 
 The flat `selection` index is the single source of truth for highlight / activation and **must always
-match the visible row order**, including the card at index 0 when present — the calculator's (see
-[calculator.md](calculator.md)) or the meeting join card (see [calendar.md](calendar.md)), never both.
+match the visible row order**, including the calculator card at index 0 when present (see
+[calculator.md](calculator.md)).
 
 ## The compact bar
 
@@ -229,13 +226,13 @@ button per configured `AppSettings.compactBarCommands` entry whose feature
 `AppIndex.isCommandEnabled` reports on. General settings shows **Compact Shortcuts** only
 when Compact is selected: an ordered list of zero to four unique commands, with add, replace,
 remove and move controls. The default is Clipboard History and Emoji & Symbols, both on for a new
-install, then Search Files and Search Quicklinks; Search Snippets and My Schedule are
-also available. Disabled features retain their configured positions but disappear from the
+install, then Search Files and Search Quicklinks; Search Snippets is also available.
+Disabled features retain their configured positions but disappear from the
 bar until re-enabled; Settings still offers them, under **Off** in both menus and marked Off in the
 list, so a slot can be ready before its feature is.
 The ordered command identifiers persist in preferences, backups and `appearance.compactBarCommands`
-in settings.json. Retired conversation and Notes identifiers are filtered before validation. Invalid remaining lists
-are rejected whole, and an empty array deliberately removes all slots.
+in settings.json. Retired conversation, Notes and My Schedule identifiers are filtered before validation.
+Invalid remaining lists are rejected whole, and an empty array deliberately removes all slots.
 
 Search starts selected on every presentation. Left/Right traverses Search and the visible buttons,
 stopping at either end; Down expands Search or opens the selected button, and Return opens only a

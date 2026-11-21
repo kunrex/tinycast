@@ -52,12 +52,10 @@ index or use memory. That's how the app stays small with a long feature list.
 
 | Feature                                               | Where to turn it on          |
 | ----------------------------------------------------- | ---------------------------- |
-| [AI Chat](/docs/ai)                                   | Settings → AI                |
 | [Quick Actions](/docs/ai/quick-actions)               | Settings → Quick Actions     |
 | [File Search](/docs/features/file-search)             | Settings → File Search       |
 | [Snippets](/docs/features/snippets)                   | Settings → Snippets          |
 | [Navigation](/docs/features/navigation)               | Settings → Navigation        |
-| [Calendar](/docs/features/calendar)                   | Settings → Calendar          |
 | [Quicklinks](/docs/launcher/quicklinks)               | Settings → Quicklinks        |
 | Apple Shortcuts                                       | Settings → Apple Shortcuts   |
 | Dictation                                             | Settings → Dictation         |

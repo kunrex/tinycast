@@ -249,7 +249,7 @@ Tinycast ships English plus German, Spanish, French, Japanese, Korean, Portugues
 Simplified Chinese. Every string lives in `Tinycast/Resources/Localizable.xcstrings`, keyed by its
 English source text; the compiler extracts the keys, and `./Scripts/sync-strings.sh` writes them into
 the catalog (Xcode's own build does the same in the IDE). The script also removes compiler-marked
-stale keys after their last caller is removed; surviving translations are unchanged. The six privacy prompts live in
+stale keys after their last caller is removed; surviving translations are unchanged. The four privacy prompts live in
 `InfoPlist.xcstrings`, keyed by their `Info.plist` key.
 
 - **SwiftUI's own initializers localize literals already** — `Text("…")`, `Button("…")`, `.help("…")`

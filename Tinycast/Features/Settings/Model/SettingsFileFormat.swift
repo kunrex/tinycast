@@ -39,6 +39,7 @@ enum SettingsFileFormat {
 
         var parsed = Parsed(values: [:], issues: [])
         for section in sections {
+            if section.key == "calendar" { continue }
             guard SettingsFileKey.sections.contains(section.key) else {
                 parsed.issues.append(.unknownSetting(section.key))
                 continue
@@ -53,10 +54,26 @@ enum SettingsFileFormat {
                     parsed.issues.append(.unknownSetting(path))
                     continue
                 }
-                parsed.values[key] = member.value
+                parsed.values[key] = importedValue(member.value, for: key)
             }
         }
         return parsed
+    }
+
+    private static func importedValue(
+        _ value: SettingsFileJSON, for key: SettingsFileKey
+    ) -> SettingsFileJSON {
+        if key == .compactBarCommands, let items = value.items {
+            return .array(items.filter { $0 != .string("command:my-schedule") })
+        }
+        if key == .builtInCommands, let members = value.members {
+            let retired: Set<String> = [
+                "open-camera", "join-next-meeting", "my-schedule", "create-event",
+                "copy-meeting-link", "open-in-calendar"
+            ]
+            return .object(members.filter { !retired.contains($0.key) })
+        }
+        return value
     }
 
     // MARK: - Printing

@@ -10,7 +10,7 @@ the menu bar icon. It's a regular, resizable window.
 `ocr` finds **Search text in images and PDFs**, and `caps lock` finds **Hyper Key**. Choosing a
 result takes you straight to that setting.
 
-There are 22 panes in four groups.
+There are 19 panes in four groups.
 
 ## General
 
@@ -33,7 +33,7 @@ There are 22 panes in four groups.
 | Show animations                   | On · Off                                                                                                                                                                                          | **On**                                                                     |
 | Interface size                    | Default · Large · Larger                                                                                                                                                                          | **Default**                                                                |
 | Window mode                       | Compact · Expanded                                                                                                                                                                                | **Compact**                                                                |
-| Compact Shortcuts                 | Up to four, in your order, from Clipboard History, Search Emoji & Symbols, Search Files, Search Quicklinks, Search Snippets and My Schedule. Shown when Compact is selected | Clipboard History, Search Emoji & Symbols, Search Files, Search Quicklinks |
+| Compact Shortcuts                 | Up to four, in your order, from Clipboard History, Search Emoji & Symbols, Search Files, Search Quicklinks and Search Snippets. Shown when Compact is selected | Clipboard History, Search Emoji & Symbols, Search Files, Search Quicklinks |
 | Follow the cursor across displays | On · Off                                                                                                                                                                                          | **On**                                                                     |
 | Drag to move the launcher         | On · Off                                                                                                                                                                                          | Off                                                                        |
 | Hyper Key                         | None · Caps Lock · Left or Right Control, Shift, Option or Command                                                                                                                                | **None**                                                                   |
@@ -50,7 +50,7 @@ See [The palette](/docs/palette), [Learned ranking](/docs/launcher#learned-ranki
 
 ### Permissions
 
-Shows whether **Accessibility**, **Full Disk Access**, **Calendars** and **Microphone** access is
+Shows whether **Accessibility**, **Full Disk Access** and **Microphone** access is
 granted, and opens the right System Settings pane. See [Permissions](/docs/permissions).
 
 ## Launcher
@@ -81,10 +81,8 @@ Everything here is **off** by default, except Clipboard and Emoji & Symbols.
 | [Snippets](/docs/features/snippets)                   | Enable snippets                   | Show in launcher, Default action (**Paste**), snippet commands, New Snippet, Snippets Folder                                                                                                                                                                                                                                                                           |
 | [File Search](/docs/features/file-search)             | Enable File Search                | Show in launcher (**Off**), Full Disk Access, Indexed Items, Rebuild Index, Commands, Search Scopes, Ignore Patterns                                                                                                                                                                                                                                                   |
 | [Navigation](/docs/features/navigation)               | Enable navigation                 | Commands, Show Apple menu items (**Off**), Excluded Applications                                                                                                                                                                                                                                                                                                       |
-| [Calendar](/docs/features/calendar)                   | Join meetings from Tinycast       | Show in launcher, Upcoming meetings in launcher (**5 next**), Show the meeting card (**5 minutes**), Auto Join Meetings (**Off**), Camera Preview (**Off**), Open Meeting Links In (**Default Browser**), Calendar in Menu Bar (**Disabled**), Days to Show (**Today and Tomorrow**), other menu bar settings, Calendar commands, Calendars                            |
 | [Emoji & Symbols](/docs/features/emoji)               | _(always on)_                     | Emoji commands, Column Count (**8**), Emoji Skin Tone (**Default**)                                                                                                                                                                                                                                                                                                    |
 | [Dictation](/docs/features/dictation)                 | Enable Dictation                  | Shortcut behavior (**Press to start or stop**), Shortcut, Play sounds (**On**), Engine (**Parakeet**), Model (**Redux**) with Download and Remove, Language (Qwen only, **Auto**), Release model from memory (**1 minute**), Microphone (**System default**), When finished (**Paste in active app**), Insert while recording (**Off**), Adapt capitalization (**On**) |
-| [AI](/docs/ai)                                        | Enable AI                         | Providers, AI commands, Default model, Reasoning effort, Web search, Suggested replies, Expand thinking, Tool call rounds, Opens to, Start a new conversation after, Keep conversations, System prompt, [MCP servers](/docs/ai/mcp)                                                                                                                                    |
 | [Quick Actions](/docs/ai/quick-actions)               | Enable Quick Actions              | Actions (Replace or Preview, shortcut, prompt, model), Add Quick Action, Model, Reasoning effort, Translate to                                                                                                                                                                                                                                                         |
 | [Extensions](/docs/extensions)                        | Enable extensions                 | Show in launcher, Search extensions, Install from GitHub, Import from Raycast, Add from folder, installed extensions, Compatibility, Leftover files                                                                                                                                                                                                                    |
 

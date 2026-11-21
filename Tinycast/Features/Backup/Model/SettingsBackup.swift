@@ -69,20 +69,6 @@ struct SettingsBackup: Codable {
         var quicklinkConfirmsBeforeDelete: Bool?
         // Carried like quicklinks: running a shortcut the user built grants no permission class.
         var appleShortcutsEnabled: Bool?
-        // `calendarEnabled` is absent: an import must not grant calendar access.
-        var calendarShowInLauncher: Bool?
-        var calendarLauncherLimit: Int?
-        // Carried: it narrows what is read rather than widening what may be reached.
-        var calendarSpan: Int?
-        var joinWindowMinutes: Int?
-        // `autoJoinMeetings` and `cameraPreview` are absent: an import must arm neither.
-        var autoJoinConfirms: Bool?
-        var autoJoinNamedProvidersOnly: Bool?
-        var menuBarEvents: Int?
-        var calendarMenuBarDisplay: Int?
-        var menuBarLinkedEventsOnly: Bool?
-        var calendarMenuBarHidesWhenEmpty: Bool?
-        var hideCurrentEvent: Int?
         // Safe to carry: it silences a prompt rather than granting anything.
         var supportReminders: Bool?
     }

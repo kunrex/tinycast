@@ -121,7 +121,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `LocalizedResourceTests` | `Platform/LocalizedResource.swift` — `resolved()` matches `String(localized:)` in every language, for plain, contextual, interpolated, plural and missing keys |
 | `RelaunchTests` | The shipped app delegate and relaunch helper — asynchronous cleanup, repeated quit requests, and a responsive replacement process |
 | `CalcTests` | all of `Calculator/Model/` |
-| `CalendarTests` | all of `Calendar/Model/` plus `EventEditorSession` — links, join window, day buckets, draft and form focus |
+| `CalendarRemovalMigrationTests` | `Migrations/CalendarRemovalMigration.swift` — retired defaults, launcher references, ranking and symlinked settings-file cleanup; preserves unrelated state and is idempotent |
 | `ClipboardSearchTests` | Ordinary and OCR result ordering, opt-in lifecycle, cancellation, pins and type filters |
 | `ClipboardTextTests` | Apple Vision/PDF extraction, scheduling, retry backoff and recovery |
 | `PasteSequenceTests` | `Clipboard/Model/PasteSequence.swift` — the walk's order, its end, and what starts it over |
@@ -549,7 +549,7 @@ prefs, caches, TCC grants and login item, so this cannot disturb an installed co
   Diagnostics… reports a Karabiner conflict
 - Every binding survives quit and relaunch
 - `Enable Commands` off leaves every pane-owned command listed, searchable and firing —
-  Clipboard, Emoji, File Search, Snippets, Quicklinks, Calendar, Quick Actions and Navigation
+  Clipboard, Emoji, File Search, Snippets, Quicklinks, Quick Actions and Navigation
 
 ### Quicklinks
 
@@ -646,65 +646,18 @@ prefs, caches, TCC grants and login item, so this cannot disturb an installed co
 - `1000 usd in eur/12` converts and then divides; copying preserves the euro amount and code.
   `100km/h in m/s / 2` retains the compound target, and `1000 usd in eur / 0` stays silent
 
-### Calendar and meetings
+### Calendar and Camera removal
 
-- With Calendar **off**: no launcher entries, no card, no permission prompt at launch
-- Enabling shows the consent dialog **before** the macOS prompt; declining prompts for nothing
-- After Calendar permission is reset, Settings ▸ Calendar offers `Allow Calendar Access…` and asks
-  again; after denial it offers System Settings instead
-- With a meeting four minutes out, an empty palette shows the card on top, provider glyph and all
-- The countdown steps on the minute boundary rather than on a keystroke
-- ↵ joins: a Zoom link opens the Zoom app, and the browser where no app claims the scheme
-- Typing a character swaps the card for the calculator's; ↑/↓ never lands on a phantom row
-- Unchecking a calendar drops its events from the launcher and My Schedule, and survives a relaunch
-- `Show in launcher` off drops the meeting entries from the launcher, yet typing `My Schedule`
-  still finds the command, and it still lists the meetings
-- Adding or deleting an event in Calendar.app updates an open palette without a reopen
-- A meeting with no link is listed and searchable, and answers Open in Calendar rather than Join
-- Two upcoming meetings with titles in reverse alphabetical order appear earliest first in the
-  launcher's Meetings section and the `Meetings` category listing, even after opening the later one
-- Import a backup taken with Calendar on: it comes back **off**, and no calendar toggle travels
-- Calendar in Menu Bar on Disabled: the calendar item is gone and Tinycast's own item is unaffected;
-  turning `Show in menu bar` off leaves an enabled calendar item in place, and both off leaves neither
-- On Meeting Title with Show Upcoming Events at 5 minutes, the title and countdown appear at T-5 and
-  step on the minute boundary, not on a keystroke
-- `Only show events with meetings` hides a linkless event and shows it again when unchecked
-- `Hide when there are no upcoming events` removes the item whenever it would show only the glyph or
-  `No upcoming events`: on Today after the last event, on 5 minutes between meetings too. It returns
-  with the next event and never moves the `Calendar in Menu Bar` picker off its choice
-- Hide Current Event on Automatically clears the entry at the start and hands the space to the next
-  event inside its lead time; on 5 minutes it lingers counting up, then clears
-- Clicking the calendar item opens `Join <title>`, `Open in Calendar...`, `My Schedule` and
-  `Calendar Settings...` and nothing else; the second opens that event in Calendar.app, while a bare
-  click never joins
-- Camera Preview on: ↵ on the join card opens the panel **already showing live video** — no black
-  frame, no blank mid-preview; ↵ joins, Esc drops the join; the camera light goes out with the
-  panel, and the first run prompts once, before any panel appears
-- With Open Camera or the join card up, changing a video effect in Control Center leaves the preview
-  live; the next click outside both the panel and system UI then closes it, and Esc does once the
-  panel is clicked
-- A meeting that ends leaves the launcher results and `My Schedule` on the same minute boundary it
-  leaves the menu bar, with the palette open or closed over the end
-- Auto Join on: the meeting opens itself at its start, **once** — dismiss it and it does not return.
-  With confirm on and camera preview off, the dialog asks first
-- Arming Auto Join during a meeting already under way joins nothing
-- `Only join known meeting services` on: an event whose only link is a booking page or document
-  neither asks nor opens at its start, while a Zoom or Meet event beside it still joins; the join
-  card still offers both
-- Sleeping over a meeting's start and waking past it reloads the events; one still inside the window
-  joins, one long past does not
-- Create Event opens the launcher form with only Title, Start and Duration, defaulting to Now and
-  30 min. Blank and whitespace-only titles disable the action, including ⌘↵. Tab/Shift-Tab cycle the
-  fields; Return/Space/Down open a focused choice, and Escape closes that menu before the form.
-- Back or Escape restores the search and selection that opened Create Event; a hotkey-opened form
-  closes instead. Disabling Calendar closes the editor, and revoked permission cannot write an event.
-- Create Event writes to the default calendar and shows up on the card, the schedule and the launcher
-  without a relaunch; start offsets are measured at save, not when the editor opens.
-- Arrow keys move the caret in the event title field, and still step the Set Volume slider.
-- Every command row of Settings ▸ Calendar has Add Alias, Record Hotkey and a checkbox, and none of
-  the five appears in Settings ▸ Commands
-- Export with auto join and camera preview on, import onto a clean profile: both come back **off**,
-  while the menu-bar settings carry over
+- Upgrade a profile with legacy calendar preferences, meeting favorites, aliases, shortcuts and
+  ranking: removed entries disappear while Quick Actions, Navigation and other live launcher state stay.
+- A legacy `settings.json`, including a symlink, loses only retired calendar settings and commands;
+  a later import silently ignores the retired section and command records.
+- Import an old backup: retired commands and meeting entries do not return in favorites, visibility,
+  aliases or hotkeys.
+- No Calendar pane, Meetings category, meeting card, calendar menu bar item or Open Camera command
+  appears; old deep links report an unknown target and no calendar or camera permission is requested.
+- The calculator's Foundation date arithmetic, Quick Actions, native Cmd-Tab and durable window
+  recovery continue to work.
 
 ### File favorites
 
@@ -712,8 +665,7 @@ prefs, caches, TCC grants and login item, so this cannot disturb an installed co
   empty query: both appear with app favorites in insertion order, including after relaunch.
 - Move files and apps across each other with ⌥⌘↑/↓ and the matching menu actions; selection follows
   the moved row. Remove a favorite through either path; selection stays within Favorites.
-- Hold ⌘ and check that each displayed ⌘1–⌘0 opens that favorite, including with the meeting card
-  above Favorites and from the compact palette.
+- Hold ⌘ and check that each displayed ⌘1–⌘0 opens that favorite, including from the compact palette.
 - Search for a saved filename, including a short query and accented text: the favorite appears once.
   Turn Show in launcher off: saved files remain available; disable File Search: they disappear.
   Re-enable it: their order returns.

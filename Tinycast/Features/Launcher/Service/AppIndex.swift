@@ -12,7 +12,6 @@ struct AppEntry: Identifiable, Hashable, Sendable {
         case quicklink
         case appleShortcut
         case extensionCommand
-        case meeting
 
         var descriptor: KindDescriptor {
             switch self {
@@ -68,11 +67,6 @@ struct AppEntry: Identifiable, Hashable, Sendable {
                     label: "Extension", sectionTitle: "Extensions",
                     openVerb: "Run Command", canHideFromSearch: true,
                     canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 3)
-            case .meeting:
-                return KindDescriptor(
-                    label: "Meeting", sectionTitle: "Meetings",
-                    openVerb: "Join Meeting", canHideFromSearch: false,
-                    canRevealInFinder: false, canDragOut: false, isSymbolIcon: true, rankPriority: 1)
             }
         }
     }
@@ -157,7 +151,7 @@ struct AppEntry: Identifiable, Hashable, Sendable {
             return bundleID.map { .settingsPane(bundleID: $0) }
         case .command, .quickAction, .customCommand, .systemAction, .quicklink, .appleShortcut, .snippet:
             return HotKeyAction(entryID: id)
-        case .extensionCommand, .meeting:
+        case .extensionCommand:
             return nil
         }
     }
@@ -186,7 +180,6 @@ struct AppEntry: Identifiable, Hashable, Sendable {
         case .quickAction:
             return CommandCatalog.command(for: self)?.sfSymbol ?? CustomQuickAction.sfSymbol
         case .systemAction: return SystemActionCatalog.action(forEntryID: id)?.sfSymbol ?? "questionmark"
-        case .meeting: return "video.fill"
         case .application, .systemSettings, .appleShortcut, .extensionCommand: return "questionmark"
         }
     }
@@ -281,7 +274,6 @@ final class AppIndex {
     struct Results: Equatable {
         var entries: [AppEntry] = []
         var favoriteCount = 0
-        var meetingCount = 0
         var suggestionCount = 0
         var matchCount = 0
     }
@@ -325,7 +317,6 @@ final class AppIndex {
     private var appleShortcutEntries: [AppEntry] = []
     private var customQuickActionEntries: [AppEntry] = []
     private var extensionEntries: [AppEntry] = []
-    private var meetingEntries: [AppEntry] = []
     /// The catalog's commands a disabled feature hides; the Commands slice is recomputed from it.
     private var hiddenCommands: Set<CommandID> = []
     /// Kept out of launcher search by a "Show in launcher" switch, yet still runnable by shortcut.
@@ -413,13 +404,6 @@ final class AppIndex {
     func setAppleShortcuts(_ entries: [AppEntry]) {
         guard entries != appleShortcutEntries else { return }
         appleShortcutEntries = entries
-        publishEntries()
-    }
-
-    /// Events move on their own, so this comes from the store's change hook, not an edit.
-    func setMeetings(_ entries: [AppEntry]) {
-        guard entries != meetingEntries else { return }
-        meetingEntries = entries
         publishEntries()
     }
 
@@ -582,7 +566,7 @@ final class AppIndex {
     private func publishEntries() {
         // Each slice arrives in its own display order; the slice order is the section order.
         let updated =
-            Self.named(meetingEntries) + discoveredEntries
+            discoveredEntries
             + Self.named(
                 extensionEntries + quicklinkEntries + appleShortcutEntries + snippetEntries
                     + Self.systemActionEntries + customCommandEntries + quickActionEntries
@@ -659,12 +643,9 @@ final class AppIndex {
                 showsSuggestions ? suggestions(from: split.rest, usage: usage, hotKeys: hotKeys) : []
             let shown = Set((split.favorites + suggested).map(\.id))
             let rest = byUsage(visible.filter { !shown.contains($0.id) }, usage: usage)
-            // Above Suggestions: a meeting is worth opening only until it ends.
-            let meetings = rest.filter { $0.kind == .meeting }
             return Results(
-                entries: split.favorites + meetings + suggested + rest.filter { $0.kind != .meeting },
-                favoriteCount: split.favorites.count, meetingCount: meetings.count,
-                suggestionCount: suggested.count)
+                entries: split.favorites + suggested + rest,
+                favoriteCount: split.favorites.count, suggestionCount: suggested.count)
         }
     }
 
@@ -692,24 +673,19 @@ final class AppIndex {
         while start < entries.endIndex {
             let kind = entries[start].kind
             let end = entries[start...].firstIndex { $0.kind != kind } ?? entries.endIndex
-            if kind == .meeting {
-                ordered.append(contentsOf: entries[start..<end])
-            } else {
-                ordered += LauncherOrder.byUsage(
-                    Array(entries[start..<end]), signals: { self.signals(for: $0, usage: usage) })
-            }
+            ordered += LauncherOrder.byUsage(
+                Array(entries[start..<end]), signals: { self.signals(for: $0, usage: usage) })
             start = end
         }
         return ordered
     }
 
-    /// Meetings keep their own card, and Tinycast opening itself goes nowhere.
+    /// Tinycast opening itself goes nowhere.
     private func suggestions(
         from entries: [AppEntry], usage: LauncherRankingStore.Snapshot, hotKeys: HotKeyManager
     ) -> [AppEntry] {
         let eligible = entries.filter {
-            $0.kind != .meeting
-                && !($0.bundleID?.hasPrefix(Self.ownBundlePrefix) ?? false)
+            !($0.bundleID?.hasPrefix(Self.ownBundlePrefix) ?? false)
         }
         return LauncherSuggestions.select(from: eligible, now: usage.now) { entry in
             // `hotKeyAction` is nil for an extension command, whose shortcut is keyed by entry ID.

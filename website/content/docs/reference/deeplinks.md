@@ -36,7 +36,7 @@ for them.
 A link to a command that opens a screen works like its shortcut: open it twice and the screen
 closes. Retired `note/*`, `command/show-notes`, `command/create-note`, `command/search-notes`
 and `settings/notes` links report unknown and do nothing, including when they carry input.
-Retired chat, Quick AI, window-management and Uninstall links likewise perform no action.
+Retired chat, Quick AI, window-management, Uninstall, Calendar and Camera links likewise perform no action.
 
 ## Send text and arguments
 

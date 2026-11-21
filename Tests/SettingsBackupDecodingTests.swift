@@ -5,6 +5,14 @@ enum SettingsBackupDecodingTests {
     static func main() throws {
         let binding = HotKeyBinding.globe
         let shortcut = try JSONSerialization.jsonObject(with: JSONEncoder().encode(binding))
+        let legacyCalendarSettings: [String: Any] = [
+            "calendarEnabled": true, "calendarShowInLauncher": true, "calendarLauncherLimit": 5,
+            "calendarSpan": 2, "joinWindowMinutes": 5, "autoJoinMeetings": true,
+            "autoJoinConfirms": false, "autoJoinNamedProvidersOnly": true, "cameraPreview": true,
+            "meetingBrowser": "com.example.browser", "menuBarEvents": 2,
+            "calendarMenuBarDisplay": 1, "menuBarLinkedEventsOnly": true,
+            "calendarMenuBarHidesWhenEmpty": false, "hideCurrentEvent": 5
+        ]
         let settings: [String: Any] = [
             "appearance": "dark", "clipboardEnabled": false, "clipboardRetentionDays": 90,
             "navigationEnabled": true, "menuSearchDisabledApps": ["com.example.private"],
@@ -12,7 +20,7 @@ enum SettingsBackupDecodingTests {
             "notesRendersMarkdown": true, "notesShowsFormattingBar": false, "notesShowsInMenuBar": true,
             "windowManagementEnabled": true, "windowManagementGap": 8,
             "windowManagementCycleMode": "cycle", "windowRoomsShowInLauncher": false
-        ]
+        ].merging(legacyCalendarSettings) { current, _ in current }
         let object: [String: Any] = [
             "settings": settings,
             "hotkeys": [
@@ -57,6 +65,17 @@ enum SettingsBackupDecodingTests {
         for key in settings.keys where key.hasPrefix("window") || key.hasPrefix("notes") {
             precondition(encodedSettings[key] == nil)
         }
+        for key in legacyCalendarSettings.keys {
+            precondition(encodedSettings[key] == nil)
+        }
+        let unknownLegacyValues = Dictionary(
+            uniqueKeysWithValues: legacyCalendarSettings.keys.map {
+                ($0, ["unknown": []] as [String: [Int]])
+            })
+        let legacyOnly = try SettingsBackup(json: JSONSerialization.data(
+            withJSONObject: ["settings": unknownLegacyValues]))
+        let legacyEncoded = try JSONSerialization.jsonObject(with: legacyOnly.encoded()) as! [String: Any]
+        precondition((legacyEncoded["settings"] as! [String: Any]).isEmpty)
         let decodedAgain = try SettingsBackup(json: backup.encoded())
         precondition(decodedAgain.hotkeys?.commands?["command:switch-windows"] == binding)
         precondition(decodedAgain.settings?.clipboardRetentionDays == 90)

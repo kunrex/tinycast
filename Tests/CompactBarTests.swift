@@ -19,9 +19,10 @@ struct CompactBarTests {
         check(
             defaults == [.clipboardHistory, .searchEmoji, .searchFiles, .searchQuicklinks],
             "the always-on commands lead the default")
-        check(CommandID.compactBarOptions.count == 6, "six surviving destinations")
+        check(CommandID.compactBarOptions.count == 5, "five surviving destinations")
         check(CommandID(rawValue: "command:ai-chat") == nil, "retired Quick AI command is ignored")
         check(CommandID(rawValue: "command:ai-chat-window") == nil, "retired AI Chat command is ignored")
+        check(CommandID(rawValue: "command:my-schedule") == nil, "retired schedule command is ignored")
         for count in 0...CommandID.compactBarLimit {
             let commands = Array(defaults.prefix(count))
             var selection = CompactBarSelection()
@@ -42,15 +43,21 @@ struct CompactBarTests {
         check(selection.command == .searchFiles, "reordering preserves the selected command")
         selection.reconcile(commands: [.clipboardHistory])
         check(selection.command == nil, "removing or disabling the selected command returns to Search")
-        selection.command = .openCamera
+        selection.command = .quit
         selection.move(by: 1, commands: defaults)
         check(selection.command == defaults.first, "an obsolete selection starts from Search")
 
         check(CommandID.compactBarCommands(from: []) == [], "empty means no shortcuts")
-        let chosen: [CommandID] = [.searchSnippets, .searchEmoji, .mySchedule, .searchFiles]
+        let chosen: [CommandID] = [.searchSnippets, .searchEmoji, .searchFiles]
         check(
             CommandID.compactBarCommands(from: chosen.map(\.rawValue)) == chosen,
             "all additional destinations retain their order")
+        check(
+            CommandID.compactBarCommands(from: ["command:my-schedule"] + chosen.map(\.rawValue))
+                == chosen, "retired schedule is removed without resetting other shortcuts")
+        check(
+            CommandID.compactBarCommands(from: ["command:my-schedule", "unknown"]) == nil,
+            "removing schedule does not make unknown identifiers valid")
         for invalid in [
             ["unknown"], [CommandID.quit.rawValue],
             [CommandID.searchFiles.rawValue, CommandID.searchFiles.rawValue],
@@ -72,8 +79,11 @@ struct CompactBarTests {
         check(
             preferences.stringArray(forKey: key).flatMap(CommandID.compactBarCommands(from:)) == chosen,
             "stable identifiers round trip through isolated preferences")
-        let retired = ["command:ai-chat", "command:ai-chat-window"]
-        let legacy = [chosen[0].rawValue, retired[0], chosen[1].rawValue, retired[1]]
+        let retired = [
+            "command:ai-chat", "command:ai-chat-window", "command:my-schedule",
+            "command:show-notes", "command:create-note", "command:search-notes"
+        ]
+        let legacy = [chosen[0].rawValue, retired[0], chosen[1].rawValue] + Array(retired.dropFirst())
         preferences.set(legacy, forKey: key)
         preferences.synchronize()
         let restarted = UserDefaults(suiteName: suite)!

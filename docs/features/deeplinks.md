@@ -1,7 +1,7 @@
 # Deeplinks
 
-Every launcher row that can take a hotkey can also be run by URL, and so can a saved AI chat
-and a one-off window size. Retired `note/*`, `command/show-notes`, `command/create-note`,
+Every launcher row that can take a hotkey can also be run by URL. Retired conversation, window
+management, Uninstall, Calendar and Camera links run nothing. Retired `note/*`, `command/show-notes`, `command/create-note`,
 `command/search-notes` and `settings/notes` links report an unknown link and run nothing; they never
 fall back to the launcher or another action. Karabiner-Elements, a Shortcut, a script, a Stream Deck
 or a web page can drive Tinycast without a chord of its own:
@@ -21,7 +21,6 @@ exact link, typed fields included, so nobody has to build one by hand.
   (`Model/`).
 - `DeepLinkConsentPolicy` — which links ask, and the key Always Allow stores (`Model/`).
 - `DeepLinkSource` — outside, or a quicklink of ours, and what each may run (`Model/`).
-- `CustomWindowSize+DeepLink` — a window size spelled out in a link (`Model/`).
 - `DeepLinkCoordinator` — on `AppCore`. It parses, gates, asks, and hands the target to its feature
   (`UI/`).
 - `AllowedDeepLinksSection` — Settings → General → Deeplinks, where an Always Allow is removed
@@ -135,7 +134,7 @@ so a new command fails to build until it is classed:
 - **Never asks without input**: anything that only opens a Tinycast screen or editor — search
   screens, Settings and the create commands.
 - **Always asks**: system actions, quicklinks, snippets, custom commands, Apple Shortcuts,
-  custom Quick Actions, the AI text actions, Paste Sequentially, Open Camera and the meeting commands.
+  custom Quick Actions, the AI text actions and Paste Sequentially.
 
 Input always asks because a page chose it: typed into the launcher it is one Return from a fallback
 row, and as arguments it reaches a script.

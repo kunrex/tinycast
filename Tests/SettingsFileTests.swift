@@ -11,6 +11,7 @@ struct SettingsFileTests {
         testValues()
         testFormat()
         testParseIssues()
+        try testRetiredCalendarImport()
         try await testRepository()
         try testCommit()
         try testReplace()
@@ -47,7 +48,7 @@ struct SettingsFileTests {
                 "general", "appearance", "hyperKey", "calculator", "search", "applications",
                 "systemSettings", "systemActions", "commands", "quicklinks", "appleShortcuts",
                 "quickActions", "dictation", "fileSearch", "snippets", "navigation",
-                "clipboard", "emoji", "calendar", "extensions"
+                "clipboard", "emoji", "extensions"
             ])
 
         let retiredConversationPaths = [
@@ -78,6 +79,24 @@ struct SettingsFileTests {
         check(
             "no capability grant has a settings.json key",
             grantPaths.allSatisfy { SettingsFileKey(rawValue: $0) == nil })
+    }
+
+    private static func testRetiredCalendarImport() throws {
+        let parsed = try SettingsFileFormat.parse(Data("""
+            {"calendar":{"enabled":true,"commands":{"my-schedule":{}}},
+             "appearance":{"compactBarCommands":["command:my-schedule","command:show-notes","unknown"]},
+             "commands":{"builtIn":{"open-camera":false,"show-notes":{},"unknown":{}}},
+             "navigation":{"mimicsMacOS":true},"snippets":{"showInLauncher":false}}
+            """.utf8))
+        check("retired calendar imports silently", parsed.issues.isEmpty)
+        check("calendar import preserves native Cmd-Tab", parsed.values[.navigationMimicsMacOS] == true)
+        check("calendar import preserves Snippets", parsed.values[.snippetsShowInLauncher] == false)
+        check(
+            "compact import drops only My Schedule",
+            parsed.values[.compactBarCommands] == .array(["command:show-notes", "unknown"]))
+        check(
+            "command import drops only retired rows",
+            parsed.values[.builtInCommands] == .object(["show-notes": .object([]), "unknown": .object([])]))
     }
 
     // MARK: - Values
@@ -136,15 +155,14 @@ struct SettingsFileTests {
             .automaticallyCheckForUpdates: false,
             .escapeKeyBehavior: "say \"hi\"\\ / é\n\t\u{01}",
             .fileSearchIgnorePatterns: .array([]),
-            .popToRootTimeout: 5,
-            .calendarSpan: .number(-1.5)
+            .popToRootTimeout: .number(-1.5)
         ]
         let golden = """
             {
               "general": {
                 "showInMenuBar": true,
                 "automaticallyCheckForUpdates": false,
-                "popToRootSeconds": 5,
+                "popToRootSeconds": -1.5,
                 "escapeKeyBehavior": "say \\"hi\\"\\\\ / é\\n\\t\\u0001",
                 "autoSwitchInputSource": null
               },
@@ -159,9 +177,6 @@ struct SettingsFileTests {
               },
               "navigation": {
                 "commands": {}
-              },
-              "calendar": {
-                "span": -1.5
               }
             }
 

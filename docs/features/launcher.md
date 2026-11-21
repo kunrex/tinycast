@@ -100,7 +100,7 @@ refreshes collapse into a single trailing scan.
 | title | the display name | the query read into Latin | yes |
 | alternate titles | the bundle's names in the user's other languages and English, a renamed bundle's file name, `CFBundleAlternateNames`, a snippet's keyword | the query as typed | yes |
 | subtitle | an extension's title, or a row's own subtitle in its place | the query read into Latin | yes |
-| keywords | the declared Info.plist name, an extension command's `keywords`, a meeting's calendar, and the title and subtitle joined both ways | the query read into Latin | no — they only make an entry appear |
+| keywords | the declared Info.plist name, an extension command's `keywords`, and the title and subtitle joined both ways | the query read into Latin | no — they only make an entry appear |
 
 An entry appears when the user's alias is an exact or prefix hit, or when any field passes the
 sensitivity — an alias that is neither counts as one more alternate title. Bundle identifiers and
@@ -173,7 +173,7 @@ the Zed app: rule 3 only protects an exact title past three characters.
 ### Kind priority and boosts
 
 - **Apps win the ties.** `KindDescriptor.rankPriority` puts applications (4) above command-like kinds
-  (3), quicklinks (2), and System Settings panes and meetings (1), so a first-party app is never
+  (3), quicklinks (2), and System Settings panes (1), so a first-party app is never
   shadowed by the Tinycast command named after it: Calculator over Calculator History.
 - **No built-in command currently declares boosted terms.** Boosting a built-in command must not
   shadow an application with the same name.
@@ -284,8 +284,8 @@ never expand a category; short queries retain ordinary search ranking.
 
 A partial category query never reorders the ordinary search. Its ranked matches, including apps and
 aliases, lead under Results in relevance order, so the best match keeps the row Return opens. The
-category's remaining entries follow under their section headers in usage order, and meetings retain
-agenda order. Those sections follow publication order, so visible rows and flat selection stay aligned;
+category's remaining entries follow under their section headers in usage order. Those sections follow
+publication order, so visible rows and flat selection stay aligned;
 `AppIndex.Results.matchCount` tells the view where the ranked rows end. Visibility still applies
 downstream. The result limit bounds ordinary matches, while whole categories remain uncapped, as they
 are for an empty query.
@@ -466,29 +466,27 @@ per-item reset in its Actions menu, and users can clear all learned ranking in G
 
 ## The empty list
 
-Favorites, then Meetings, then Suggestions, then one section per kind. Meetings sit above
-Suggestions because a meeting is worth opening only until it ends. They keep the agenda's start
-order, including in the `Meetings` category listing, regardless of title or past usage. Each remaining
-kind section is sorted by the tiebreak, so what the user opens comes first and never-used entries still
+Favorites, then Suggestions, then one section per kind. Each remaining kind section is sorted by the
+tiebreak, so what the user opens comes first and never-used entries still
 read alphabetically below it. The sort runs within each contiguous kind run of the publication order,
 so the sectioned view stays 1:1 with the flat selection.
 
 ### Suggestions
 
 `LauncherSuggestions.select` chooses at most five from every visible entry that is not a favorite,
-a meeting, a lowest-priority entry or Tinycast itself:
+a lowest-priority entry or Tinycast itself:
 
 1. up to two apps or extensions installed in the last five minutes and never opened —
    `AppEntry.installedAt` is the bundle's added-to-directory date;
 2. entries with a score above 1 and no bound shortcut, in empty-list order — a shortcut is already the
    faster way in;
 3. while fewer than five, built-in commands with no alias or shortcut, by
-   `CommandID.suggestionPriority`: Clipboard History, Search Files, My Schedule, Search Emoji &
+   `CommandID.suggestionPriority`: Clipboard History, Search Files, Search Emoji &
    Symbols, then Create Quicklink and Create Snippet. A command whose feature is off is absent from the
    index, so it is never offered.
 
 A suggested entry leaves its kind section below, so no row appears twice. `AppIndex.Results` carries
-`favoriteCount`, `meetingCount`, `suggestionCount` and, for a typed query, `matchCount`, which
+`favoriteCount`, `suggestionCount` and, for a typed query, `matchCount`, which
 `LauncherScreen` hands to `LauncherList` for its leading headers. **Show suggestions** in Settings › General › Search turns the section
 off (`launcherShowsSuggestions`, carried by a settings backup). `HotKeyManager.revision` is part of
 `AppIndex`'s results key, because binding a shortcut takes an entry out of the section.
@@ -635,9 +633,9 @@ and three places read it: `FeatureCommandsSection` draws the pane's rows from it
 category gate for it in both `isVisible` and `allowsHotKey`. Stamping the entry rather than sniffing its
 id is what keeps "which pane owns this" out of the entry-ID namespace.
 
-Eight panes own commands today — Quick Actions, File Search, Snippets, Navigation,
-Clipboard, Emoji, Calendar and Quicklinks. What is left in Settings › Commands is
-the set no feature switch governs: Calculator History, Open Camera, the three backup commands, Check
+Seven panes own commands today — Quick Actions, File Search, Snippets, Navigation,
+Clipboard, Emoji and Quicklinks. What is left in Settings › Commands is
+the set no feature switch governs: Calculator History, the three backup commands, Check
 for Updates, Tinycast Settings, About, Support and Quit.
 
 A pane's list is also its display order, so `CommandID`'s declaration order is grouped by owner.

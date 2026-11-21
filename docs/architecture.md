@@ -26,9 +26,7 @@ Independently of the folder tree, every mature subsystem has converged on the sa
 │ ShellCommandRunner · DoubleTap{Modifier,Detector} · ClipboardStore ·       │
 │ RaycastDecoder · Scrypt · AppSettingsKey · SettingsBackupCoverage          │
 │ SettingsFile{JSON,Key,Value,Format,Binding,Issue,Identity} ·               │
-│ HotKeySpelling ·                                                          │
-│ MeetingLink · MeetingEvent · UpcomingWindow · MeetingDay · MenuBarSummary  │
-│ AutoJoinPolicy · EventDraft · SupportReminderSchedule ·                    │
+│ HotKeySpelling · SupportReminderSchedule ·                                │
 │ MenuSearch{Item,Shortcut,Query,TreeNode,SnapshotPolicy,Target} ·           │
 │ WindowSwitch{Entry,Order,Query}                                            │
 └──────────────────────────────────┬─────────────────────────────────────────┘
@@ -42,7 +40,6 @@ Independently of the folder tree, every mature subsystem has converged on the sa
 │ SnippetKeywordListener · CurrencyRateStore · Paster ·    │
 │ HotKeyCenter · HyperKeyTap · KeyboardRemapper · ModifierTapMonitor ·       │
 │ SecureInputMonitor · RunningAppsMonitor ·                                  │
-│ CalendarStore · MeetingLauncher · MeetingClock · CameraSession ·           │
 │ SupportReminderStore · AXMenuAccess · WindowZOrder · WindowSwitchSweep ·   │
 │ AppleShortcutRunner · SettingsFileRepository · SettingsFileMonitor ·       │
 └──────────────────────────────────┬─────────────────────────────────────────┘
@@ -91,12 +88,12 @@ coordinate conversion and display identity. See [window-recovery.md](features/wi
 `AppCore.shared` (`App/AppCore.swift`) is a `@MainActor` singleton owning every long-lived thing in the
 app: the stores (`AppIndex`, `ClipboardStore`, `SnippetsStore`, `QuicklinkStore`, `CustomCommandStore`,
 `FavoritesStore`, `VisibilityStore`, `AliasStore`, `LauncherRankingStore`, `CalculatorHistoryStore`,
-`CurrencyRateStore`, `FrequentEmojiStore`, `CalendarStore`), the managers, monitors and clocks
+`CurrencyRateStore`, `FrequentEmojiStore`), the managers and monitors
 (`ClipboardManager`, the opt-in `ClipboardTextIndexer`, the opt-in `SettingsFileRepository`,
 `HotKeyManager`, `HyperKeyManager`, `DictationKeyManager`, `RunningAppsMonitor`,
 `SnippetKeywordListener`), the shared state
-(`AppSettings`, `PaletteState`, `FileSearchSession`, `MenuSearchSession`,
-`MeetingClock`), the feature coordinators, and the
+(`AppSettings`, `PaletteState`, `FileSearchSession`, `MenuSearchSession`), the feature coordinators,
+and the
 window controllers.
 
 `AppDelegate.applicationDidFinishLaunching` calls `AppCore.shared.start(launchedByUser:)` and nothing
@@ -129,8 +126,7 @@ store starts the helper on demand and reaps it after the selected idle delay or 
 ## Entry points and windows
 
 `TinycastLaunch` (`@main`) pins the interface language, then runs `TinycastApp`, which declares
-only two `MenuBarExtra` scenes — Tinycast's own item and the
-calendar's, each inserted by one preference and independent of the other; everything else visible is
+one `MenuBarExtra` scene — Tinycast's own item, inserted by its preference; everything else visible is
 driven imperatively from AppKit. Extension menu extras are dynamic `NSStatusItem`s owned entirely by
 `Features/Extensions/`, through `ExtensionManager`, with no scene or lifecycle wiring in the core.
 
@@ -163,11 +159,6 @@ driven imperatively from AppKit. Extension menu extras are dynamic `NSStatusItem
   height its content measured. Every route into it — the palette's menu circle, Settings → About, the
   menu bar, the launcher, and the 30-day reminder — lands on `showSupport()`, which is what moves the
   reminder's anchor. See [features/support.md](features/support.md).
-- **The camera surfaces** — a borderless, non-activating `CameraPanel` at `.floating`, in two
-  shapes over one `CameraSession`: `CameraPreviewController`, owned by `CalendarCoordinator`, gates a
-  join and doubles as auto join's confirmation; `CameraCoordinator`, owned by `AppCore`, is the
-  standalone `Open Camera` command. See [features/camera.md](features/camera.md) and
-  [features/calendar.md](features/calendar.md).
 - **HUDs** are separate, because a dialog asks and a HUD reports: `MessageHUDController` (the pill) and
   `VolumeHUDController` (the level box), both over a shared `HUDPresenter` that owns the
   one-at-a-time, auto-dismiss and fade policy. See [ui.md](ui.md#dialogs--hud).
@@ -238,7 +229,7 @@ Tinycast/
   Migrations/       one-shot repairs, each deleted after one stable release (migrations.md)
   Features/
     PaletteRowIndex.swift   the flat selection index — palette-owned, so it sits at the top
-    Launcher/ Clipboard/ Calculator/ Calendar/ Emoji/ FileSearch/ MenuSearch/
+    Launcher/ Clipboard/ Calculator/ Emoji/ FileSearch/ MenuSearch/
     Quicklinks/ Snippets/ SystemActions/ CustomCommands/ HotKeys/ Backup/
     WindowSwitcher/ WindowRecovery/ Onboarding/ Updates/ Support/ AI/ Settings/
     Extensions/

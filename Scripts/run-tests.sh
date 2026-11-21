@@ -181,8 +181,7 @@ run LauncherSettingsFileTests \
 run AppleShortcutTests     Tinycast/Features/AppleShortcuts/Model/*.swift
 run CalcTests              Tinycast/Features/Calculator/Model/*.swift
 run index CalcPerformanceTests Tinycast/Features/Calculator/Model/*.swift
-run CalendarTests          Tinycast/Features/Calendar/Model/*.swift \
-                           Tinycast/Features/Calendar/UI/EventEditorSession.swift
+run CalendarRemovalMigrationTests Tinycast/Migrations/CalendarRemovalMigration.swift
 run ClipboardTests         Tinycast/Features/Clipboard/Model/ClipboardStore.swift \
                            Tinycast/Platform/Images/ImageDerivative.swift \
                            Tinycast/Features/Clipboard/Model/ClipboardFilter.swift \

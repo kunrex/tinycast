@@ -55,17 +55,6 @@ extension SettingsBackup {
             quicklinkPassesSelectedText: s.quicklinkPassesSelectedText,
             quicklinkConfirmsBeforeDelete: s.quicklinkConfirmsBeforeDelete,
             appleShortcutsEnabled: s.appleShortcutsEnabled,
-            calendarShowInLauncher: s.calendarShowInLauncher,
-            calendarLauncherLimit: s.calendarLauncherLimit.rawValue,
-            calendarSpan: s.calendarSpan.rawValue,
-            joinWindowMinutes: s.joinWindowMinutes.rawValue,
-            autoJoinConfirms: s.autoJoinConfirms,
-            autoJoinNamedProvidersOnly: s.autoJoinNamedProvidersOnly,
-            menuBarEvents: s.menuBarEvents.rawValue,
-            calendarMenuBarDisplay: s.calendarMenuBarDisplay.rawValue,
-            menuBarLinkedEventsOnly: s.menuBarLinkedEventsOnly,
-            calendarMenuBarHidesWhenEmpty: s.calendarMenuBarHidesWhenEmpty,
-            hideCurrentEvent: s.hideCurrentEvent.rawValue,
             supportReminders: s.supportRemindersEnabled)
 
         let hk = core.hotKeys
@@ -120,17 +109,20 @@ extension SettingsBackup {
         }
         if let hotkeys { summary.hotkeys = applyHotkeys(hotkeys, to: core) }
         if let favoriteApps {
-            core.favorites.replace(keys: favoriteApps)
-            summary.favorites = favoriteApps.count
+            let retained = favoriteApps.filter { !CommandID.isRetiredEntry($0) }
+            core.favorites.replace(keys: retained)
+            summary.favorites = retained.count
         }
         if hiddenLauncherItems != nil || hiddenLauncherKinds != nil {
-            let items = hiddenLauncherItems ?? Array(core.visibility.hiddenItemKeys)
-            let kinds = hiddenLauncherKinds ?? Array(core.visibility.disabledKinds)
+            let items = (hiddenLauncherItems ?? Array(core.visibility.hiddenItemKeys))
+                .filter { !CommandID.isRetiredEntry($0) }
+            let kinds = (hiddenLauncherKinds ?? Array(core.visibility.disabledKinds))
+                .filter { $0 != "meeting" }
             core.visibility.replace(hiddenItems: items, disabledKinds: kinds)
             summary.hiddenItems = items.count
         }
         if let launcherAliases {
-            core.aliases.replace(launcherAliases)
+            core.aliases.replace(launcherAliases.filter { !CommandID.isRetiredEntry($0.key) })
             // Counted after the store, which drops blanks the file may carry.
             summary.aliases = core.aliases.aliases.count
         }
@@ -333,52 +325,6 @@ extension SettingsBackup {
         }
         if let flag = s.quicklinkConfirmsBeforeDelete {
             settings.quicklinkConfirmsBeforeDelete = flag
-            count += 1
-        }
-        if let flag = s.calendarShowInLauncher {
-            settings.calendarShowInLauncher = flag
-            count += 1
-        }
-        if let raw = s.calendarLauncherLimit, let limit = CalendarLauncherLimit(rawValue: raw) {
-            settings.calendarLauncherLimit = limit
-            count += 1
-        }
-        if let raw = s.calendarSpan, let span = MeetingSpan(rawValue: raw) {
-            settings.calendarSpan = span
-            count += 1
-        }
-        if let raw = s.joinWindowMinutes, let window = JoinWindow(rawValue: raw) {
-            settings.joinWindowMinutes = window
-            count += 1
-        }
-        if let flag = s.autoJoinConfirms {
-            settings.autoJoinConfirms = flag
-            count += 1
-        }
-        if let flag = s.autoJoinNamedProvidersOnly {
-            settings.autoJoinNamedProvidersOnly = flag
-            count += 1
-        }
-        if let raw = s.menuBarEvents, let lead = MenuBarEvents(rawValue: raw) {
-            settings.menuBarEvents = lead
-            count += 1
-        }
-        if let raw = s.calendarMenuBarDisplay,
-            let display = CalendarMenuBarDisplay(rawValue: raw)
-        {
-            settings.calendarMenuBarDisplay = display
-            count += 1
-        }
-        if let flag = s.menuBarLinkedEventsOnly {
-            settings.menuBarLinkedEventsOnly = flag
-            count += 1
-        }
-        if let flag = s.calendarMenuBarHidesWhenEmpty {
-            settings.calendarMenuBarHidesWhenEmpty = flag
-            count += 1
-        }
-        if let raw = s.hideCurrentEvent, let hide = HideCurrentEvent(rawValue: raw) {
-            settings.hideCurrentEvent = hide
             count += 1
         }
         if let flag = s.supportReminders {

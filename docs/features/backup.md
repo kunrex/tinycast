@@ -114,8 +114,7 @@ anything a day old on the next run, since a run killed mid-flight leaves its tre
 
 `SettingsBackupTests` asserts that every `AppSettingsKey` appears in exactly one table, that no field
 claims a key twice, that every exclusion names a real key and carries a non-empty reason, and that each
-capability-granting key — `snippetsEnabled`, `extensionsEnabled`, `calendarEnabled`,
-`autoJoinMeetings`, `cameraPreview`, `quickActionsEnabled` — is named individually as excluded. The
+capability-granting key — `snippetsEnabled`, `extensionsEnabled`, `quickActionsEnabled` — is named individually as excluded. The
 duplication between `AppSettings` and this file is the point: it forces a decision about every new
 setting rather than defaulting it into a backup. Notes' settings declarations are retired, but their
 persisted preferences are left alone. Generic command-shortcut export iterates the remaining
@@ -128,6 +127,10 @@ merge through the existing apply path.
 Applying an import writes through `AppSettings` like any other change, so feature switches reproject into
 the launcher through the normal observation path. An import reports a summary of what it applied — it is
 not silent, because a settings file that quietly changes hotkeys is hostile.
+
+Legacy calendar settings are ignored. Retired Calendar/Meetings and Camera commands and meeting
+entries are filtered from imported favorites, visibility, aliases and hotkeys, so an old backup cannot
+restore removed launcher items.
 
 Per category:
 
