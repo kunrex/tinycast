@@ -66982,60 +66982,60 @@
         }
       }
     },
-    "Replace Command-Tab and Command-Shift-Tab. Release Command to switch. Saved window shortcuts pause until this is off. Requires Accessibility; unavailable during Secure Input." : {
+    "Replace Command-Tab and Command-Shift-Tab. Release Command to keep searching; use Tab or arrow keys to select, then Enter or a click to switch. Saved window shortcuts pause until this is off. Requires Accessibility; unavailable during Secure Input." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Command-Tab und Command-Umschalt-Tab ersetzen. Zum Wechseln Command loslassen. Gespeicherte Fensterkurzbefehle pausieren, bis dies ausgeschaltet wird. Benötigt Bedienungshilfen; bei sicherer Eingabe nicht verfügbar."
+            "value" : "Command-Tab und Command-Umschalt-Tab ersetzen. Command loslassen, um weiterzusuchen; mit Tab oder den Pfeiltasten auswählen und mit Enter oder einem Klick wechseln. Gespeicherte Fensterkurzbefehle pausieren, bis dies ausgeschaltet wird. Benötigt Bedienungshilfen; bei sicherer Eingabe nicht verfügbar."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Replace Command-Tab and Command-Shift-Tab. Release Command to switch. Saved window shortcuts pause until this is off. Requires Accessibility; unavailable during Secure Input."
+            "value" : "Replace Command-Tab and Command-Shift-Tab. Release Command to keep searching; use Tab or arrow keys to select, then Enter or a click to switch. Saved window shortcuts pause until this is off. Requires Accessibility; unavailable during Secure Input."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sustituye Comando-Tab y Comando-Mayúsculas-Tab. Suelta Comando para cambiar. Los atajos de ventanas guardados se pausan hasta desactivar esta opción. Requiere Accesibilidad; no disponible con Entrada segura."
+            "value" : "Sustituye Comando-Tab y Comando-Mayúsculas-Tab. Suelta Comando para seguir buscando; selecciona con Tab o las flechas y cambia con Intro o un clic. Los atajos de ventanas guardados se pausan hasta desactivar esta opción. Requiere Accesibilidad; no disponible con Entrada segura."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Remplace Commande-Tab et Commande-Maj-Tab. Relâchez Commande pour basculer. Les raccourcis de fenêtres enregistrés sont suspendus jusqu’à la désactivation. Nécessite Accessibilité ; indisponible pendant la saisie sécurisée."
+            "value" : "Remplace Commande-Tab et Commande-Maj-Tab. Relâchez Commande pour continuer à chercher ; sélectionnez avec Tab ou les flèches, puis basculez avec Entrée ou un clic. Les raccourcis de fenêtres enregistrés sont suspendus jusqu’à la désactivation. Nécessite Accessibilité ; indisponible pendant la saisie sécurisée."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Command-TabとCommand-Shift-Tabを置き換えます。Commandを離すと切り替わります。オフにするまで保存済みのウインドウショートカットは一時停止します。アクセシビリティが必要です。セキュア入力中は使用できません。"
+            "value" : "Command-TabとCommand-Shift-Tabを置き換えます。Commandを離しても検索を続けられます。Tabまたは矢印キーで選択し、Enterまたはクリックで切り替えます。オフにするまで保存済みのウインドウショートカットは一時停止します。アクセシビリティが必要です。セキュア入力中は使用できません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Command-Tab과 Command-Shift-Tab을 대체합니다. Command를 놓으면 전환됩니다. 이 옵션을 끌 때까지 저장된 윈도우 단축키가 일시 중지됩니다. 손쉬운 사용 권한이 필요하며 보안 입력 중에는 사용할 수 없습니다."
+            "value" : "Command-Tab과 Command-Shift-Tab을 대체합니다. Command를 놓아도 계속 검색할 수 있습니다. Tab 또는 화살표 키로 선택한 다음 Enter 또는 클릭으로 전환하세요. 이 옵션을 끌 때까지 저장된 윈도우 단축키가 일시 중지됩니다. 손쉬운 사용 권한이 필요하며 보안 입력 중에는 사용할 수 없습니다."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Substitui Command-Tab e Command-Shift-Tab. Solte Command para alternar. Os atalhos de janelas salvos ficam pausados até desativar esta opção. Requer Acessibilidade; indisponível durante a Entrada Segura."
+            "value" : "Substitui Command-Tab e Command-Shift-Tab. Solte Command para continuar buscando; selecione com Tab ou as setas e alterne com Enter ou um clique. Os atalhos de janelas salvos ficam pausados até desativar esta opção. Requer Acessibilidade; indisponível durante a Entrada Segura."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Заменяет Command-Tab и Command-Shift-Tab. Отпустите Command для переключения. Сохранённые сочетания окон приостановлены до отключения этой функции. Нужен Универсальный доступ; недоступно при защищённом вводе."
+            "value" : "Заменяет Command-Tab и Command-Shift-Tab. Отпустите Command, чтобы продолжить поиск; выбирайте клавишей Tab или стрелками, затем нажмите Enter или щёлкните для переключения. Сохранённые сочетания окон приостановлены до отключения этой функции. Нужен Универсальный доступ; недоступно при защищённом вводе."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "替换 Command-Tab 和 Command-Shift-Tab。松开 Command 即可切换。关闭此选项前，已保存的窗口快捷键将暂停。需要辅助功能权限；安全输入期间不可用。"
+            "value" : "替换 Command-Tab 和 Command-Shift-Tab。松开 Command 后可继续搜索；使用 Tab 或方向键选择，再按 Enter 或点击切换。关闭此选项前，已保存的窗口快捷键将暂停。需要辅助功能权限；安全输入期间不可用。"
           }
         }
       }

@@ -298,6 +298,7 @@ run KeyboardFocusTests     Tinycast/DesignSystem/Interaction/KeyboardFocus.swift
 run WindowSwitchCoordinatorTests Tinycast/Features/WindowSwitcher/Model/CommandTabEngine.swift \
                            Tinycast/Features/WindowSwitcher/Service/WindowSwitchSession.swift \
                            Tinycast/Features/WindowSwitcher/UI/WindowSwitchCoordinator.swift \
+                           Tinycast/Features/WindowSwitcher/UI/WindowSwitchScreen.swift \
                            Tinycast/Platform/NotificationToken.swift \
                            Tests/WindowSwitchCoordinatorFixtures.swift
 run CommandTabTests        Tinycast/Features/WindowSwitcher/Model/CommandTabEngine.swift \

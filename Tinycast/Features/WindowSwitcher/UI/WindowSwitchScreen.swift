@@ -55,6 +55,10 @@ struct WindowSwitchScreen: PaletteScreen {
         core.windowSwitchCoordinator.activate(entry)
     }
 
+    func tab(at selection: Int, backwards: Bool) -> Bool {
+        core.windowSwitchCoordinator.cycleNativePicker(backwards: backwards)
+    }
+
     func secondary(at selection: Int) -> Bool { false }
 
     func perform(_ shortcut: PaletteShortcut, at selection: Int) -> Bool {

@@ -5,7 +5,7 @@ struct CommandTabEngine: Sendable {
     enum Input: Sendable { case down, up, flags, disabled }
     enum Intent: Equatable, Sendable {
         case step(backwards: Bool, first: Bool)
-        case commit
+        case release
         case cancel
     }
     struct Result: Sendable {
@@ -56,7 +56,7 @@ struct CommandTabEngine: Sendable {
         // Some keyboards deliver the release on a key event rather than flagsChanged.
         if switching, flags & Self.command == 0 {
             switching = false
-            return Result(suppress: suppress, intent: .commit)
+            return Result(suppress: suppress, intent: .release)
         }
         guard input == .down, keyCode == 48, suppress, validChord else {
             return Result(suppress: suppress)

@@ -4103,7 +4103,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 4BP3N64TP7;
 				EXECUTABLE_NAME = "$(DICTATION_EXECUTABLE_NAME)";
 				INFOPLIST_FILE = Tinycast/Features/Dictation/Helper/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
