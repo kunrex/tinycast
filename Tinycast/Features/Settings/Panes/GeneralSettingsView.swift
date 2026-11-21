@@ -7,6 +7,16 @@ struct GeneralSettingsView: View {
     @State private var confirmingRankingReset = false
     @State private var inputSources: [InputSourceSwitcher.Option] = []
 
+    private var spotlightTintColor: Binding<Color> {
+        Binding(
+            get: { SpotlightTintColor(encoded: settings.spotlightTintColor)?.color ?? .clear },
+            set: { color in
+                if let tint = SpotlightTintColor(color: color) {
+                    settings.spotlightTintColor = tint.encoded
+                }
+            })
+    }
+
     var body: some View {
         @Bindable var settings = settings
         return Form {
@@ -80,6 +90,13 @@ struct GeneralSettingsView: View {
                 Toggle(isOn: $settings.animationsEnabled) {
                     SettingsRowTitle(.generalAppearance, "Show animations")
                 }
+                Toggle(isOn: $settings.spotlightTintEnabled) {
+                    SettingsRowTitle(.generalAppearance, "Spotlight tint")
+                }
+                ColorPicker(selection: spotlightTintColor, supportsOpacity: true) {
+                    SettingsRowTitle(.generalAppearance, "Tint color")
+                }
+                .settingsEnabled(settings.spotlightTintEnabled)
                 InterfaceSizeRow()
                 WindowModeRow()
                     .background {

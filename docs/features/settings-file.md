@@ -33,6 +33,10 @@ in `Features/Settings/` (`Model/`, `Service/`, `SettingsFileSchema.swift`), the 
 
 ## Layout
 
+`appearance.spotlightTintEnabled` defaults to `false`. `appearance.spotlightTintColor` is an sRGB
+`"#RRGGBBAA"` string (default `"#4080FF33"`), with the final byte controlling opacity. Invalid colors
+are rejected; disabling tint retains the chosen color. Both values travel in settings backups.
+
 `appearance.compactBarCommands` is an ordered array of zero to four unique command identifiers.
 For example, `["command:clipboard-history", "command:search-emoji", "command:search-files"]` shows
 Clipboard History, Emoji & Symbols and Search Files in that order. Only the five commands offered by

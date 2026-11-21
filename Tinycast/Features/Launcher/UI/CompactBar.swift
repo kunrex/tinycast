@@ -118,7 +118,7 @@ struct CompactBar: View {
 
     /// The selected button stays out of the mask, so its tint reads undimmed.
     private func scrim(geometry: CompactBarGeometry, revealed: Bool) -> some View {
-        Theme.Colors.panelScrim
+        PaletteSurface()
             .mask { silhouette(geometry: geometry, revealed: revealed, sparing: selection) }
             .allowsHitTesting(false)
             .accessibilityHidden(true)

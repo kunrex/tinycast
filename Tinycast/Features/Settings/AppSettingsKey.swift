@@ -31,6 +31,8 @@ enum AppSettingsKey: String, CaseIterable {
     case autoSwitchInputSource = "autoSwitchInputSource"
     case paletteDraggable = "paletteDraggable"
     case animationsEnabled = "animationsEnabled"
+    case spotlightTintEnabled = "spotlightTintEnabled"
+    case spotlightTintColor = "spotlightTintColor"
     case palettePosition = "palettePosition"
     case paletteExpandedCenterDisplays = "paletteExpandedCenterDisplays"
     case fileSearchEnabled = "fileSearchEnabled"

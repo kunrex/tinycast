@@ -129,6 +129,14 @@ final class AppSettings {
         didSet { defaults.set(escapeKeyBehavior.rawValue, forKey: Key.escapeKeyBehavior.rawValue) }
     }
 
+    var spotlightTintEnabled: Bool {
+        didSet { defaults.set(spotlightTintEnabled, forKey: Key.spotlightTintEnabled.rawValue) }
+    }
+
+    var spotlightTintColor: String {
+        didSet { defaults.set(spotlightTintColor, forKey: Key.spotlightTintColor.rawValue) }
+    }
+
     /// Follow macOS, or pin Tinycast to one appearance. Applied by `AppCore.applyAppearance()`.
     var appearance: AppAppearance {
         didSet { defaults.set(appearance.rawValue, forKey: Key.appearance.rawValue) }
@@ -496,6 +504,8 @@ final class AppSettings {
         escapeKeyBehavior =
             defaults.string(forKey: Key.escapeKeyBehavior.rawValue).flatMap(EscapeKeyBehavior.init)
             ?? .navigateBackOrClose
+        spotlightTintEnabled = defaults.bool(forKey: Key.spotlightTintEnabled.rawValue)
+        spotlightTintColor = defaults.string(forKey: Key.spotlightTintColor.rawValue) ?? "#4080FF33"
         appearance =
             defaults.string(forKey: Key.appearance.rawValue).flatMap(AppAppearance.init) ?? .system
         language = Self.storedLanguage

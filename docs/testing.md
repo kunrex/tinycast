@@ -771,6 +771,11 @@ Debug answers `tinycast-dev://`; use that scheme for every link below.
 
 ### Settings and backup
 
+- General → Appearance → Spotlight tint defaults off, with Tint color dimmed and disabled. Enable it,
+  choose a color and opacity, then toggle off/on: the RGBA remains. Relaunch, settings.json and backup
+  round trips retain both fields. In Light and Dark over bright wallpaper, compare expanded and
+  compact surfaces; the selected compact shortcut stays untinted and foreground/glass never fades.
+
 - General → Automatically check for updates defaults on; turn it off and relaunch: it stays off,
   no background check or update offer occurs, and Check for Updates still works. Re-enable it:
   checks resume. Settings search for "updates" reveals the toggle; settings.json edits and a backup

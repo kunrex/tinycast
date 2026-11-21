@@ -35,6 +35,8 @@ extension SettingsBackup {
             openOnCursorScreen: s.openOnCursorScreen,
             paletteDraggable: s.paletteDraggable,
             animationsEnabled: s.animationsEnabled,
+            spotlightTintEnabled: s.spotlightTintEnabled,
+            spotlightTintColor: s.spotlightTintColor,
             fileSearchEnabled: s.fileSearchEnabled,
             fileSearchScopes: s.fileSearchScopes,
             fileSearchIgnorePatterns: s.fileSearchIgnorePatterns,
@@ -240,6 +242,14 @@ extension SettingsBackup {
         }
         if let flag = s.paletteDraggable {
             settings.paletteDraggable = flag
+            count += 1
+        }
+        if let flag = s.spotlightTintEnabled {
+            settings.spotlightTintEnabled = flag
+            count += 1
+        }
+        if let encoded = s.spotlightTintColor, let color = SpotlightTintColor(encoded: encoded) {
+            settings.spotlightTintColor = color.encoded
             count += 1
         }
         if let flag = s.animationsEnabled {

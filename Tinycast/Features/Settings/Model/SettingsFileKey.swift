@@ -13,6 +13,8 @@ enum SettingsFileKey: String, CaseIterable, Sendable {
     case language = "general.language"
     case appearance = "appearance.theme"
     case animationsEnabled = "appearance.animations"
+    case spotlightTintEnabled = "appearance.spotlightTintEnabled"
+    case spotlightTintColor = "appearance.spotlightTintColor"
     case interfaceSize = "appearance.interfaceSize"
     case compactMode = "appearance.compactMode"
     case compactBarCommands = "appearance.compactBarCommands"

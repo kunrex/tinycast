@@ -29,6 +29,8 @@ enum SettingsBackupCoverage {
         "openOnCursorScreen": .openOnCursorScreen,
         "paletteDraggable": .paletteDraggable,
         "animationsEnabled": .animationsEnabled,
+        "spotlightTintEnabled": .spotlightTintEnabled,
+        "spotlightTintColor": .spotlightTintColor,
         "fileSearchEnabled": .fileSearchEnabled,
         "fileSearchScopes": .fileSearchScopes,
         "fileSearchIgnorePatterns": .fileSearchIgnorePatterns,

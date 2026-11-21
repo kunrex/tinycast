@@ -37,6 +37,18 @@ settings:
       STRIP_SWIFT_SYMBOLS: YES
       DEAD_CODE_STRIPPING: YES
 
+schemes:
+  Tinycast:
+    build:
+      targets:
+        Tinycast: all
+    run:
+      config: Release
+  ClipboardTextHelper:
+    build:
+      targets:
+        ClipboardTextHelper: all
+
 targets:
   Tinycast:
     type: application

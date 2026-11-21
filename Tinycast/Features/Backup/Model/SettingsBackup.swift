@@ -45,6 +45,8 @@ struct SettingsBackup: Codable {
         // Safe to carry: it grants no permission class, just repositions the window.
         var paletteDraggable: Bool?
         var animationsEnabled: Bool?
+        var spotlightTintEnabled: Bool?
+        var spotlightTintColor: String?
         var fileSearchEnabled: Bool?
         var fileSearchScopes: [String]?
         var fileSearchIgnorePatterns: [String]?

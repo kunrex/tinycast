@@ -39,6 +39,9 @@ enum SettingsFileSchema {
         case .language: return bind(settings, \.language)
         case .appearance: return bind(settings, \.appearance)
         case .animationsEnabled: return bind(settings, \.animationsEnabled)
+        case .spotlightTintEnabled: return bind(settings, \.spotlightTintEnabled)
+        case .spotlightTintColor:
+            return bind(settings, \.spotlightTintColor) { SpotlightTintColor(encoded: $0)?.encoded }
         case .interfaceSize: return bind(settings, \.interfaceSize)
         case .compactMode: return bind(settings, \.compactMode)
         case .compactBarCommands:

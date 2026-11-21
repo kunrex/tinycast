@@ -9,6 +9,7 @@ struct SettingsFileTests {
     static func main() async throws {
         testLayout()
         testValues()
+        testSpotlightTint()
         testFormat()
         testParseIssues()
         try testRetiredCalendarImport()
@@ -22,6 +23,30 @@ struct SettingsFileTests {
 
         print(failures == 0 ? "\nALL PASSED" : "\n\(failures) FAILED")
         exit(failures == 0 ? 0 : 1)
+    }
+
+    private static func testSpotlightTint() {
+        for encoded in ["#00000000", "#FFFFFFFF", "#4080FF33", "#12345680"] {
+            let color = SpotlightTintColor(encoded: encoded)
+            check("RGBA encoding round trips", color?.encoded == encoded)
+            let rendered = SettingsFileFormat.render([
+                .spotlightTintEnabled: .bool(false), .spotlightTintColor: .string(encoded)
+            ])
+            let parsed = try? SettingsFileFormat.parse(rendered)
+            check("disabled tint retains RGBA in settings.json",
+                  parsed?.values[.spotlightTintColor] == .string(encoded))
+            check("tint switch round trips independently",
+                  parsed?.values[.spotlightTintEnabled] == .bool(false))
+        }
+        check("alpha uses the final byte", SpotlightTintColor(encoded: "#12345680")?.alpha == 128.0 / 255)
+        check("transparent alpha is zero", SpotlightTintColor(encoded: "#FFFFFF00")?.alpha == 0)
+        check("opaque alpha is one", SpotlightTintColor(encoded: "#000000FF")?.alpha == 1)
+        check("lowercase normalizes", SpotlightTintColor(encoded: "#abcdef80")?.encoded == "#ABCDEF80")
+        for invalid in ["red", "#FFF", "#123456", "#123456789", "#GG000000", "123456789"] {
+            check("invalid RGBA is rejected", SpotlightTintColor(encoded: invalid) == nil)
+        }
+        let clamped = SpotlightTintColor(red: -1, green: 2, blue: .nan, alpha: 0.5)
+        check("channels clamp and alpha rounds", clamped.encoded == "#00FF0080")
     }
 
     // MARK: - Layout

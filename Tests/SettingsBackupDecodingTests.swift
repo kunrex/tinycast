@@ -43,6 +43,8 @@ enum SettingsBackupDecodingTests {
         precondition(backup.settings?.clipboardRetentionDays == 90)
         precondition(backup.settings?.navigationEnabled == true)
         precondition(backup.settings?.navigationMimicsMacOS == nil)
+        precondition(backup.settings?.spotlightTintEnabled == nil)
+        precondition(backup.settings?.spotlightTintColor == nil)
         precondition(backup.settings?.menuSearchDisabledApps == ["com.example.private"])
         precondition(backup.settings?.menuSearchShowsAppleMenu == false)
         precondition(backup.settings?.language == "ja")
@@ -81,9 +83,13 @@ enum SettingsBackupDecodingTests {
         precondition(decodedAgain.settings?.clipboardRetentionDays == 90)
         for enabled in [true, false] {
             var updated = backup
+            updated.settings?.spotlightTintEnabled = enabled
+            updated.settings?.spotlightTintColor = "#12345680"
             updated.settings?.navigationMimicsMacOS = enabled
             let restored = try SettingsBackup(json: updated.encoded())
             precondition(restored.settings?.navigationMimicsMacOS == enabled)
+            precondition(restored.settings?.spotlightTintEnabled == enabled)
+            precondition(restored.settings?.spotlightTintColor == "#12345680")
             precondition(restored.hotkeys?.commands?["command:switch-windows"] == binding)
         }
         print("SettingsBackupDecodingTests passed")

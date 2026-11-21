@@ -307,7 +307,9 @@ struct RootPaletteView: View {
                 )
                 // The window's frame is the size source, so the glass and clip stay matched.
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .background(isCollapsed ? .clear : Theme.Colors.panelScrim)
+                .background {
+                    if !isCollapsed { PaletteSurface() }
+                }
                 // Square, as rounded glass feathers its edge; the clip alone cuts a crisp corner.
                 .background {
                     Color.clear.glassEffect(isCollapsed ? .identity : .regular, in: Rectangle())
