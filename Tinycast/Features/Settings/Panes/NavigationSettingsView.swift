@@ -25,7 +25,8 @@ struct NavigationSettingsView: View {
                 )) {
                     SettingsRowTitle(.navigationCommands, "Mimic macOS")
                     Text("""
-                        Replace Command-Tab and Command-Shift-Tab. Release Command to switch. \
+                        Replace Command-Tab and Command-Shift-Tab. Release Command to keep searching; \
+                        use Tab or arrow keys to select, then Enter or a click to switch. \
                         Saved window shortcuts pause until this is off. \
                         Requires Accessibility; unavailable during Secure Input.
                         """)

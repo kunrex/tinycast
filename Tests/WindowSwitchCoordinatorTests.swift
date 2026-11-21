@@ -6,6 +6,12 @@ struct WindowSwitchCoordinatorTests {
     static func check(_ condition: Bool, _ message: String) {
         if !condition { failures += 1; print("FAIL: \(message)") }
     }
+    static func hasMonitor(_ name: String, in coordinator: WindowSwitchCoordinator) -> Bool {
+        Mirror(reflecting: coordinator).children.contains {
+            $0.label == name && !Mirror(reflecting: $0.value).children.isEmpty
+        }
+    }
+
     static func removalRecovery() async {
         let settings = AppSettings()
         settings.navigationMimicsMacOS = true
@@ -24,7 +30,8 @@ struct WindowSwitchCoordinatorTests {
         let installs = tap.installs
         let stops = tap.stops
         tap.handler?(.step(backwards: false, first: true))
-        tap.handler?(.commit)
+        tap.handler?(.release)
+        coordinator.activate(session.filtered[palette.selection]) // Existing Enter/row action.
         DarwinNotificationToken.post(removal) // Palette hide removes its independent Escape tap.
         check(tap.installs == installs && tap.stops == stops && tap.isInstalled,
               "unrelated removal after first commit leaves capture installed")
@@ -33,7 +40,8 @@ struct WindowSwitchCoordinatorTests {
         DarwinNotificationToken.post(removal)
         check(tap.installs == installs && tap.stops == stops && tap.cancellations == cancellations,
               "global removal does not cancel or rebuild a healthy second gesture")
-        tap.handler?(.commit)
+        tap.handler?(.release)
+        coordinator.activate(session.filtered[palette.selection])
         check(AXWindowAccess.focuses == focuses + 2 && !shell.visible,
               "second invocation commits after unrelated global removals")
         let prompts = Permissions.prompts
@@ -102,6 +110,8 @@ struct WindowSwitchCoordinatorTests {
         coordinator.show()
         check(palette.selection == 1, "custom repeat still steps")
         shell.hidePalette()
+        core.windowSwitchCoordinator = coordinator
+        let screen = WindowSwitchScreen(session: session, core: core)
         let beforeEnable = Permissions.prompts
         coordinator.setMimicsMacOS(true)
         check(
@@ -111,31 +121,58 @@ struct WindowSwitchCoordinatorTests {
         check(
             shell.opens == 2 && palette.selection == 1 && session.nativeLandingSelection == 1,
             "native first press loads and immediately selects the next window")
+        check(hasMonitor("nativeSearchMonitor", in: coordinator), "native gesture arms Command translation")
         palette.query = "third"
         palette.selection = session.nativeLandingSelection // RootPaletteView lands before filtering.
         coordinator.filterQuery()
         check(palette.selection == 0, "query filtering corrects the pre-filter landing")
-        tap.handler?(.commit)
-        check(AXWindowAccess.focuses == 1, "filtered query commits its only row")
-        check(!shell.visible && AXWindowAccess.focuses == 1, "native release activates once and hides without restoring focus")
-        tap.handler?(.commit)
-        check(AXWindowAccess.focuses == 1, "repeated stale release cannot activate")
+        tap.handler?(.release)
+        check(shell.visible && AXWindowAccess.focuses == 0, "release keeps filtered picker open without activation")
+        check(!hasMonitor("nativeSearchMonitor", in: coordinator), "release disarms Command translation")
+        check(screen.tab(at: palette.selection, backwards: false) && palette.selection == 0,
+              "Tab wraps within filtered query after release")
+        check(screen.tab(at: palette.selection, backwards: true) && palette.selection == 0,
+              "Shift-Tab wraps within filtered query")
+        screen.activate(at: palette.selection) // RootPaletteView's Enter handler calls this.
+        check(!shell.visible && AXWindowAccess.focuses == 1, "explicit selection activates once and hides")
+        tap.handler?(.release)
+        check(AXWindowAccess.focuses == 1 && !coordinator.cycleNativePicker(backwards: false),
+              "reset clears native picker routing and stale release cannot activate")
         tap.handler?(.step(backwards: true, first: true))
         check(palette.selection == 2, "first native reverse selects last window")
         palette.query = "third"
         palette.selection = session.nativeLandingSelection
         coordinator.filterQuery()
         check(palette.selection == 0, "reverse stale landing resets after narrowing")
-        tap.handler?(.commit)
-        check(AXWindowAccess.focuses == 2 && !shell.visible, "reverse query commits its only row")
-        shell.hidePalette()
+        tap.handler?(.release)
+        check(AXWindowAccess.focuses == 1 && shell.visible, "reverse release leaves narrowed picker open")
+        palette.query = ""
+        coordinator.filterQuery()
+        check(screen.tab(at: palette.selection, backwards: true) && palette.selection == 2,
+              "Shift-Tab wraps backwards after clearing query")
+        check(screen.tab(at: palette.selection, backwards: false) && palette.selection == 0,
+              "Tab wraps forwards")
+        check(!hasMonitor("releaseMonitor", in: coordinator), "plain Tab never arms release activation")
+        let opens = shell.opens
+        let cancellations = tap.cancellations
+        tap.handler?(.step(backwards: false, first: true))
+        check(palette.selection == 1 && shell.opens == opens && tap.cancellations == cancellations,
+              "fresh Command-Tab cycles current picker without reload or cancellation")
+        tap.handler?(.release)
+        coordinator.activate(session.filtered[palette.selection])
+        check(AXWindowAccess.focuses == 2 && !shell.visible, "row action activates exactly once")
+        tap.handler?(.step(backwards: false, first: true))
+        shell.hidePalette() // Escape/click-away uses the same reset.
+        check(!coordinator.cycleNativePicker(backwards: false), "cancel clears native Tab routing")
         coordinator.show(query: "search")
-        tap.handler?(.commit)
+        tap.handler?(.release)
         check(AXWindowAccess.focuses == 2 && shell.visible, "release cannot activate a closed and reopened session")
+        check(!screen.tab(at: palette.selection, backwards: false), "ordinary search does not claim Tab")
         tap.handler?(.step(backwards: false, first: true))
         tap.handler?(.cancel)
-        tap.handler?(.commit)
-        check(AXWindowAccess.focuses == 2, "system disable cancels commit")
+        tap.handler?(.release)
+        check(AXWindowAccess.focuses == 2 && !coordinator.cycleNativePicker(backwards: false),
+              "system disable clears native picker routing without activation")
         core.hotKeys.recordingAction = 1
         coordinator.applyNativeSwitching()
         check(
@@ -161,6 +198,19 @@ struct WindowSwitchCoordinatorTests {
             "failed takeover reports and keeps saved shortcuts suppressed")
         coordinator.setMimicsMacOS(false)
         check(!core.hotKeys.navigationMimicsMacOS && tap.handler == nil, "mimic off restores saved shortcut routes")
+        shell.hidePalette()
+        let focuses = AXWindowAccess.focuses
+        NSEvent.holdForTest(.command)
+        coordinator.show()
+        NSEvent.releaseForTest()
+        check(shell.visible && AXWindowAccess.focuses == focuses,
+              "custom first press and release still leaves search open")
+        NSEvent.holdForTest(.command)
+        coordinator.show()
+        check(hasMonitor("releaseMonitor", in: coordinator), "custom repeat arms release activation")
+        NSEvent.releaseForTest()
+        check(!shell.visible && AXWindowAccess.focuses == focuses + 1,
+              "custom repeated shortcut still activates once on release")
         coordinator.prepareForTermination()
         await removalRecovery()
         print("Window switch coordinator: \(failures) failures")

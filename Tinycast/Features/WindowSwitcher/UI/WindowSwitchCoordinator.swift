@@ -12,8 +12,8 @@ final class WindowSwitchCoordinator: HealthCheckable {
     /// Armed by a repeat press with its modifiers held: letting go switches, as ⌘Tab does.
     private var releaseMonitor: Any?
     private let nativeTap = CommandTabTap()
+    /// Survives Command release so only a native-opened picker claims plain Tab.
     private var nativeSession: UUID?
-    private var committingNative = false
     private var nativeSearchMonitor: Any?
     private var observers: [NotificationToken] = []
     private var darwinObservers: [DarwinNotificationToken] = []
@@ -36,7 +36,7 @@ final class WindowSwitchCoordinator: HealthCheckable {
 
     func start() {
         session.onReset = { [weak self] in
-            guard let self, !self.committingNative else { return }
+            guard let self else { return }
             self.cancelNativeGesture()
         }
         let workspace = NSWorkspace.shared.notificationCenter
@@ -163,19 +163,21 @@ final class WindowSwitchCoordinator: HealthCheckable {
                 paletteCoordinator.isShowing(.switchWindows) else { return }
             filterQuery()
             step(by: backwards ? -1 : 1, native: true)
-        case .commit:
-            guard nativeSession == session.identity else { return }
-            filterQuery()
-            nativeSession = nil
+        case .release:
             disarmNativeSearch()
-            committingNative = true
-            defer { committingNative = false }
-            switchOnRelease()
         }
     }
 
+    func cycleNativePicker(backwards: Bool) -> Bool {
+        guard nativeSession == session.identity,
+            paletteCoordinator.isShowing(.switchWindows) else { return false }
+        filterQuery()
+        step(by: backwards ? -1 : 1, native: true)
+        return true
+    }
+
     func filterQuery() {
-        // Release can arrive before SwiftUI has forwarded the latest typed query to the session.
+        // A step can arrive before SwiftUI forwards the latest query to the session.
         if session.filter(palette.query) { palette.selection = 0 }
     }
 

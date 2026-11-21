@@ -67,7 +67,7 @@ struct CommandTabTests {
             engine.handle(.down, keyCode: 48, flags: command | shift, isAutorepeat: true).intent == .step(backwards: true, first: false),
             "repeat reverses")
         check(engine.handle(.flags, keyCode: 56, flags: command).intent == nil, "Shift release does not commit")
-        check(engine.handle(.flags, keyCode: 55, flags: shift).intent == .commit, "Command release commits with Shift held")
+        check(engine.handle(.flags, keyCode: 55, flags: shift).intent == .release, "Command release ends gesture with Shift held")
         check(engine.handle(.up, keyCode: 48, flags: shift).suppress, "paired up swallowed despite changed flags")
         check(!engine.handle(.up, keyCode: 48, flags: shift).suppress, "up consumed only once")
         _ = engine.handle(.down, keyCode: 48, flags: command)
@@ -78,7 +78,7 @@ struct CommandTabTests {
         check(engine.handle(.up, keyCode: 48, flags: 0).suppress, "cancellation retains down/up pairing")
         _ = engine.handle(.down, keyCode: 48, flags: command)
         let fallback = engine.handle(.up, keyCode: 48, flags: shift)
-        check(fallback.suppress && fallback.intent == .commit, "key-event release fallback")
+        check(fallback.suppress && fallback.intent == .release, "key-event release fallback")
         _ = engine.handle(.down, keyCode: 48, flags: command)
         _ = engine.handle(.disabled, keyCode: 0, flags: 0)
         check(engine.handle(.flags, keyCode: 55, flags: 0).intent == nil, "system disable cancels commit")
@@ -185,8 +185,8 @@ struct CommandTabTests {
             check(deliver(index, .keyUp, flags: flags), "independent gesture pairs Tab up")
             _ = deliver(index, .flagsChanged, flags: [])
             await settle()
-            check(intents == [.step(backwards: backwards, first: true), .commit],
-                  "independent gesture delivers fresh step and exactly one commit")
+            check(intents == [.step(backwards: backwards, first: true), .release],
+                  "independent gesture delivers fresh step and exactly one release")
             intents = []
             tap.cancelGesture() // Palette hide/reset must not uninstall or lose the next gesture.
             check(tap.isInstalled && fixture.withLock { $0.records.count } == index + 1,
@@ -215,7 +215,7 @@ struct CommandTabTests {
         check(intents.isEmpty, "main can remain blocked throughout a quick chord")
         await settle()
         check(
-            intents == [.step(backwards: false, first: true), .step(backwards: true, first: false), .commit],
+            intents == [.step(backwards: false, first: true), .step(backwards: true, first: false), .release],
             "single consumer delivers in order")
         _ = deliver(0, .keyDown)
         tap.cancelGesture()

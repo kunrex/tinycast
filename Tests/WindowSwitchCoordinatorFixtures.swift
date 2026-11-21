@@ -1,6 +1,69 @@
 import AppKit
+import SwiftUI
+
+@MainActor protocol PaletteScreen {
+    func activate(at selection: Int)
+    func tab(at selection: Int, backwards: Bool) -> Bool
+}
+struct ScrollIntent {}
+enum PaletteShortcut { case minimizeWindow, hideApp, quit, other }
+struct PopoverMenuItem {
+    init(title: String, systemImage: String, startsSection: Bool = false,
+         shortcut: String, action: @escaping () -> Void) {}
+}
+struct PopoverMenuContent {
+    let header: String
+    let items: [PopoverMenuItem]
+}
+struct EmptyResults: View {
+    let text: String
+    var body: some View { EmptyView() }
+}
+struct WindowSwitchList: View {
+    let entries: [WindowSwitchEntry]
+    let selectedID: Int?
+    let scroll: ScrollIntent
+    let onActivate: (WindowSwitchEntry) -> Void
+    var body: some View { EmptyView() }
+}
 
 func IsSecureEventInputEnabled() -> Bool { false }
+
+@MainActor private final class EventMonitor {
+    static var held: NSEvent.ModifierFlags = []
+    static var monitors: [EventMonitor] = []
+    let mask: NSEvent.EventTypeMask
+    let handler: (NSEvent) -> NSEvent?
+    init(mask: NSEvent.EventTypeMask, handler: @escaping (NSEvent) -> NSEvent?) {
+        self.mask = mask
+        self.handler = handler
+    }
+}
+extension NSEvent {
+    var modifierFlags: ModifierFlags { ModifierFlags(rawValue: UInt(cgEvent?.flags.rawValue ?? 0)) }
+    @MainActor static var modifierFlags: ModifierFlags { EventMonitor.held }
+    @MainActor static func addLocalMonitorForEvents(
+        matching mask: EventTypeMask, handler: @escaping (NSEvent) -> NSEvent?
+    ) -> Any? {
+        let monitor = EventMonitor(mask: mask, handler: handler)
+        EventMonitor.monitors.append(monitor)
+        return monitor
+    }
+    @MainActor static func removeMonitor(_ monitor: Any) {
+        EventMonitor.monitors.removeAll { $0 === monitor as? EventMonitor }
+    }
+    @MainActor static func holdForTest(_ flags: ModifierFlags) { EventMonitor.held = flags }
+    @MainActor static func releaseForTest() {
+        EventMonitor.held = []
+        let event = NSEvent.keyEvent(
+            with: .flagsChanged, location: .zero, modifierFlags: [], timestamp: 0,
+            windowNumber: 0, context: nil, characters: "", charactersIgnoringModifiers: "",
+            isARepeat: false, keyCode: 55)!
+        for monitor in EventMonitor.monitors where monitor.mask.contains(.flagsChanged) {
+            _ = monitor.handler(event)
+        }
+    }
+}
 
 @MainActor @Observable final class AppSettings {
     var navigationEnabled = true
@@ -12,6 +75,7 @@ enum CommandID { case switchWindows, switchWindowsBackwards }
 }
 struct WindowSwitchEntry {
     let handle: Int
+    var id: Int { handle }
     var isMinimized = false
     var displayTitle: String { "Window" }
 }
@@ -129,6 +193,11 @@ enum PaletteMode { case launcher, switchWindows }
 }
 enum DialogTone { case danger }
 @MainActor final class AppCore {
+    private var coordinator: WindowSwitchCoordinator?
+    var windowSwitchCoordinator: WindowSwitchCoordinator {
+        get { coordinator! }
+        set { coordinator = newValue }
+    }
     let hotKeys = HotKeyManager()
     let secureInput = SecureInputMonitor()
     var messages: [String] = []

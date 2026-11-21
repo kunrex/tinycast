@@ -11,9 +11,12 @@ launcher and a still-recorded shortcut for any does nothing.
 
 Settings also offers **Mimic macOS**, off by default, above the window command shortcuts. With
 Navigation enabled it replaces ⌘Tab / ⌘⇧Tab with the searchable window switcher. The first press
-opens, loads and steps immediately; repeats cycle, and releasing Command commits even with Shift
-still held. Typing printable characters into the key switcher searches while Command is held.
-Launcher invocation still opens search without arming a release commit.
+opens, loads and steps immediately; repeats cycle. Experimentally, releasing Command leaves the
+picker open, even with Shift still held. Tab / Shift-Tab and the existing arrow navigation select
+rows; Enter or a row click switches. Typing searches with or without Command held. A fresh ⌘Tab
+on the open picker cycles the current selection without reloading. Escape follows the standard
+palette behavior (clear the query, then leave). Launcher invocation and custom-shortcut first-open
+and release-to-activate behavior are unchanged.
 
 The two saved window shortcuts remain persisted and conflict-reserved, but are temporarily
 **unregistered** (Carbon, modifier-only and Secure Input equivalents) and guarded at dispatch.
@@ -141,10 +144,12 @@ only Command+Tab with optional Shift, not Control, Option or fn. Initial downs f
 whole press: passed downs keep passing their repeats and up; swallowed downs suppress their repeats
 and up even when modifiers change. Autorepeat without an initial down cannot acquire ownership. Tagged Hyper Key and paste/text-injection synthetics
 pass through. No AX window reads, main-actor waits or UI effects run in the callback. One AsyncStream
-consumer delivers ordered step/repeat/commit intents on main. Cancellation increments a generation,
+consumer delivers ordered step/repeat/release intents on main. Cancellation increments a generation,
 so queued actions from a stopped, disabled or superseded tap cannot open or activate stale selections;
-the coordinator also checks the current presentation identity before committing. Local printable-key
-translation is scoped to the key switcher during a native gesture, never global typing.
+the coordinator also checks the current presentation identity before stepping. Local printable-key
+translation is scoped to the key switcher during a native gesture and disarmed on Command release,
+never global typing. The native picker identity remains until cancellation or session reset so plain
+Tab can cycle without arming the custom-shortcut release monitor.
 
 ## Raising
 
@@ -225,9 +230,10 @@ paired ups, unrelated modifier passthrough, synthetic filtering, generation canc
 unposted tap callbacks. It exercises ordered delivery while main is blocked, timeout/user-input
 recovery, revoked grants, Secure Input, failed installation, retry and teardown. The coordinator
 harness uses concrete fixtures (no live AX window actions) to verify native first-press stepping,
-query landing before filtering (including a reverse stale index), one release commit, stale
+query landing before filtering (including a reverse stale index), release without activation,
+explicit screen activation, forward/reverse Tab wrapping, fresh gestures without reloading, stale
 presentation cancellation, custom first-press search, recording and
-feature gates. Global removal injection verifies two commits without healthy-tap churn, genuine loss
+feature gates. Global removal injection verifies two explicit activations without healthy-tap churn, genuine loss
 recovery without prompting, replacement feedback suppression and policy-paused drains. The real-tap
 harness also repeats independent gestures and palette-reset cancellation on one private installation;
 the coordinator harness still uses a tap fixture rather than a real tap. `HotKeyDispatchTests` checks suppression/restoration without changing stored bindings.
@@ -235,8 +241,11 @@ the coordinator harness still uses a tap fixture rather than a real tap. `HotKey
 Real-machine verification is still required:
 
 - Check Mimic macOS with Navigation on: ⌘Tab selects the second window immediately, ⌘⇧Tab selects
-  the last, repeats interleave, and releasing Command with Shift held switches once. Try a very
-  quick chord while an AX app is slow, and type a search while Command remains held.
+  the last, repeats interleave, and releasing Command with Shift held leaves the picker open.
+  Tab / Shift-Tab wrap, arrows navigate, and typing filters before and after release. Enter or a row
+  click activates exactly once. Fresh ⌘Tab cycles the open picker without reloading; Escape cancels
+  and the next invocation works. Try a quick chord while an AX app is slow. With Mimic off, verify
+  custom shortcuts still open search first and activate on release only after a repeated step.
 - Uncheck either window command's visibility box: native switching still works. Menu Search's
   visibility checkbox also never disables its hotkey. No per-command capability toggles exist.
 - The saved window hotkeys do nothing while Mimic macOS is on; aliases, visibility and Menu Search
