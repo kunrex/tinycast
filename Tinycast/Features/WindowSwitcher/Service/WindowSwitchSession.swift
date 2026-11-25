@@ -49,7 +49,8 @@ final class WindowSwitchSession {
     }
 
     func markMinimized(_ handle: Int) {
-        guard let index = snapshot.firstIndex(where: { $0.handle == handle }) else { return }
+        guard let index = snapshot.firstIndex(where: { $0.handle == handle }),
+            snapshot[index].hasWindow else { return }
         var entries = snapshot
         entries[index].isMinimized = true
         snapshot = WindowSwitchOrder.sorted(entries)

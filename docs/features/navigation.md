@@ -1,7 +1,8 @@
 # Navigation
 
 Commands that move you somewhere rather than changing something, behind one switch:
-**Switch Windows** raises any open window of any running app, **Switch Windows Backwards** walks the
+**Switch Windows** raises any open window of any running app, or activates a regular running app
+with no eligible windows. **Switch Windows Backwards** walks the
 same list the other way, and **Search Menu Bar Items** presses any item in the front app's menu bar. The second has its own page —
 [menu-search.md](menu-search.md) — because its internals are a menu walk; this page owns the
 switcher and the pane the two share.
@@ -42,7 +43,7 @@ backups and `navigation.mimicsMacOS` in the settings file.
   and drops it in `reset()`, which `hidePalette` and every mode change call. So every open sweeps
   anew — `WindowSwitchCoordinator.load()`, through `PaletteCoordinator.onScreenOpening` — and a
   screen restored inside the Pop to Root window lists today's windows, not an empty snapshot.
-- **Nothing in `Model/` knows what a window is.** `WindowSwitchEntry` takes `appRank` as a number
+- **Nothing in `Model/` knows about AX elements.** `WindowSwitchEntry` takes `appRank` as a number
   someone else measured, so `WindowSwitchOrder` and `WindowSwitchQuery` stay Foundation-only and the
   harness compiles the shipped sources.
 - **The order is total.** `(isMinimized, appRank, appName, handle)` — so a sweep that enumerated apps
@@ -61,7 +62,7 @@ backups and `navigation.mimicsMacOS` in the settings file.
 
 | Piece | Holds |
 | --- | --- |
-| `Model/WindowSwitchEntry.swift` | one row: handle, app, title, minimized, rank, search fields |
+| `Model/WindowSwitchEntry.swift` | one row: handle, app, title, window presence, minimized, rank, search fields |
 | `Model/WindowSwitchOrder.swift` | the MRU sort, pure and total |
 | `Model/WindowSwitchPolicy.swift` | which windows the sweep offers, pure |
 | `Model/WindowSwitchQuery.swift` | ranking over `SearchRelevance`, capped at 200 rows |
@@ -97,6 +98,12 @@ rather than after the user has switched apps once.
 and takes every window `WindowSwitchPolicy` accepts: a standard-subrole one, or a minimized one that
 still has a minimize button. A **minimized** window is exactly what a switcher is for, and a window
 on another Space reports no frame until it is raised, so requiring one would hide it.
+
+An app that contributes no eligible windows gets exactly one app-only row, including apps that
+report no windows at all. Apps with eligible windows keep just their existing window rows. The
+app-only row uses the app name as its title, the same icon and per-app rank, and a unique handle in
+the same live element table, with a nil window. It sorts like a non-minimized row; unranked apps
+therefore sort by name after ranked rows and before minimized windows.
 
 **A minimized window changes subrole.** Finder and Transmission report their minimized windows as
 `AXDialog`, not `AXStandardWindow`, and back to `AXStandardWindow` when restored, so a subrole test
@@ -159,6 +166,10 @@ orders the window inside an app that is not frontmost, and activating alone brin
 front window forward rather than the chosen one. Activating is also what pulls another Space forward,
 so the switcher needs no Space handling of its own.
 
+An app-only row calls `NSRunningApplication.activate()` without any window AX actions. It does not
+launch or reopen the app to manufacture a window. The same permission, live-app and focus-restoration
+guards apply, and Hide and Quit remain available; Minimize is absent and its shortcut does nothing.
+
 Every step is allowed to fail quietly. What is reported is only the case the user can act on: the
 window's app quit between the sweep and the ↵.
 
@@ -218,7 +229,9 @@ window's app quit between the sweep and the ↵.
 `Tests/WindowSwitchTests.swift` covers the pure half: the handle-derived id, the untitled-window
 fallback, the name/owner split in the search fields, the MRU order and its totality under a shuffled
 sweep, the minimized run at the end, which windows the sweep offers, ranking, and the 200-row cap
-under both an empty and a matching query.
+under both an empty and a matching query. App-only regression cases cover distinct row identities,
+mixed ordering and app-name queries. The coordinator harness checks selection, activation without
+window AX actions, minimize guards, and app-level Hide and Quit for app-only rows.
 
 The harness also compiles `WindowSwitchSweep` and the shared `Platform/AXWindowAccess` without
 any recovery sources, guarding their independence. It does not exercise live AX calls.
@@ -268,3 +281,7 @@ Real-machine verification is still required:
 5. Minimize moves the row into the minimized run; on a full-screen window it does nothing.
 6. Hide hides the frontmost app as well as a background one, and Escape does not bring it back.
 7. ⌃⇧Q on an app with unsaved work keeps its rows until the save sheet lets it exit.
+8. Close all windows of a regular app: exactly one app-only row appears on the next summon and
+   activates that running app without reopening a window. Check a truly windowless regular app too,
+   and an app with only ineligible dialogs. Minimize is absent and ⌃⇧M does nothing; Hide and Quit
+   still work. An app with eligible windows never gains an extra app-only row.

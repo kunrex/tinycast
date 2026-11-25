@@ -12,6 +12,63 @@ struct WindowSwitchCoordinatorTests {
         }
     }
 
+    static func appOnlyRows() {
+        let settings = AppSettings()
+        let core = AppCore()
+        let session = WindowSwitchSession()
+        let palette = PaletteState()
+        let shell = PaletteCoordinator(palette: palette, session: session)
+        let coordinator = WindowSwitchCoordinator(
+            settings: settings, appIndex: AppIndex(), session: session,
+            palette: palette, paletteCoordinator: shell, core: core)
+        core.windowSwitchCoordinator = coordinator
+        let screen = WindowSwitchScreen(session: session, core: core)
+        let app = NSRunningApplication.current
+        let appEntry = WindowSwitchEntry(handle: 1, hasWindow: false)
+        let snapshot = WindowSwitchSweep.Snapshot(
+            entries: [WindowSwitchEntry(handle: 0), appEntry, WindowSwitchEntry(handle: 2)],
+            elements: [0: .init(), 1: .init(window: nil), 2: .init()])
+        shell.showPalette(mode: .switchWindows)
+        session.present(snapshot)
+        coordinator.show()
+        check(palette.selection == 1, "shortcut stepping can select an app-only row between windows")
+        check(screen.actions(at: 1)?.items.count == 3,
+              "app-only actions contain activation, hide and quit but no minimize")
+        check(screen.actions(at: 0)?.items.count == 4, "window rows retain minimize")
+        let minimizes = AXWindowAccess.minimizes
+        coordinator.minimize(appEntry)
+        _ = screen.perform(.minimizeWindow, at: 1)
+        coordinator.minimize(WindowSwitchEntry(handle: 1))
+        session.markMinimized(1)
+        check(AXWindowAccess.minimizes == minimizes && !session.snapshot[1].isMinimized,
+              "app rows cannot minimize even through shortcuts, stale entries or session updates")
+        let terminations = app.terminations
+        coordinator.quitApplication(appEntry)
+        check(app.terminations == terminations + 1 && session.filtered.count == 3,
+              "quit targets the app and keeps rows until termination")
+        let focuses = AXWindowAccess.focuses
+        let unminimizes = AXWindowAccess.unminimizes
+        let activations = app.activations
+        screen.activate(at: 1)
+        check(app.activations == activations + 1 && AXWindowAccess.focuses == focuses
+              && AXWindowAccess.unminimizes == unminimizes,
+              "app-only activation activates the running app without window AX actions")
+        check(!shell.visible && shell.lastRestoreFocus == false && session.snapshot.isEmpty,
+              "app activation hides without restoring focus and drops live handles")
+        shell.showPalette(mode: .switchWindows)
+        session.present(snapshot)
+        let hides = app.hides
+        coordinator.hideApplication(appEntry)
+        check(app.hides == hides + 1 && !shell.visible && shell.lastRestoreFocus == false,
+              "hide remains available for app-only rows without restoring focus")
+        shell.showPalette(mode: .switchWindows)
+        session.present(snapshot)
+        screen.activate(at: 2)
+        check(AXWindowAccess.focuses == focuses + 1 && app.activations == activations + 1,
+              "existing window activation still raises its window")
+        coordinator.prepareForTermination()
+    }
+
     static func removalRecovery() async {
         let settings = AppSettings()
         settings.navigationMimicsMacOS = true
@@ -213,6 +270,7 @@ struct WindowSwitchCoordinatorTests {
               "custom repeated shortcut still activates once on release")
         coordinator.prepareForTermination()
         await removalRecovery()
+        appOnlyRows()
         print("Window switch coordinator: \(failures) failures")
         if failures > 0 { exit(1) }
     }

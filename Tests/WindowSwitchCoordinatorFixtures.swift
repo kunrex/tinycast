@@ -77,18 +77,23 @@ struct WindowSwitchEntry {
     let handle: Int
     var id: Int { handle }
     var isMinimized = false
+    var hasWindow = true
     var displayTitle: String { "Window" }
 }
 @MainActor final class NSRunningApplication {
     static let current = NSRunningApplication()
     var isTerminated = false
     var processIdentifier: pid_t { 0 }
-    func hide() -> Bool { true }
-    @discardableResult func terminate() -> Bool { true }
+    var activations = 0
+    var hides = 0
+    var terminations = 0
+    func activate() { activations += 1 }
+    func hide() -> Bool { hides += 1; return true }
+    @discardableResult func terminate() -> Bool { terminations += 1; return true }
 }
 @MainActor enum WindowSwitchSweep {
     @MainActor struct Element {
-        let window = AXUIElementCreateSystemWide()
+        var window: AXUIElement? = AXUIElementCreateSystemWide()
         let application = AXUIElementCreateSystemWide()
         let app = NSRunningApplication.current
     }
@@ -123,6 +128,7 @@ enum PaletteMode { case launcher, switchWindows }
     let session: WindowSwitchSession
     var visible = false
     var opens = 0
+    var lastRestoreFocus: Bool?
     var onOpen: (() -> Void)?
     var anchorView: NSView? { nil }
     init(palette: PaletteState, session: WindowSwitchSession) {
@@ -137,12 +143,17 @@ enum PaletteMode { case launcher, switchWindows }
         visible = true; palette.mode = mode; palette.selection = 0
         palette.query = seeding ?? ""; opens += 1; onOpen?()
     }
-    func hidePalette(restoreFocus: Bool = true) { visible = false; session.reset() }
+    func hidePalette(restoreFocus: Bool = true) {
+        lastRestoreFocus = restoreFocus
+        visible = false; session.reset()
+    }
 }
 @MainActor enum AXWindowAccess {
     static var focuses = 0
-    static func unminimize(_ window: AXUIElement) -> Bool { true }
-    static func minimize(_ window: AXUIElement) -> Bool { true }
+    static var minimizes = 0
+    static var unminimizes = 0
+    static func unminimize(_ window: AXUIElement) -> Bool { unminimizes += 1; return true }
+    static func minimize(_ window: AXUIElement) -> Bool { minimizes += 1; return true }
     static func isFullScreen(_ window: AXUIElement) -> Bool { false }
     static func setHidden(_ hidden: Bool, application: AXUIElement) {}
     static func focus(_ window: AXUIElement, in application: AXUIElement, of app: NSRunningApplication) { focuses += 1 }

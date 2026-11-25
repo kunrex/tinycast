@@ -14,15 +14,17 @@ struct WindowSwitchTests {
 
     static func entry(
         _ handle: Int, app: String = "Safari", title: String = "Window",
-        minimized: Bool = false, rank: Int = 0
+        minimized: Bool = false, hasWindow: Bool = true, rank: Int = 0
     ) -> WindowSwitchEntry {
         WindowSwitchEntry(
             handle: handle, appName: app, bundleID: "com.example.\(app.lowercased())",
-            iconURL: nil, iconStamp: 0, title: title, isMinimized: minimized, appRank: rank)
+            iconURL: nil, iconStamp: 0, title: title, isMinimized: minimized,
+            hasWindow: hasWindow, appRank: rank)
     }
 
     static func main() {
         identity()
+        appOnlyEntries()
         displayTitle()
         searchMapping()
         ordering()
@@ -37,6 +39,31 @@ struct WindowSwitchTests {
 
     static func identity() {
         expect(entry(7).id == "7", "the id is the handle, which is unique inside one sweep")
+    }
+
+    static func appOnlyEntries() {
+        let app = entry(3, app: "Preview", title: "", hasWindow: false, rank: .max)
+        let anotherInstance = entry(4, app: "Preview", title: "", hasWindow: false, rank: .max)
+        let windows = [
+            entry(0, app: "Safari", rank: 0),
+            entry(1, app: "Safari", rank: 0),
+            entry(2, app: "Mail", minimized: true, rank: 1)
+        ]
+        expect(app.id != anotherInstance.id, "app instances with the same name have distinct handles")
+        expect(!windows.contains { $0.id == app.id }, "app and window identities do not collide")
+        expect(app.displayTitle == "Preview", "an app-only row displays the app name")
+        expect(!app.isMinimized && !app.hasWindow, "an app-only row has no minimized window")
+        let sorted = WindowSwitchOrder.sorted([app, anotherInstance] + windows.reversed())
+        expect(sorted.map(\.handle) == [0, 1, 3, 4, 2],
+               "app rows use the existing rank/name order before minimized windows")
+        expect(WindowSwitchOrder.sorted(sorted.reversed()) == sorted,
+               "mixed app/window ordering remains total")
+        expect(WindowSwitchQuery.rank(sorted, for: "").map(\.id) == sorted.map(\.id),
+               "an empty query preserves mixed row identities and order")
+        expect(WindowSwitchQuery.rank(sorted, for: "Preview").map(\.id) == [app.id, anotherInstance.id],
+               "app-only rows match their name and retain instance order")
+        expect(WindowSwitchQuery.rank(sorted, for: "Safari").map(\.handle) == [0, 1],
+               "existing windows remain independently searchable")
     }
 
     static func displayTitle() {

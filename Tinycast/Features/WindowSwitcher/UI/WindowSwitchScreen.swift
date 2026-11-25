@@ -25,7 +25,7 @@ struct WindowSwitchScreen: PaletteScreen {
                 coordinator.activate(entry)
             }
         ]
-        if !entry.isMinimized {
+        if entry.hasWindow && !entry.isMinimized {
             items.append(
                 PopoverMenuItem(
                     title: String(localized: "Minimize Window"), systemImage: "minus.rectangle",

@@ -281,14 +281,19 @@ final class WindowSwitchCoordinator: HealthCheckable {
         }
         // Restoring focus reactivates the displaced app, which races the raise below.
         paletteCoordinator.hidePalette(restoreFocus: false)
-        if entry.isMinimized { _ = AXWindowAccess.unminimize(element.window) }
-        AXWindowAccess.focus(element.window, in: element.application, of: element.app)
+        if let window = element.window {
+            if entry.isMinimized { _ = AXWindowAccess.unminimize(window) }
+            AXWindowAccess.focus(window, in: element.application, of: element.app)
+        } else {
+            element.app.activate()
+        }
     }
 
     /// A full-screen window can't minimize, so its row must not join the minimized ones.
     func minimize(_ entry: WindowSwitchEntry) {
-        guard !entry.isMinimized, hasAccessibility(), let element = liveElement(for: entry),
-            !AXWindowAccess.isFullScreen(element.window), AXWindowAccess.minimize(element.window)
+        guard entry.hasWindow, !entry.isMinimized, hasAccessibility(),
+            let window = liveElement(for: entry)?.window,
+            !AXWindowAccess.isFullScreen(window), AXWindowAccess.minimize(window)
         else { return }
         session.markMinimized(entry.handle)
     }

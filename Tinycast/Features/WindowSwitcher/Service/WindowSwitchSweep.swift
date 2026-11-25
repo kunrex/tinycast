@@ -12,7 +12,7 @@ enum WindowSwitchSweep {
     struct Element {
         let app: NSRunningApplication
         let application: AXUIElement
-        let window: AXUIElement
+        let window: AXUIElement?
     }
 
     struct Snapshot {
@@ -30,6 +30,7 @@ enum WindowSwitchSweep {
             let application = AXWindowAccess.application(for: pid, timeout: sweepTimeout)
             let iconURL = app.bundleURL
             let iconStamp = iconURL.map(FileIconStamp.value(for:)) ?? 0
+            let firstHandle = entries.count
             for window in AXWindowAccess.windows(in: application) {
                 AXUIElementSetMessagingTimeout(window, sweepTimeout)
                 let minimized = AXWindowAccess.bool(window, kAXMinimizedAttribute) == true
@@ -42,6 +43,14 @@ enum WindowSwitchSweep {
                         title: AXWindowAccess.string(window, kAXTitleAttribute) ?? "",
                         isMinimized: minimized, appRank: ranks[pid] ?? .max))
                 elements[handle] = Element(app: app, application: application, window: window)
+            }
+            if entries.count == firstHandle {
+                entries.append(
+                    WindowSwitchEntry(
+                        handle: firstHandle, appName: app.localizedName ?? bundleID,
+                        bundleID: bundleID, iconURL: iconURL, iconStamp: iconStamp,
+                        title: "", isMinimized: false, hasWindow: false, appRank: ranks[pid] ?? .max))
+                elements[firstHandle] = Element(app: app, application: application, window: nil)
             }
         }
         return Snapshot(entries: entries, elements: elements)

@@ -1,6 +1,6 @@
 import Foundation
 
-/// One open window the switcher offers. A handle, not an `AXUIElement`: this layer stays pure.
+/// A window or windowless app the switcher offers; live AX elements stay outside this layer.
 struct WindowSwitchEntry: Identifiable, Hashable, Sendable {
     /// The app's own front-to-back order, flattened across apps; also indexes the live elements.
     let handle: Int
@@ -10,6 +10,7 @@ struct WindowSwitchEntry: Identifiable, Hashable, Sendable {
     let iconStamp: Int
     let title: String
     var isMinimized: Bool
+    var hasWindow: Bool = true
     /// Lower is nearer the front; `.max` when the app has no on-screen window to rank it by.
     let appRank: Int
 
